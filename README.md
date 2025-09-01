@@ -1,296 +1,325 @@
-# Context Engineering Template
+# Teams Notification API Server
 
-A comprehensive template for getting started with Context Engineering - the discipline of engineering context for AI coding assistants so they have the information necessary to get the job done end to end.
+A comprehensive Microsoft Teams notification system that provides pre-registered destination management, multi-target messaging, rate limiting compliance, and enterprise-grade features.
 
-> **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
+## 🚀 Features
 
-## 🚀 Quick Start
+- **Pre-registered Destinations**: Secure notification key mapping system
+- **Multi-target Support**: Channels, group chats, and individual users
+- **Teams API Compliance**: 50 RPS global, 7 RPS per conversation rate limiting
+- **Enterprise Ready**: Authentication, authorization, audit trails
+- **Usage Tracking**: Comprehensive billing and cost tracking
+- **Monitoring**: Health checks, metrics, and observability
+- **Scheduled Messaging**: Queue-based message scheduling
 
-```bash
-# 1. Clone this template
-git clone https://github.com/coleam00/Context-Engineering-Intro.git
-cd Context-Engineering-Intro
+## 📋 Prerequisites
 
-# 2. Set up your project rules (optional - template provided)
-# Edit CLAUDE.md to add your project-specific guidelines
+- Go 1.21 or higher
+- Docker and Docker Compose
+- Microsoft Teams Bot Framework registration
+- PostgreSQL and Redis (or use Docker Compose)
 
-# 3. Add examples (highly recommended)
-# Place relevant code examples in the examples/ folder
+## 🏗️ Architecture
 
-# 4. Create your initial feature request
-# Edit INITIAL.md with your feature requirements
+- **Framework**: Go with Gin web framework
+- **Database**: PostgreSQL with GORM ORM
+- **Cache/Queue**: Redis for caching and message queuing
+- **Authentication**: JWT-based with Teams Bot Framework validation
+- **Configuration**: Viper with environment variable support
 
-# 5. Generate a comprehensive PRP (Product Requirements Prompt)
-# In Claude Code, run:
-/generate-prp INITIAL.md
+## ⚡ Quick Start
 
-# 6. Execute the PRP to implement your feature
-# In Claude Code, run:
-/execute-prp PRPs/your-feature-name.md
-```
-
-## 📚 Table of Contents
-
-- [What is Context Engineering?](#what-is-context-engineering)
-- [Template Structure](#template-structure)
-- [Step-by-Step Guide](#step-by-step-guide)
-- [Writing Effective INITIAL.md Files](#writing-effective-initialmd-files)
-- [The PRP Workflow](#the-prp-workflow)
-- [Using Examples Effectively](#using-examples-effectively)
-- [Best Practices](#best-practices)
-
-## What is Context Engineering?
-
-Context Engineering represents a paradigm shift from traditional prompt engineering:
-
-### Prompt Engineering vs Context Engineering
-
-**Prompt Engineering:**
-- Focuses on clever wording and specific phrasing
-- Limited to how you phrase a task
-- Like giving someone a sticky note
-
-**Context Engineering:**
-- A complete system for providing comprehensive context
-- Includes documentation, examples, rules, patterns, and validation
-- Like writing a full screenplay with all the details
-
-### Why Context Engineering Matters
-
-1. **Reduces AI Failures**: Most agent failures aren't model failures - they're context failures
-2. **Ensures Consistency**: AI follows your project patterns and conventions
-3. **Enables Complex Features**: AI can handle multi-step implementations with proper context
-4. **Self-Correcting**: Validation loops allow AI to fix its own mistakes
-
-## Template Structure
-
-```
-context-engineering-intro/
-├── .claude/
-│   ├── commands/
-│   │   ├── generate-prp.md    # Generates comprehensive PRPs
-│   │   └── execute-prp.md     # Executes PRPs to implement features
-│   └── settings.local.json    # Claude Code permissions
-├── PRPs/
-│   ├── templates/
-│   │   └── prp_base.md       # Base template for PRPs
-│   └── EXAMPLE_multi_agent_prp.md  # Example of a complete PRP
-├── examples/                  # Your code examples (critical!)
-├── CLAUDE.md                 # Global rules for AI assistant
-├── INITIAL.md               # Template for feature requests
-├── INITIAL_EXAMPLE.md       # Example feature request
-└── README.md                # This file
-```
-
-This template doesn't focus on RAG and tools with context engineering because I have a LOT more in store for that soon. ;)
-
-## Step-by-Step Guide
-
-### 1. Set Up Global Rules (CLAUDE.md)
-
-The `CLAUDE.md` file contains project-wide rules that the AI assistant will follow in every conversation. The template includes:
-
-- **Project awareness**: Reading planning docs, checking tasks
-- **Code structure**: File size limits, module organization
-- **Testing requirements**: Unit test patterns, coverage expectations
-- **Style conventions**: Language preferences, formatting rules
-- **Documentation standards**: Docstring formats, commenting practices
-
-**You can use the provided template as-is or customize it for your project.**
-
-### 2. Create Your Initial Feature Request
-
-Edit `INITIAL.md` to describe what you want to build:
-
-```markdown
-## FEATURE:
-[Describe what you want to build - be specific about functionality and requirements]
-
-## EXAMPLES:
-[List any example files in the examples/ folder and explain how they should be used]
-
-## DOCUMENTATION:
-[Include links to relevant documentation, APIs, or MCP server resources]
-
-## OTHER CONSIDERATIONS:
-[Mention any gotchas, specific requirements, or things AI assistants commonly miss]
-```
-
-**See `INITIAL_EXAMPLE.md` for a complete example.**
-
-### 3. Generate the PRP
-
-PRPs (Product Requirements Prompts) are comprehensive implementation blueprints that include:
-
-- Complete context and documentation
-- Implementation steps with validation
-- Error handling patterns
-- Test requirements
-
-They are similar to PRDs (Product Requirements Documents) but are crafted more specifically to instruct an AI coding assistant.
-
-Run in Claude Code:
-```bash
-/generate-prp INITIAL.md
-```
-
-**Note:** The slash commands are custom commands defined in `.claude/commands/`. You can view their implementation:
-- `.claude/commands/generate-prp.md` - See how it researches and creates PRPs
-- `.claude/commands/execute-prp.md` - See how it implements features from PRPs
-
-The `$ARGUMENTS` variable in these commands receives whatever you pass after the command name (e.g., `INITIAL.md` or `PRPs/your-feature.md`).
-
-This command will:
-1. Read your feature request
-2. Research the codebase for patterns
-3. Search for relevant documentation
-4. Create a comprehensive PRP in `PRPs/your-feature-name.md`
-
-### 4. Execute the PRP
-
-Once generated, execute the PRP to implement your feature:
+### 1. Clone and Setup
 
 ```bash
-/execute-prp PRPs/your-feature-name.md
+git clone <repository-url>
+cd TeamsNotifyGo
 ```
 
-The AI coding assistant will:
-1. Read all context from the PRP
-2. Create a detailed implementation plan
-3. Execute each step with validation
-4. Run tests and fix any issues
-5. Ensure all success criteria are met
+### 2. Configure Environment
 
-## Writing Effective INITIAL.md Files
+```bash
+# Copy environment template
+cp .env.example .env
 
-### Key Sections Explained
-
-**FEATURE**: Be specific and comprehensive
-- ❌ "Build a web scraper"
-- ✅ "Build an async web scraper using BeautifulSoup that extracts product data from e-commerce sites, handles rate limiting, and stores results in PostgreSQL"
-
-**EXAMPLES**: Leverage the examples/ folder
-- Place relevant code patterns in `examples/`
-- Reference specific files and patterns to follow
-- Explain what aspects should be mimicked
-
-**DOCUMENTATION**: Include all relevant resources
-- API documentation URLs
-- Library guides
-- MCP server documentation
-- Database schemas
-
-**OTHER CONSIDERATIONS**: Capture important details
-- Authentication requirements
-- Rate limits or quotas
-- Common pitfalls
-- Performance requirements
-
-## The PRP Workflow
-
-### How /generate-prp Works
-
-The command follows this process:
-
-1. **Research Phase**
-   - Analyzes your codebase for patterns
-   - Searches for similar implementations
-   - Identifies conventions to follow
-
-2. **Documentation Gathering**
-   - Fetches relevant API docs
-   - Includes library documentation
-   - Adds gotchas and quirks
-
-3. **Blueprint Creation**
-   - Creates step-by-step implementation plan
-   - Includes validation gates
-   - Adds test requirements
-
-4. **Quality Check**
-   - Scores confidence level (1-10)
-   - Ensures all context is included
-
-### How /execute-prp Works
-
-1. **Load Context**: Reads the entire PRP
-2. **Plan**: Creates detailed task list using TodoWrite
-3. **Execute**: Implements each component
-4. **Validate**: Runs tests and linting
-5. **Iterate**: Fixes any issues found
-6. **Complete**: Ensures all requirements met
-
-See `PRPs/EXAMPLE_multi_agent_prp.md` for a complete example of what gets generated.
-
-## Using Examples Effectively
-
-The `examples/` folder is **critical** for success. AI coding assistants perform much better when they can see patterns to follow.
-
-### What to Include in Examples
-
-1. **Code Structure Patterns**
-   - How you organize modules
-   - Import conventions
-   - Class/function patterns
-
-2. **Testing Patterns**
-   - Test file structure
-   - Mocking approaches
-   - Assertion styles
-
-3. **Integration Patterns**
-   - API client implementations
-   - Database connections
-   - Authentication flows
-
-4. **CLI Patterns**
-   - Argument parsing
-   - Output formatting
-   - Error handling
-
-### Example Structure
-
-```
-examples/
-├── README.md           # Explains what each example demonstrates
-├── cli.py             # CLI implementation pattern
-├── agent/             # Agent architecture patterns
-│   ├── agent.py      # Agent creation pattern
-│   ├── tools.py      # Tool implementation pattern
-│   └── providers.py  # Multi-provider pattern
-└── tests/            # Testing patterns
-    ├── test_agent.py # Unit test patterns
-    └── conftest.py   # Pytest configuration
+# Edit .env with your Teams Bot credentials:
+# - TEAMS_NOTIFY_TEAMS_APP_ID
+# - TEAMS_NOTIFY_TEAMS_APP_SECRET  
+# - TEAMS_NOTIFY_TEAMS_BOT_ID
+# - TEAMS_NOTIFY_AUTH_JWT_SECRET (generated)
+# - TEAMS_NOTIFY_DATABASE_PASSWORD
 ```
 
-## Best Practices
+### 3. Start with Docker Compose
 
-### 1. Be Explicit in INITIAL.md
-- Don't assume the AI knows your preferences
-- Include specific requirements and constraints
-- Reference examples liberally
+```bash
+# Start all services
+docker-compose up -d
 
-### 2. Provide Comprehensive Examples
-- More examples = better implementations
-- Show both what to do AND what not to do
-- Include error handling patterns
+# Or start with admin tools
+docker-compose --profile admin up -d
 
-### 3. Use Validation Gates
-- PRPs include test commands that must pass
-- AI will iterate until all validations succeed
-- This ensures working code on first try
+# Check health
+curl http://localhost:8080/health
+```
 
-### 4. Leverage Documentation
-- Include official API docs
-- Add MCP server resources
-- Reference specific documentation sections
+## 🛠️ Development Setup
 
-### 5. Customize CLAUDE.md
-- Add your conventions
-- Include project-specific rules
-- Define coding standards
+### Option 1: Full Docker Environment (Recommended)
 
-## Resources
+```bash
+# Start only database and Redis services
+docker-compose up -d postgres redis
 
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
+# Run the Go server locally for debugging
+go run ./cmd/server
+```
+
+### Option 2: Hot Reload Development
+
+```bash
+# Install Air for hot reloading
+go install github.com/cosmtrek/air@latest
+
+# Start database services
+docker-compose up -d postgres redis
+
+# Run with hot reload
+make dev
+```
+
+### Option 3: VS Code Debugging
+
+The project includes VS Code debugging configuration:
+
+1. **F5** to start debugging
+2. Automatically starts PostgreSQL and Redis containers
+3. Sets development environment variables
+4. Enables breakpoints and step-through debugging
+
+### Option 4: Pure Local Development
+
+```bash
+# Make sure PostgreSQL and Redis are running locally
+# Set local environment variables:
+export TEAMS_NOTIFY_DATABASE_HOST=localhost
+export TEAMS_NOTIFY_REDIS_HOST=localhost
+
+# Run the server
+make run
+```
+
+## 🧪 Testing and Validation
+
+```bash
+# Run all validations (format, vet, lint, test)
+make validate
+
+# Run tests only
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build the binary
+make build
+
+# Check environment variables
+make env-check
+```
+
+## 🐳 Docker Commands
+
+```bash
+# Build Docker image
+make docker-build
+
+# Run in Docker container
+make docker-run
+
+# Start full environment
+docker-compose up -d
+
+# View logs
+docker-compose logs -f teams-notify-server
+
+# Stop services
+docker-compose down
+```
+
+## 📊 Monitoring and Admin Tools
+
+### Health Endpoints
+
+- **Health Check**: `GET /health`
+- **Database Stats**: Available via health endpoint
+- **Service Status**: `make status`
+
+### Admin Interfaces (with --profile admin)
+
+- **pgAdmin**: http://localhost:5050
+  - Email: `admin@teamsnotify.local`
+  - Password: `admin_password`
+
+- **Redis Commander**: http://localhost:8081
+  - Username: `admin`
+  - Password: `admin_password`
+
+## 🔧 Configuration
+
+### Required Environment Variables
+
+```bash
+# Teams Bot Configuration
+TEAMS_NOTIFY_TEAMS_APP_ID=your-bot-app-id
+TEAMS_NOTIFY_TEAMS_APP_SECRET=your-bot-app-secret
+TEAMS_NOTIFY_TEAMS_BOT_ID=28:your-bot-app-id
+
+# Authentication
+TEAMS_NOTIFY_AUTH_JWT_SECRET=your-jwt-secret
+
+# Database
+TEAMS_NOTIFY_DATABASE_PASSWORD=your-database-password
+```
+
+### Optional Configuration
+
+```bash
+# Server
+TEAMS_NOTIFY_SERVER_PORT=8080
+TEAMS_NOTIFY_SERVER_ENVIRONMENT=development
+
+# Database
+TEAMS_NOTIFY_DATABASE_HOST=localhost
+TEAMS_NOTIFY_DATABASE_PORT=5432
+TEAMS_NOTIFY_DATABASE_USERNAME=teams_notify
+TEAMS_NOTIFY_DATABASE_DATABASE_NAME=teams_notify
+
+# Redis
+TEAMS_NOTIFY_REDIS_HOST=localhost
+TEAMS_NOTIFY_REDIS_PORT=6379
+TEAMS_NOTIFY_REDIS_PASSWORD=redis_password
+
+# Logging
+TEAMS_NOTIFY_LOGGING_LEVEL=info
+TEAMS_NOTIFY_LOGGING_FORMAT=json
+```
+
+## 🚦 Rate Limiting
+
+The system complies with Microsoft Teams API rate limits:
+
+- **Global Rate Limit**: 50 requests per second per application
+- **Conversation Rate Limit**: 7 requests per second per conversation
+- **Automatic Retry**: Exponential backoff with jitter
+- **Queue Management**: Redis-based message queuing
+
+## 📡 API Endpoints
+
+### Core Endpoints
+
+- `GET /health` - Health check and system status
+- `POST /api/v1/destinations` - Register notification destinations
+- `POST /api/v1/notifications` - Send notifications
+- `GET /api/v1/notifications/{id}` - Get notification status
+- `POST /api/v1/notifications/batch` - Batch notification sending
+
+### Authentication
+
+All API endpoints require JWT authentication:
+
+```bash
+Authorization: Bearer <jwt-token>
+```
+
+## 📝 Debugging Tips
+
+### Local Development
+
+```bash
+# Set debug logging
+export TEAMS_NOTIFY_LOGGING_LEVEL=debug
+export TEAMS_NOTIFY_SERVER_ENVIRONMENT=development
+
+# Start dependencies
+docker-compose up -d postgres redis
+
+# Run locally
+go run ./cmd/server
+
+# Check health
+curl http://localhost:8080/health
+```
+
+### Common Issues
+
+1. **Configuration Errors**: Check environment variables match required prefixes
+2. **Database Connection**: Ensure PostgreSQL is running and credentials are correct
+3. **Teams Authentication**: Verify Bot Framework credentials and permissions
+4. **Rate Limiting**: Check Redis connection for rate limiting functionality
+
+### Logging
+
+- All logs are in JSON format for structured logging
+- Use `TEAMS_NOTIFY_LOGGING_LEVEL=debug` for verbose output
+- Logs include request IDs for tracing
+
+## 🏭 Production Deployment
+
+### Docker Production
+
+```bash
+# Build production image
+docker build -t teams-notify-server:latest .
+
+# Run with production environment
+docker run -d \
+  --name teams-notify-server \
+  -p 8080:8080 \
+  --env-file .env \
+  teams-notify-server:latest
+```
+
+### Security Considerations
+
+- Use strong JWT secrets (64+ characters)
+- Enable TLS in production
+- Secure database and Redis connections
+- Implement proper firewall rules
+- Regular security updates
+
+## 📚 Development Resources
+
+### Microsoft Teams Bot Framework
+
+- [Bot Framework Documentation](https://docs.microsoft.com/en-us/azure/bot-service/)
+- [Teams API Rate Limits](https://docs.microsoft.com/en-us/microsoftteams/platform/bots/how-to/rate-limit)
+- [Proactive Messaging](https://docs.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/send-proactive-messages)
+
+### Go Libraries Used
+
+- [Gin Web Framework](https://github.com/gin-gonic/gin)
+- [GORM ORM](https://gorm.io/docs/)
+- [Viper Configuration](https://github.com/spf13/viper)
+- [JWT Golang](https://github.com/golang-jwt/jwt)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with tests
+4. Run validation: `make validate`
+5. Submit a pull request
+
+## 📄 License
+
+[Your License Here]
+
+## 🆘 Support
+
+For issues and questions:
+
+1. Check the troubleshooting section above
+2. Review logs for error details
+3. Ensure all environment variables are set correctly
+4. Verify Teams Bot Framework configuration
