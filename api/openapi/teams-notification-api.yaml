@@ -1,0 +1,725 @@
+openapi: 3.0.3
+info:
+  title: Teams Notification API
+  description: |
+    Enterprise-grade Teams notification API server that enables secure and efficient message delivery 
+    to Microsoft Teams targets (chat groups, channels, individuals) with comprehensive monitoring, 
+    billing, and operational capabilities.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api-support@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.company.com/v1
+    description: Production server
+  - url: https://staging-api.company.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /notifications:
+    post:
+      summary: Send notification
+      description: Send a notification to Teams targets
+      operationId: sendNotification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRequest"
+            examples:
+              text_message:
+                summary: Text message
+                value:
+                  message:
+                    type: text
+                    content: "Hello from API!"
+                    mentions: ["@user1", "@user2"]
+                  sender: "api-user@company.com"
+                  notificationKey: "daily-reminder"
+                  priority: "normal"
+              file_message:
+                summary: File attachment message
+                value:
+                  message:
+                    type: file
+                    content: "請查看附件報告"
+                    attachment:
+                      fileName: "monthly-report.pdf"
+                      fileUrl: "https://storage.company.com/reports/monthly-report.pdf"
+                      fileSize: 2048576
+                      mimeType: "application/pdf"
+                  sender: "system@company.com"
+                  notificationKey: "monthly-report"
+                  priority: "high"
+      responses:
+        "200":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/schedule:
+    post:
+      summary: Schedule notification
+      description: Schedule a notification for future delivery
+      operationId: scheduleNotification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduledNotificationRequest"
+      responses:
+        "200":
+          description: Notification scheduled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledNotificationResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/batch:
+    post:
+      summary: Send batch notifications
+      description: Send notifications to multiple targets
+      operationId: sendBatchNotifications
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchNotificationRequest"
+      responses:
+        "200":
+          description: Batch notifications sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchNotificationResponse"
+
+  /notifications/status/{notificationId}:
+    get:
+      summary: Get notification status
+      description: Get the status of a specific notification
+      operationId: getNotificationStatus
+      tags:
+        - Notifications
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique notification identifier
+      responses:
+        "200":
+          description: Notification status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStatusResponse"
+        "404":
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/history:
+    get:
+      summary: Get notification history
+      description: Retrieve notification history with filtering options
+      operationId: getNotificationHistory
+      tags:
+        - Notifications
+      parameters:
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+          description: Filter by sender email
+        - name: company
+          in: query
+          schema:
+            type: string
+          description: Filter by company
+        - name: key
+          in: query
+          schema:
+            type: string
+          description: Filter by notification key
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for filtering
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for filtering
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        "200":
+          description: Notification history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistoryResponse"
+
+  /billing/summary:
+    get:
+      summary: Get billing summary
+      description: Get billing summary for a specific user or company
+      operationId: getBillingSummary
+      tags:
+        - Billing
+      parameters:
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+          description: Filter by user email
+        - name: company
+          in: query
+          schema:
+            type: string
+          description: Filter by company
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+          description: Billing period
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for billing period
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for billing period
+      responses:
+        "200":
+          description: Billing summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingSummaryResponse"
+
+  /health:
+    get:
+      summary: Health check
+      description: Check the health status of the service
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /metrics:
+    get:
+      summary: Get metrics
+      description: Get service metrics and statistics
+      operationId: getMetrics
+      tags:
+        - System
+      responses:
+        "200":
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    NotificationRequest:
+      type: object
+      required:
+        - message
+        - sender
+        - notificationKey
+      properties:
+        message:
+          $ref: "#/components/schemas/Message"
+        sender:
+          type: string
+          format: email
+          description: Sender email address
+        notificationKey:
+          type: string
+          description: Pre-registered notification key for target mapping
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+          description: Message priority level
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for the notification
+
+    Message:
+      type: object
+      required:
+        - type
+        - content
+      properties:
+        type:
+          type: string
+          enum: [text, file]
+          description: Message type
+        content:
+          type: string
+          description: Message content
+        mentions:
+          type: array
+          items:
+            type: string
+          description: List of mentioned users
+        attachment:
+          $ref: "#/components/schemas/Attachment"
+
+    Attachment:
+      type: object
+      required:
+        - fileName
+        - fileUrl
+      properties:
+        fileName:
+          type: string
+          description: Name of the file
+        fileUrl:
+          type: string
+          format: uri
+          description: URL to the file
+        fileSize:
+          type: integer
+          minimum: 0
+          description: File size in bytes
+        mimeType:
+          type: string
+          description: MIME type of the file
+
+    ScheduledNotificationRequest:
+      type: object
+      required:
+        - message
+        - sender
+        - notificationKey
+        - schedule
+      properties:
+        message:
+          $ref: "#/components/schemas/Message"
+        sender:
+          type: string
+          format: email
+        notificationKey:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+
+    Schedule:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [once, recurring]
+          description: Schedule type
+        pattern:
+          type: string
+          description: Cron pattern for recurring schedules
+        timezone:
+          type: string
+          default: UTC
+          description: Timezone for the schedule
+        startDate:
+          type: string
+          format: date
+          description: Start date for the schedule
+        endDate:
+          type: string
+          format: date
+          description: End date for the schedule
+
+    BatchNotificationRequest:
+      type: object
+      required:
+        - targets
+        - message
+        - sender
+        - notificationKey
+      properties:
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Target"
+          minItems: 1
+          maxItems: 100
+          description: List of notification targets
+        message:
+          $ref: "#/components/schemas/Message"
+        sender:
+          type: string
+          format: email
+        notificationKey:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+
+    Target:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [channel, person, chatgroup]
+          description: Target type
+        teamId:
+          type: string
+          description: Teams team ID (for channel type)
+        channelId:
+          type: string
+          description: Teams channel ID (for channel type)
+        userId:
+          type: string
+          description: Teams user ID (for person type)
+        groupId:
+          type: string
+          description: Teams group chat ID (for chatgroup type)
+
+    NotificationResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          description: Unique notification identifier
+        status:
+          type: string
+          enum: [pending, sent, failed, scheduled]
+          description: Notification status
+        message:
+          type: string
+          description: Response message
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    ScheduledNotificationResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        scheduleId:
+          type: string
+          description: Unique schedule identifier
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        message:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Scheduled delivery time
+
+    BatchNotificationResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+          description: Unique batch identifier
+        totalCount:
+          type: integer
+          description: Total number of notifications in batch
+        successCount:
+          type: integer
+          description: Number of successfully queued notifications
+        failureCount:
+          type: integer
+          description: Number of failed notifications
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+
+    NotificationStatusResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, failed, scheduled, cancelled]
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: string
+          format: date-time
+          description: Time when notification was sent
+        errorMessage:
+          type: string
+          description: Error message if status is failed
+
+    NotificationHistoryResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationHistoryItem"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    NotificationHistoryItem:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        sender:
+          type: string
+        notificationKey:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: string
+          format: date-time
+
+    BillingSummaryResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          description: Billing period
+        totalNotifications:
+          type: integer
+          description: Total number of notifications sent
+        totalCost:
+          type: number
+          format: decimal
+          description: Total cost in USD
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingBreakdown"
+
+    BillingBreakdown:
+      type: object
+      properties:
+        notificationKey:
+          type: string
+        count:
+          type: integer
+        cost:
+          type: number
+          format: decimal
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        services:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ServiceStatus"
+
+    ServiceStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+        message:
+          type: string
+        lastCheck:
+          type: string
+          format: date-time
+
+    MetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        metrics:
+          type: object
+          properties:
+            totalNotifications:
+              type: integer
+            successRate:
+              type: number
+              format: float
+            averageResponseTime:
+              type: number
+              format: float
+            activeConnections:
+              type: integer
+            queueSize:
+              type: integer
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+          description: Unique request identifier
+
+tags:
+  - name: Notifications
+    description: Notification management operations
+  - name: Billing
+    description: Billing and usage tracking
+  - name: System
+    description: System health and monitoring

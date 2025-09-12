@@ -1,0 +1,269 @@
+syntax = "proto3";
+
+package teams.notification.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/company/teamsnotifygov2/api/proto/notification/v1;notificationv1";
+
+// Notification service definition
+service NotificationService {
+  // Send a single notification
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  
+  // Send batch notifications
+  rpc SendBatchNotifications(SendBatchNotificationsRequest) returns (SendBatchNotificationsResponse);
+  
+  // Schedule a notification
+  rpc ScheduleNotification(ScheduleNotificationRequest) returns (ScheduleNotificationResponse);
+  
+  // Get notification status
+  rpc GetNotificationStatus(GetNotificationStatusRequest) returns (GetNotificationStatusResponse);
+  
+  // Get notification history
+  rpc GetNotificationHistory(GetNotificationHistoryRequest) returns (GetNotificationHistoryResponse);
+  
+  // Cancel a scheduled notification
+  rpc CancelNotification(CancelNotificationRequest) returns (CancelNotificationResponse);
+}
+
+// Billing service definition
+service BillingService {
+  // Get billing summary
+  rpc GetBillingSummary(GetBillingSummaryRequest) returns (GetBillingSummaryResponse);
+  
+  // Get usage statistics
+  rpc GetUsageStatistics(GetUsageStatisticsRequest) returns (GetUsageStatisticsResponse);
+}
+
+// Health check service
+service HealthService {
+  // Check service health
+  rpc CheckHealth(HealthCheckRequest) returns (HealthCheckResponse);
+  
+  // Get service metrics
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}
+
+// Message types
+message Message {
+  string type = 1; // text, file
+  string content = 2;
+  repeated string mentions = 3;
+  Attachment attachment = 4;
+}
+
+message Attachment {
+  string file_name = 1;
+  string file_url = 2;
+  int64 file_size = 3;
+  string mime_type = 4;
+}
+
+// Target types
+message Target {
+  string type = 1; // channel, person, chatgroup
+  string team_id = 2;
+  string channel_id = 3;
+  string user_id = 4;
+  string group_id = 5;
+}
+
+// Schedule types
+message Schedule {
+  string type = 1; // once, recurring
+  string pattern = 2; // cron pattern
+  string timezone = 3;
+  google.protobuf.Timestamp start_date = 4;
+  google.protobuf.Timestamp end_date = 5;
+}
+
+// Request/Response messages
+message SendNotificationRequest {
+  Message message = 1;
+  string sender = 2;
+  string notification_key = 3;
+  string priority = 4; // low, normal, high, urgent
+  google.protobuf.Any metadata = 5;
+}
+
+message SendNotificationResponse {
+  string notification_id = 1;
+  string status = 2; // pending, sent, failed, scheduled
+  string message = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+message SendBatchNotificationsRequest {
+  repeated Target targets = 1;
+  Message message = 2;
+  string sender = 3;
+  string notification_key = 4;
+  string priority = 5;
+}
+
+message SendBatchNotificationsResponse {
+  string batch_id = 1;
+  int32 total_count = 2;
+  int32 success_count = 3;
+  int32 failure_count = 4;
+  repeated SendNotificationResponse results = 5;
+}
+
+message ScheduleNotificationRequest {
+  Message message = 1;
+  string sender = 2;
+  string notification_key = 3;
+  Schedule schedule = 4;
+}
+
+message ScheduleNotificationResponse {
+  string notification_id = 1;
+  string schedule_id = 2;
+  string status = 3; // scheduled, active, completed, cancelled
+  string message = 4;
+  google.protobuf.Timestamp scheduled_at = 5;
+}
+
+message GetNotificationStatusRequest {
+  string notification_id = 1;
+}
+
+message GetNotificationStatusResponse {
+  string notification_id = 1;
+  string status = 2;
+  string message = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  google.protobuf.Timestamp sent_at = 6;
+  string error_message = 7;
+}
+
+message GetNotificationHistoryRequest {
+  string email = 1;
+  string company = 2;
+  string key = 3;
+  google.protobuf.Timestamp start_date = 4;
+  google.protobuf.Timestamp end_date = 5;
+  int32 page = 6;
+  int32 limit = 7;
+}
+
+message GetNotificationHistoryResponse {
+  repeated NotificationHistoryItem notifications = 1;
+  Pagination pagination = 2;
+}
+
+message NotificationHistoryItem {
+  string notification_id = 1;
+  string sender = 2;
+  string notification_key = 3;
+  string status = 4;
+  string priority = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp sent_at = 7;
+}
+
+message CancelNotificationRequest {
+  string notification_id = 1;
+}
+
+message CancelNotificationResponse {
+  string notification_id = 1;
+  string status = 2;
+  string message = 3;
+}
+
+message GetBillingSummaryRequest {
+  string email = 1;
+  string company = 2;
+  string period = 3; // daily, weekly, monthly, yearly
+  google.protobuf.Timestamp start_date = 4;
+  google.protobuf.Timestamp end_date = 5;
+}
+
+message GetBillingSummaryResponse {
+  string period = 1;
+  int32 total_notifications = 2;
+  double total_cost = 3;
+  repeated BillingBreakdown breakdown = 4;
+}
+
+message BillingBreakdown {
+  string notification_key = 1;
+  int32 count = 2;
+  double cost = 3;
+}
+
+message GetUsageStatisticsRequest {
+  string email = 1;
+  string company = 2;
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+}
+
+message GetUsageStatisticsResponse {
+  int32 total_notifications = 1;
+  double success_rate = 2;
+  double average_response_time = 3;
+  repeated UsageByDay daily_usage = 4;
+}
+
+message UsageByDay {
+  google.protobuf.Timestamp date = 1;
+  int32 count = 2;
+  double cost = 3;
+}
+
+message HealthCheckRequest {
+  // Empty request
+}
+
+message HealthCheckResponse {
+  string status = 1; // healthy, unhealthy
+  google.protobuf.Timestamp timestamp = 2;
+  string version = 3;
+  map<string, ServiceStatus> services = 4;
+}
+
+message ServiceStatus {
+  string status = 1; // healthy, unhealthy, degraded
+  string message = 2;
+  google.protobuf.Timestamp last_check = 3;
+}
+
+message GetMetricsRequest {
+  // Empty request
+}
+
+message GetMetricsResponse {
+  google.protobuf.Timestamp timestamp = 1;
+  Metrics metrics = 2;
+}
+
+message Metrics {
+  int32 total_notifications = 1;
+  double success_rate = 2;
+  double average_response_time = 3;
+  int32 active_connections = 4;
+  int32 queue_size = 5;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+  bool has_next = 5;
+  bool has_prev = 6;
+}
+
+// Error response
+message ErrorResponse {
+  string error = 1;
+  string message = 2;
+  google.protobuf.Any details = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string request_id = 5;
+}
