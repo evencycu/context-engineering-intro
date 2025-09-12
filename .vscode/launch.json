@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Teams Notify Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/server",
+            "env": {
+                "TEAMS_NOTIFY_SERVER_ENVIRONMENT": "development",
+                "TEAMS_NOTIFY_LOGGING_LEVEL": "debug",
+                "TEAMS_NOTIFY_DATABASE_HOST": "localhost",
+                "TEAMS_NOTIFY_REDIS_HOST": "localhost"
+            },
+            "args": [],
+            "showLog": true,
+            "preLaunchTask": "start-local-services"
+        }
+    ]
+}

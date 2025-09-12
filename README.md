@@ -53,11 +53,11 @@ cp .env.example .env
 ### 3. Start with Docker Compose
 
 ```bash
-# Start all services
-docker-compose up -d
+# Start all services (from repo root)
+docker compose -f deployments/docker/docker-compose.yml up -d
 
 # Or start with admin tools
-docker-compose --profile admin up -d
+docker compose -f deployments/docker/docker-compose.yml --profile admin up -d
 
 # Check health
 curl http://localhost:8080/health
@@ -69,7 +69,7 @@ curl http://localhost:8080/health
 
 ```bash
 # Start only database and Redis services
-docker-compose up -d postgres redis
+docker compose -f deployments/docker/docker-compose.yml up -d postgres redis
 
 # Run the Go server locally for debugging
 go run ./cmd/server
@@ -82,7 +82,7 @@ go run ./cmd/server
 go install github.com/cosmtrek/air@latest
 
 # Start database services
-docker-compose up -d postgres redis
+docker compose -f deployments/docker/docker-compose.yml up -d postgres redis
 
 # Run with hot reload
 make dev
@@ -138,13 +138,13 @@ make docker-build
 make docker-run
 
 # Start full environment
-docker-compose up -d
+docker compose -f deployments/docker/docker-compose.yml up -d
 
 # View logs
-docker-compose logs -f teams-notify-server
+docker compose -f deployments/docker/docker-compose.yml logs -f teams-notify-server
 
 # Stop services
-docker-compose down
+docker compose -f deployments/docker/docker-compose.yml down
 ```
 
 ## 📊 Monitoring and Admin Tools
@@ -214,11 +214,31 @@ The system complies with Microsoft Teams API rate limits:
 - **Automatic Retry**: Exponential backoff with jitter
 - **Queue Management**: Redis-based message queuing
 
-## 📡 API Endpoints
+## 📡 API Documentation
+
+### Interactive API Documentation
+
+The API includes comprehensive OpenAPI 3.0 documentation with interactive testing:
+
+- **Swagger UI**: http://localhost:8080/docs/
+- **OpenAPI Spec**: http://localhost:8080/docs/doc.json
+- **ReDoc**: Available via Swagger UI interface
+
+### Generate Documentation
+
+```bash
+# Generate API documentation
+make docs
+
+# Generate and serve documentation locally
+make docs-serve
+```
 
 ### Core Endpoints
 
 - `GET /health` - Health check and system status
+- `GET /ping` - Simple connectivity test
+- `GET /docs/` - Interactive API documentation
 - `POST /api/v1/destinations` - Register notification destinations
 - `POST /api/v1/notifications` - Send notifications
 - `GET /api/v1/notifications/{id}` - Get notification status
@@ -269,8 +289,8 @@ curl http://localhost:8080/health
 ### Docker Production
 
 ```bash
-# Build production image
-docker build -t teams-notify-server:latest .
+# Build production image (from repo root)
+docker build -f deployments/docker/Dockerfile -t teams-notify-server:latest .
 
 # Run with production environment
 docker run -d \

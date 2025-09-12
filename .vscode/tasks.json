@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "start-local-services",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": ["up", "-d", "postgres", "redis"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "stop-local-services",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": ["stop", "postgres", "redis"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
