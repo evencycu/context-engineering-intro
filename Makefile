@@ -107,10 +107,6 @@ dev: ## Run in development mode with live reload (requires air)
 
 ##@ Database
 
-migrate: ## Run database migrations (auto-migrate)
-	@echo "🗄️  Running database migrations..."
-	@echo "TEAMS_NOTIFY_DATABASE_PASSWORD=your_password go run ./cmd/server --migrate"
-	@echo "Note: Set required environment variables before running"
 
 ##@ Docker
 
