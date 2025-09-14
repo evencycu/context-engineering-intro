@@ -1,6 +1,10 @@
 package database
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -144,20 +148,174 @@ type TeamsTarget struct {
 	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
+// JSONBTargets is a JSONB-backed slice of TeamsTarget for DB scanning/valuing
+type JSONBTargets []TeamsTarget
+
+// JSONBStringArray is a JSONB-backed slice of strings for DB scanning/valuing
+type JSONBStringArray []string
+
+// JSONBObject is a JSONB-backed object for DB scanning/valuing
+type JSONBObject map[string]any
+
+// JSONBNullableObject is a JSONB-backed nullable object for DB scanning/valuing
+type JSONBNullableObject map[string]any
+
+// Value implements driver.Valuer to convert JSONBTargets to JSON bytes
+func (t JSONBTargets) Value() (driver.Value, error) {
+	if t == nil {
+		return []byte("[]"), nil
+	}
+	b, err := json.Marshal([]TeamsTarget(t))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBTargets: %w", err)
+	}
+	log.Println("Value() JSONBTargets: ", string(b))
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBTargets
+func (t *JSONBTargets) Scan(src any) error {
+	if src == nil {
+		*t = JSONBTargets{}
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBTargets Scan: %T", src)
+	}
+	log.Println("Scan() JSONBTargets: ", string(data))
+	var arr []TeamsTarget
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBTargets: %w", err)
+	}
+	*t = JSONBTargets(arr)
+	return nil
+}
+
+// Value implements driver.Valuer to convert JSONBStringArray to JSON bytes
+func (s JSONBStringArray) Value() (driver.Value, error) {
+	if s == nil {
+		return []byte("[]"), nil
+	}
+	b, err := json.Marshal([]string(s))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBStringArray: %w", err)
+	}
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBStringArray
+func (s *JSONBStringArray) Scan(src any) error {
+	if src == nil {
+		*s = JSONBStringArray{}
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBStringArray Scan: %T", src)
+	}
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBStringArray: %w", err)
+	}
+	*s = JSONBStringArray(arr)
+	return nil
+}
+
+// Value implements driver.Valuer to convert JSONBObject to JSON bytes
+func (o JSONBObject) Value() (driver.Value, error) {
+	if o == nil {
+		return []byte("{}"), nil
+	}
+	b, err := json.Marshal(map[string]any(o))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBObject: %w", err)
+	}
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBObject
+func (o *JSONBObject) Scan(src any) error {
+	if src == nil {
+		*o = JSONBObject{}
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBObject Scan: %T", src)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBObject: %w", err)
+	}
+	*o = JSONBObject(obj)
+	return nil
+}
+
+// Value implements driver.Valuer to convert JSONBNullableObject to JSON bytes
+func (o JSONBNullableObject) Value() (driver.Value, error) {
+	if o == nil {
+		return nil, nil
+	}
+	b, err := json.Marshal(map[string]any(o))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBNullableObject: %w", err)
+	}
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBNullableObject
+func (o *JSONBNullableObject) Scan(src any) error {
+	if src == nil {
+		*o = nil
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBNullableObject Scan: %T", src)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBNullableObject: %w", err)
+	}
+	*o = JSONBNullableObject(obj)
+	return nil
+}
+
 // Destination represents a Teams target group (can contain multiple targets)
 type Destination struct {
 	BaseModel
-	ProjectID        uuid.UUID     `json:"project_id" db:"project_id"`
-	Name             string        `json:"name" db:"name"`
-	Description      string        `json:"description" db:"description"`
-	TeamsTenantID    string        `json:"teams_tenant_id" db:"teams_tenant_id"`
-	Targets          []TeamsTarget `json:"targets" db:"targets"`
-	BotID            *uuid.UUID    `json:"bot_id" db:"bot_id"`
-	BotType          *BotType      `json:"bot_type" db:"bot_type"`
-	Status           string        `json:"status" db:"status"`
-	ValidationStatus string        `json:"validation_status" db:"validation_status"`
-	LastValidatedAt  *time.Time    `json:"last_validated_at" db:"last_validated_at"`
-	CreatedBy        uuid.UUID     `json:"created_by" db:"created_by"`
+	ProjectID        uuid.UUID    `json:"project_id" db:"project_id"`
+	Name             string       `json:"name" db:"name"`
+	Description      string       `json:"description" db:"description"`
+	TeamsTenantID    string       `json:"teams_tenant_id" db:"teams_tenant_id"`
+	Targets          JSONBTargets `json:"targets" db:"targets"`
+	BotID            *uuid.UUID   `json:"bot_id" db:"bot_id"`
+	BotType          *BotType     `json:"bot_type" db:"bot_type"`
+	Status           string       `json:"status" db:"status"`
+	ValidationStatus string       `json:"validation_status" db:"validation_status"`
+	LastValidatedAt  *time.Time   `json:"last_validated_at" db:"last_validated_at"`
+	CreatedBy        uuid.UUID    `json:"created_by" db:"created_by"`
 }
 
 // =============================================
@@ -167,18 +325,18 @@ type Destination struct {
 // Notification represents a notification message
 type Notification struct {
 	BaseModel
-	ProjectID    uuid.UUID      `json:"project_id" db:"project_id"`
-	SenderID     uuid.UUID      `json:"sender_id" db:"sender_id"`
-	MessageType  string         `json:"message_type" db:"message_type"` // text, file, adaptive_card
-	Content      string         `json:"content" db:"content"`
-	Mentions     []string       `json:"mentions" db:"mentions"`
-	Attachment   *Attachment    `json:"attachment" db:"attachment"`
-	AdaptiveCard *AdaptiveCard  `json:"adaptive_card" db:"adaptive_card"`
-	Priority     string         `json:"priority" db:"priority"`
-	Status       string         `json:"status" db:"status"`
-	ErrorMessage string         `json:"error_message" db:"error_message"`
-	Metadata     map[string]any `json:"metadata" db:"metadata"`
-	SentAt       *time.Time     `json:"sent_at" db:"sent_at"`
+	ProjectID    uuid.UUID            `json:"project_id" db:"project_id"`
+	SenderID     uuid.UUID            `json:"sender_id" db:"sender_id"`
+	MessageType  string               `json:"message_type" db:"message_type"` // text, file, adaptive_card
+	Content      string               `json:"content" db:"content"`
+	Mentions     JSONBStringArray     `json:"mentions" db:"mentions"`
+	Attachment   *JSONBNullableObject `json:"attachment" db:"attachment"`
+	AdaptiveCard *JSONBNullableObject `json:"adaptive_card" db:"adaptive_card"`
+	Priority     string               `json:"priority" db:"priority"`
+	Status       string               `json:"status" db:"status"`
+	ErrorMessage string               `json:"error_message" db:"error_message"`
+	Metadata     JSONBObject          `json:"metadata" db:"metadata"`
+	SentAt       *time.Time           `json:"sent_at" db:"sent_at"`
 }
 
 // Attachment represents a file attachment

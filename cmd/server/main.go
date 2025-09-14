@@ -64,13 +64,19 @@ func main() {
 	thirdPartyBotRepo := repositories.NewThirdPartyBotRepository(db)
 	thirdPartyBotService := services.NewThirdPartyBotService(thirdPartyBotRepo)
 
+	destinationRepo := repositories.NewDestinationRepository(db)
+	destinationService := services.NewDestinationService(destinationRepo)
+
+	notificationRepo := repositories.NewNotificationRepository(db)
+	notificationService := services.NewNotificationService(notificationRepo)
+
 	// Create handlers
 	companyHandler := companies.NewHandler(companyService)
 	userHandler := users.NewHandler(userService)
 	projectHandler := projects.NewHandler(projectService)
 	botHandler := bots.NewHandler(platformBotService, thirdPartyBotService)
-	destinationHandler := destinations.NewHandler(nil)   // TODO: Inject real service
-	notificationHandler := notifications.NewHandler(nil) // TODO: Inject real service
+	destinationHandler := destinations.NewHandler(destinationService)
+	notificationHandler := notifications.NewHandler(notificationService)
 
 	// Create server
 	server := api.NewServer(api.Config{

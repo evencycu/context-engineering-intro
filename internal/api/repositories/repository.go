@@ -42,7 +42,8 @@ type DestinationRepository interface {
 	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error)
 	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error)
 	GetByStatus(ctx context.Context, status string) ([]*database.Destination, error)
-	SearchByTargets(ctx context.Context, targetType string, targetID string) ([]*database.Destination, error)
+	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error)
+	SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error)
 }
 
 // NotificationRepository defines notification-specific operations
@@ -627,4 +628,317 @@ func (r *thirdPartyBotRepository) GetByCompanyID(ctx context.Context, companyID 
 	query := `SELECT * FROM third_party_bots WHERE company_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, companyID)
 	return bots, err
+}
+
+// =============================================
+// Destination Repository Implementation
+// =============================================
+
+// NewDestinationRepository creates a new destination repository
+func NewDestinationRepository(db *sqlx.DB) DestinationRepository {
+	return &destinationRepository{db: db}
+}
+
+type destinationRepository struct {
+	db *sqlx.DB
+}
+
+// Create creates a new destination
+func (r *destinationRepository) Create(ctx context.Context, entity *database.Destination) error {
+	// Marshal targets to JSONB
+	targetsJSON, err := json.Marshal(entity.Targets)
+	if err != nil {
+		return fmt.Errorf("failed to marshal targets: %w", err)
+	}
+
+	query := `INSERT INTO destinations (id, project_id, name, description, teams_tenant_id, targets, bot_id, bot_type, status, validation_status, last_validated_at, created_by, created_at, updated_at) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+
+	_, err = r.db.ExecContext(ctx, query,
+		entity.ID, entity.ProjectID, entity.Name, entity.Description, entity.TeamsTenantID,
+		targetsJSON, entity.BotID, entity.BotType, entity.Status, entity.ValidationStatus,
+		entity.LastValidatedAt, entity.CreatedBy, entity.CreatedAt, entity.UpdatedAt)
+
+	return err
+}
+
+// GetByID retrieves a destination by ID
+func (r *destinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
+	var destination database.Destination
+	query := `SELECT * FROM destinations WHERE id = $1`
+	err := r.db.GetContext(ctx, &destination, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return &destination, nil
+}
+
+// Update updates a destination
+func (r *destinationRepository) Update(ctx context.Context, entity *database.Destination) error {
+	// Marshal targets to JSONB
+	targetsJSON, err := json.Marshal(entity.Targets)
+	if err != nil {
+		return fmt.Errorf("failed to marshal targets: %w", err)
+	}
+
+	query := `UPDATE destinations SET 
+			  project_id = $2, name = $3, description = $4, teams_tenant_id = $5, 
+			  targets = $6, bot_id = $7, bot_type = $8, status = $9, 
+			  validation_status = $10, last_validated_at = $11, updated_at = $12
+			  WHERE id = $1`
+
+	_, err = r.db.ExecContext(ctx, query,
+		entity.ID, entity.ProjectID, entity.Name, entity.Description, entity.TeamsTenantID,
+		targetsJSON, entity.BotID, entity.BotType, entity.Status, entity.ValidationStatus,
+		entity.LastValidatedAt, entity.UpdatedAt)
+
+	return err
+}
+
+// Delete deletes a destination by ID
+func (r *destinationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM destinations WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+// List retrieves destinations with pagination
+func (r *destinationRepository) List(ctx context.Context, limit, offset int) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	query := `SELECT * FROM destinations ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	err := r.db.SelectContext(ctx, &destinations, query, limit, offset)
+	return destinations, err
+}
+
+// Count returns the total number of destinations
+func (r *destinationRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM destinations`
+	err := r.db.GetContext(ctx, &count, query)
+	return count, err
+}
+
+// GetByProjectID retrieves destinations by project ID
+func (r *destinationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	query := `SELECT * FROM destinations WHERE project_id = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &destinations, query, projectID)
+	return destinations, err
+}
+
+// GetByBotID retrieves destinations by bot ID
+func (r *destinationRepository) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	query := `SELECT * FROM destinations WHERE bot_id = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &destinations, query, botID)
+	return destinations, err
+}
+
+// GetByStatus retrieves destinations by status
+func (r *destinationRepository) GetByStatus(ctx context.Context, status string) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	query := `SELECT * FROM destinations WHERE status = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &destinations, query, status)
+	return destinations, err
+}
+
+// GetByValidationStatus retrieves destinations by validation status
+func (r *destinationRepository) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	query := `SELECT * FROM destinations WHERE validation_status = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &destinations, query, validationStatus)
+	return destinations, err
+}
+
+// SearchDestinations searches destinations by name or description
+func (r *destinationRepository) SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error) {
+	var destinations []*database.Destination
+	sql := `SELECT * FROM destinations WHERE name ILIKE $1 OR description ILIKE $1 ORDER BY created_at DESC`
+	searchQuery := "%" + query + "%"
+	err := r.db.SelectContext(ctx, &destinations, sql, searchQuery)
+	return destinations, err
+}
+
+// =============================================
+// Notification Repository Implementation
+// =============================================
+
+// NewNotificationRepository creates a new notification repository
+func NewNotificationRepository(db *sqlx.DB) NotificationRepository {
+	return &notificationRepository{db: db}
+}
+
+type notificationRepository struct {
+	db *sqlx.DB
+}
+
+// Create creates a new notification
+func (r *notificationRepository) Create(ctx context.Context, entity *database.Notification) error {
+	// Marshal JSONB fields
+	mentionsJSON, err := json.Marshal([]string(entity.Mentions))
+	if err != nil {
+		return fmt.Errorf("failed to marshal mentions: %w", err)
+	}
+
+	var attachmentJSON []byte
+	if entity.Attachment != nil {
+		attachmentJSON, err = json.Marshal(*entity.Attachment)
+		if err != nil {
+			return fmt.Errorf("failed to marshal attachment: %w", err)
+		}
+	}
+
+	var adaptiveCardJSON []byte
+	if entity.AdaptiveCard != nil {
+		adaptiveCardJSON, err = json.Marshal(*entity.AdaptiveCard)
+		if err != nil {
+			return fmt.Errorf("failed to marshal adaptive_card: %w", err)
+		}
+	}
+
+	metadataJSON, err := json.Marshal(map[string]any(entity.Metadata))
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	query := `INSERT INTO notifications (id, project_id, sender_id, message_type, content, mentions, attachment, adaptive_card, priority, status, error_message, metadata, sent_at, created_at, updated_at) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+
+	// Handle nil values for JSONB fields
+	var attachmentJSONValue interface{} = attachmentJSON
+	if len(attachmentJSON) == 0 {
+		attachmentJSONValue = nil
+	}
+
+	var adaptiveCardJSONValue interface{} = adaptiveCardJSON
+	if len(adaptiveCardJSON) == 0 {
+		adaptiveCardJSONValue = nil
+	}
+
+	_, err = r.db.ExecContext(ctx, query,
+		entity.ID, entity.ProjectID, entity.SenderID, entity.MessageType, entity.Content,
+		mentionsJSON, attachmentJSONValue, adaptiveCardJSONValue, entity.Priority, entity.Status,
+		entity.ErrorMessage, metadataJSON, entity.SentAt, entity.CreatedAt, entity.UpdatedAt)
+
+	return err
+}
+
+// GetByID retrieves a notification by ID
+func (r *notificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
+	var notification database.Notification
+	query := `SELECT * FROM notifications WHERE id = $1`
+	err := r.db.GetContext(ctx, &notification, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return &notification, nil
+}
+
+// Update updates a notification
+func (r *notificationRepository) Update(ctx context.Context, entity *database.Notification) error {
+	// Marshal JSONB fields
+	mentionsJSON, err := json.Marshal([]string(entity.Mentions))
+	if err != nil {
+		return fmt.Errorf("failed to marshal mentions: %w", err)
+	}
+
+	var attachmentJSON []byte
+	if entity.Attachment != nil {
+		attachmentJSON, err = json.Marshal(*entity.Attachment)
+		if err != nil {
+			return fmt.Errorf("failed to marshal attachment: %w", err)
+		}
+	}
+
+	var adaptiveCardJSON []byte
+	if entity.AdaptiveCard != nil {
+		adaptiveCardJSON, err = json.Marshal(*entity.AdaptiveCard)
+		if err != nil {
+			return fmt.Errorf("failed to marshal adaptive_card: %w", err)
+		}
+	}
+
+	metadataJSON, err := json.Marshal(map[string]any(entity.Metadata))
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	query := `UPDATE notifications SET 
+			  project_id = $2, sender_id = $3, message_type = $4, content = $5, 
+			  mentions = $6, attachment = $7, adaptive_card = $8, priority = $9, 
+			  status = $10, error_message = $11, metadata = $12, sent_at = $13, updated_at = $14
+			  WHERE id = $1`
+
+	// Handle nil values for JSONB fields
+	var attachmentJSONValue interface{} = attachmentJSON
+	if len(attachmentJSON) == 0 {
+		attachmentJSONValue = nil
+	}
+
+	var adaptiveCardJSONValue interface{} = adaptiveCardJSON
+	if len(adaptiveCardJSON) == 0 {
+		adaptiveCardJSONValue = nil
+	}
+
+	_, err = r.db.ExecContext(ctx, query,
+		entity.ID, entity.ProjectID, entity.SenderID, entity.MessageType, entity.Content,
+		mentionsJSON, attachmentJSONValue, adaptiveCardJSONValue, entity.Priority, entity.Status,
+		entity.ErrorMessage, metadataJSON, entity.SentAt, entity.UpdatedAt)
+
+	return err
+}
+
+// Delete deletes a notification by ID
+func (r *notificationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM notifications WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+// List retrieves notifications with pagination
+func (r *notificationRepository) List(ctx context.Context, limit, offset int) ([]*database.Notification, error) {
+	var notifications []*database.Notification
+	query := `SELECT * FROM notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	err := r.db.SelectContext(ctx, &notifications, query, limit, offset)
+	return notifications, err
+}
+
+// Count returns the total number of notifications
+func (r *notificationRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM notifications`
+	err := r.db.GetContext(ctx, &count, query)
+	return count, err
+}
+
+// GetByProjectID retrieves notifications by project ID
+func (r *notificationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error) {
+	var notifications []*database.Notification
+	query := `SELECT * FROM notifications WHERE project_id = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &notifications, query, projectID)
+	return notifications, err
+}
+
+// GetBySenderID retrieves notifications by sender ID
+func (r *notificationRepository) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error) {
+	var notifications []*database.Notification
+	query := `SELECT * FROM notifications WHERE sender_id = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &notifications, query, senderID)
+	return notifications, err
+}
+
+// GetByStatus retrieves notifications by status
+func (r *notificationRepository) GetByStatus(ctx context.Context, status string) ([]*database.Notification, error) {
+	var notifications []*database.Notification
+	query := `SELECT * FROM notifications WHERE status = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &notifications, query, status)
+	return notifications, err
+}
+
+// GetByDateRange retrieves notifications by date range
+func (r *notificationRepository) GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error) {
+	var notifications []*database.Notification
+	query := `SELECT * FROM notifications WHERE created_at BETWEEN $1 AND $2 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &notifications, query, start, end)
+	return notifications, err
 }

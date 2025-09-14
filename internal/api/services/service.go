@@ -431,9 +431,10 @@ type DestinationService interface {
 	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error)
 	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error)
 	GetByStatus(ctx context.Context, status string) ([]*database.Destination, error)
-	SearchByTargets(ctx context.Context, targetType string, targetID string) ([]*database.Destination, error)
-	ValidateTargets(ctx context.Context, targets []database.TeamsTarget) error
-	UpdateTargets(ctx context.Context, id uuid.UUID, targets []database.TeamsTarget) error
+	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error)
+	SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error)
+	UpdateTargets(ctx context.Context, id uuid.UUID, targets database.JSONBTargets) (*database.Destination, error)
+	ValidateTargets(ctx context.Context, id uuid.UUID) (*database.Destination, error)
 }
 
 // NotificationService defines notification-specific operations
@@ -451,6 +452,7 @@ type NotificationService interface {
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
 	ProjectID    uuid.UUID              `json:"project_id" validate:"required"`
+	SenderID     uuid.UUID              `json:"sender_id" validate:"required"`
 	MessageType  string                 `json:"message_type" validate:"required,oneof=text file adaptive_card"`
 	Content      string                 `json:"content" validate:"required,max=4000"`
 	Mentions     []string               `json:"mentions"`
@@ -852,4 +854,334 @@ func (s *thirdPartyBotService) TestConnection(ctx context.Context, id uuid.UUID)
 	// TODO: Implement actual connection testing logic
 	// This would typically make a test API call to the bot's webhook URL
 	return nil
+}
+
+// =============================================
+// Destination Service Implementation
+// =============================================
+
+// NewDestinationService creates a new destination service
+func NewDestinationService(repo repositories.DestinationRepository) DestinationService {
+	return &destinationService{repo: repo}
+}
+
+type destinationService struct {
+	repo repositories.DestinationRepository
+}
+
+// Create creates a new destination
+func (s *destinationService) Create(ctx context.Context, req *CreateRequest[database.Destination]) (*database.Destination, error) {
+	// Set default values
+	destination := req.Data
+	destination.ID = uuid.New()
+	destination.CreatedAt = time.Now()
+	destination.UpdatedAt = time.Now()
+	// Only set default status if not already set
+	if destination.Status == "" {
+		destination.Status = "active"
+	}
+	if destination.ValidationStatus == "" {
+		destination.ValidationStatus = "pending"
+	}
+
+	err := s.repo.Create(ctx, &destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &destination, nil
+}
+
+// GetByID retrieves a destination by ID
+func (s *destinationService) GetByID(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+// Update updates a destination
+func (s *destinationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Destination]) (*database.Destination, error) {
+	destination := req.Data
+	destination.ID = id
+	destination.UpdatedAt = time.Now()
+
+	err := s.repo.Update(ctx, &destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &destination, nil
+}
+
+// Delete deletes a destination by ID
+func (s *destinationService) Delete(ctx context.Context, id uuid.UUID) error {
+	return s.repo.Delete(ctx, id)
+}
+
+// List retrieves destinations with pagination
+func (s *destinationService) List(ctx context.Context, req *ListRequest) ([]*database.Destination, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	return s.repo.List(ctx, limit, offset)
+}
+
+// Count returns the total number of destinations
+func (s *destinationService) Count(ctx context.Context, req *CountRequest) (int64, error) {
+	return s.repo.Count(ctx)
+}
+
+// GetByProjectID retrieves destinations by project ID
+func (s *destinationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error) {
+	return s.repo.GetByProjectID(ctx, projectID)
+}
+
+// GetByBotID retrieves destinations by bot ID
+func (s *destinationService) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error) {
+	return s.repo.GetByBotID(ctx, botID)
+}
+
+// GetByStatus retrieves destinations by status
+func (s *destinationService) GetByStatus(ctx context.Context, status string) ([]*database.Destination, error) {
+	return s.repo.GetByStatus(ctx, status)
+}
+
+// GetByValidationStatus retrieves destinations by validation status
+func (s *destinationService) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error) {
+	return s.repo.GetByValidationStatus(ctx, validationStatus)
+}
+
+// SearchDestinations searches destinations by name or description
+func (s *destinationService) SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error) {
+	return s.repo.SearchDestinations(ctx, query)
+}
+
+// UpdateTargets updates destination targets
+func (s *destinationService) UpdateTargets(ctx context.Context, id uuid.UUID, targets database.JSONBTargets) (*database.Destination, error) {
+	destination, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get destination: %w", err)
+	}
+
+	destination.Targets = targets
+	destination.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return destination, nil
+}
+
+// ValidateTargets validates destination targets
+func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
+	destination, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get destination: %w", err)
+	}
+
+	// TODO: Implement actual target validation logic
+	// This would typically validate Teams channels, chat groups, or users
+	destination.ValidationStatus = "validated"
+	destination.LastValidatedAt = &time.Time{}
+	*destination.LastValidatedAt = time.Now()
+	destination.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return destination, nil
+}
+
+// =============================================
+// Notification Service Implementation
+// =============================================
+
+// NewNotificationService creates a new notification service
+func NewNotificationService(repo repositories.NotificationRepository) NotificationService {
+	return &notificationService{repo: repo}
+}
+
+type notificationService struct {
+	repo repositories.NotificationRepository
+}
+
+// Create creates a new notification
+func (s *notificationService) Create(ctx context.Context, req *CreateRequest[database.Notification]) (*database.Notification, error) {
+	notification := req.Data
+	notification.ID = uuid.New()
+	notification.CreatedAt = time.Now()
+	notification.UpdatedAt = time.Now()
+	if notification.Status == "" {
+		notification.Status = "pending"
+	}
+
+	err := s.repo.Create(ctx, &notification)
+	if err != nil {
+		return nil, err
+	}
+	return &notification, nil
+}
+
+// GetByID retrieves a notification by ID
+func (s *notificationService) GetByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+// Update updates a notification
+func (s *notificationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Notification]) (*database.Notification, error) {
+	notification := req.Data
+	notification.ID = id
+	notification.UpdatedAt = time.Now()
+
+	err := s.repo.Update(ctx, &notification)
+	if err != nil {
+		return nil, err
+	}
+	return &notification, nil
+}
+
+// Delete deletes a notification by ID
+func (s *notificationService) Delete(ctx context.Context, id uuid.UUID) error {
+	return s.repo.Delete(ctx, id)
+}
+
+// List retrieves notifications with pagination
+func (s *notificationService) List(ctx context.Context, req *ListRequest) ([]*database.Notification, error) {
+	return s.repo.List(ctx, req.Limit, req.Offset)
+}
+
+// Count returns the total number of notifications
+func (s *notificationService) Count(ctx context.Context, req *CountRequest) (int64, error) {
+	return s.repo.Count(ctx)
+}
+
+// GetByProjectID retrieves notifications by project ID
+func (s *notificationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error) {
+	return s.repo.GetByProjectID(ctx, projectID)
+}
+
+// GetBySenderID retrieves notifications by sender ID
+func (s *notificationService) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error) {
+	return s.repo.GetBySenderID(ctx, senderID)
+}
+
+// GetByStatus retrieves notifications by status
+func (s *notificationService) GetByStatus(ctx context.Context, status string) ([]*database.Notification, error) {
+	return s.repo.GetByStatus(ctx, status)
+}
+
+// GetByDateRange retrieves notifications by date range
+func (s *notificationService) GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error) {
+	return s.repo.GetByDateRange(ctx, start, end)
+}
+
+// SendNotification sends a notification
+func (s *notificationService) SendNotification(ctx context.Context, req *SendNotificationRequest) (*database.Notification, error) {
+	// Convert Attachment and AdaptiveCard to JSONBNullableObject
+	var attachment *database.JSONBNullableObject
+	if req.Attachment != nil {
+		// Convert Attachment struct to map[string]any
+		attachmentData := map[string]any{
+			"file_name": req.Attachment.FileName,
+			"file_url":  req.Attachment.FileURL,
+			"file_size": req.Attachment.FileSize,
+			"mime_type": req.Attachment.MimeType,
+		}
+		attachment = (*database.JSONBNullableObject)(&attachmentData)
+	}
+
+	var adaptiveCard *database.JSONBNullableObject
+	if req.AdaptiveCard != nil {
+		// Convert AdaptiveCard struct to map[string]any
+		adaptiveCardData := map[string]any{
+			"type":    req.AdaptiveCard.Type,
+			"version": req.AdaptiveCard.Version,
+			"body":    req.AdaptiveCard.Body,
+			"actions": req.AdaptiveCard.Actions,
+		}
+		adaptiveCard = (*database.JSONBNullableObject)(&adaptiveCardData)
+	}
+
+	notification := &database.Notification{
+		ProjectID:    req.ProjectID,
+		SenderID:     req.SenderID,
+		MessageType:  req.MessageType,
+		Content:      req.Content,
+		Mentions:     database.JSONBStringArray(req.Mentions),
+		Attachment:   attachment,
+		AdaptiveCard: adaptiveCard,
+		Priority:     req.Priority,
+		Status:       "pending",
+		Metadata:     database.JSONBObject(req.Metadata),
+	}
+
+	// TODO: Implement actual notification sending logic
+	// For now, just create the notification record
+	notification.ID = uuid.New()
+	notification.CreatedAt = time.Now()
+	notification.UpdatedAt = time.Now()
+
+	err := s.repo.Create(ctx, notification)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Queue notification for actual sending
+	// This would typically involve:
+	// 1. Finding destinations for the project
+	// 2. Creating notification_destinations records
+	// 3. Queuing the notification for processing
+
+	return notification, nil
+}
+
+// RetryNotification retries a failed notification
+func (s *notificationService) RetryNotification(ctx context.Context, id uuid.UUID) error {
+	notification, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if notification.Status != "failed" {
+		return fmt.Errorf("notification is not in failed status")
+	}
+
+	// Reset status and retry
+	notification.Status = "pending"
+	notification.ErrorMessage = ""
+	notification.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, notification)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Queue notification for retry processing
+
+	return nil
+}
+
+// CancelNotification cancels a notification
+func (s *notificationService) CancelNotification(ctx context.Context, id uuid.UUID) error {
+	notification, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if notification.Status == "sent" {
+		return fmt.Errorf("cannot cancel already sent notification")
+	}
+
+	notification.Status = "cancelled"
+	notification.UpdatedAt = time.Now()
+
+	return s.repo.Update(ctx, notification)
 }
