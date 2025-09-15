@@ -1,6 +1,6 @@
 # TeamsNotifyGoV2 Makefile
 
-.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate db-reset
+.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate db-reset openapi-start openapi-stop openapi-status openapi-open
 
 # Default target
 help:
@@ -14,6 +14,12 @@ help:
 	@echo "  run            - Run the application"
 	@echo "  test           - Run tests"
 	@echo "  clean          - Clean build artifacts"
+	@echo ""
+	@echo "OpenAPI Documentation:"
+	@echo "  openapi-start  - Start OpenAPI server (Swagger UI)"
+	@echo "  openapi-stop   - Stop OpenAPI server"
+	@echo "  openapi-status - Check OpenAPI server status"
+	@echo "  openapi-open   - Open Swagger UI in browser"
 
 # Docker operations
 docker-up:
@@ -77,3 +83,20 @@ dev-setup: docker-up db-migrate
 prod-build:
 	@echo "Building for production..."
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/server ./cmd/server
+
+# OpenAPI Documentation
+openapi-start:
+	@echo "Starting OpenAPI server..."
+	./scripts/openapi.sh start
+
+openapi-stop:
+	@echo "Stopping OpenAPI server..."
+	./scripts/openapi.sh stop
+
+openapi-status:
+	@echo "Checking OpenAPI server status..."
+	./scripts/openapi.sh status
+
+openapi-open:
+	@echo "Opening Swagger UI in browser..."
+	./scripts/openapi.sh open
