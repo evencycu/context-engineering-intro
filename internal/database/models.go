@@ -84,37 +84,37 @@ type Project struct {
 // PlatformBot represents a platform-managed bot
 type PlatformBot struct {
 	BaseModel
-	Name                  string         `json:"name" db:"name"`
-	Description           string         `json:"description" db:"description"`
-	AppID                 string         `json:"app_id" db:"app_id"`
-	AppPasswordHash       string         `json:"-" db:"app_password_hash"`
-	TenantID              string         `json:"tenant_id" db:"tenant_id"`
-	Status                BotStatus      `json:"status" db:"status"`
-	WebhookURL            string         `json:"webhook_url" db:"webhook_url"`
-	Capabilities          map[string]any `json:"capabilities" db:"capabilities"`
-	RateLimitPerMinute    int            `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
-	MaxConcurrentRequests int            `json:"max_concurrent_requests" db:"max_concurrent_requests"`
+	Name                  string      `json:"name" db:"name"`
+	Description           string      `json:"description" db:"description"`
+	AppID                 string      `json:"app_id" db:"app_id"`
+	AppPasswordHash       string      `json:"-" db:"app_password_hash"`
+	TenantID              string      `json:"tenant_id" db:"tenant_id"`
+	Status                BotStatus   `json:"status" db:"status"`
+	WebhookURL            string      `json:"webhook_url" db:"webhook_url"`
+	Capabilities          JSONBObject `json:"capabilities" db:"capabilities"`
+	RateLimitPerMinute    int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
+	MaxConcurrentRequests int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
 }
 
 // ThirdPartyBot represents a third-party bot
 type ThirdPartyBot struct {
 	BaseModel
-	CompanyID             uuid.UUID      `json:"company_id" db:"company_id"`
-	Name                  string         `json:"name" db:"name"`
-	Description           string         `json:"description" db:"description"`
-	AppID                 string         `json:"app_id" db:"app_id"`
-	AppPasswordHash       string         `json:"-" db:"app_password_hash"`
-	TenantID              string         `json:"tenant_id" db:"tenant_id"`
-	Status                BotStatus      `json:"status" db:"status"`
-	WebhookURL            string         `json:"webhook_url" db:"webhook_url"`
-	APIEndpoint           string         `json:"api_endpoint" db:"api_endpoint"`
-	APIKeyHash            string         `json:"-" db:"api_key_hash"`
-	Capabilities          map[string]any `json:"capabilities" db:"capabilities"`
-	RateLimitPerMinute    int            `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
-	MaxConcurrentRequests int            `json:"max_concurrent_requests" db:"max_concurrent_requests"`
-	ContactEmail          string         `json:"contact_email" db:"contact_email"`
-	ContactPhone          string         `json:"contact_phone" db:"contact_phone"`
-	CreatedBy             uuid.UUID      `json:"created_by" db:"created_by"`
+	CompanyID             uuid.UUID   `json:"company_id" db:"company_id"`
+	Name                  string      `json:"name" db:"name"`
+	Description           string      `json:"description" db:"description"`
+	AppID                 string      `json:"app_id" db:"app_id"`
+	AppPasswordHash       string      `json:"-" db:"app_password_hash"`
+	TenantID              string      `json:"tenant_id" db:"tenant_id"`
+	Status                BotStatus   `json:"status" db:"status"`
+	WebhookURL            string      `json:"webhook_url" db:"webhook_url"`
+	APIEndpoint           string      `json:"api_endpoint" db:"api_endpoint"`
+	APIKeyHash            string      `json:"-" db:"api_key_hash"`
+	Capabilities          JSONBObject `json:"capabilities" db:"capabilities"`
+	RateLimitPerMinute    int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
+	MaxConcurrentRequests int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
+	ContactEmail          string      `json:"contact_email" db:"contact_email"`
+	ContactPhone          string      `json:"contact_phone" db:"contact_phone"`
+	CreatedBy             uuid.UUID   `json:"created_by" db:"created_by"`
 }
 
 // BotInstallation represents a bot installation

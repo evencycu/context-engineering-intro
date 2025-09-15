@@ -410,7 +410,7 @@ func (r *platformBotRepository) Create(ctx context.Context, entity *database.Pla
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(entity.Capabilities)
+	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
 	if err != nil {
 		return fmt.Errorf("failed to marshal capabilities: %w", err)
 	}
@@ -425,11 +425,28 @@ func (r *platformBotRepository) Create(ctx context.Context, entity *database.Pla
 // GetByID retrieves a platform bot by ID
 func (r *platformBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.PlatformBot, error) {
 	var bot database.PlatformBot
-	query := `SELECT * FROM platform_bots WHERE id = $1`
-	err := r.db.GetContext(ctx, &bot, query, id)
+	var capabilitiesJSON []byte
+	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
+			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
+			  FROM platform_bots WHERE id = $1`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.Name, &bot.Description,
+		&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
+		&capabilitiesJSON, &bot.RateLimitPerMinute, &bot.MaxConcurrentRequests,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Parse capabilities JSON
+	if len(capabilitiesJSON) > 0 {
+		var capabilities map[string]any
+		if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
+		}
+		bot.Capabilities = database.JSONBObject(capabilities)
+	}
+
 	return &bot, nil
 }
 
@@ -441,7 +458,7 @@ func (r *platformBotRepository) Update(ctx context.Context, entity *database.Pla
 			  WHERE id = $1`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(entity.Capabilities)
+	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
 	if err != nil {
 		return fmt.Errorf("failed to marshal capabilities: %w", err)
 	}
@@ -462,10 +479,41 @@ func (r *platformBotRepository) Delete(ctx context.Context, id uuid.UUID) error 
 
 // List retrieves platform bots with pagination
 func (r *platformBotRepository) List(ctx context.Context, limit, offset int) ([]*database.PlatformBot, error) {
+	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
+			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
+			  FROM platform_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
 	var bots []*database.PlatformBot
-	query := `SELECT * FROM platform_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	err := r.db.SelectContext(ctx, &bots, query, limit, offset)
-	return bots, err
+	for rows.Next() {
+		var bot database.PlatformBot
+		var capabilitiesJSON []byte
+		err := rows.Scan(
+			&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.Name, &bot.Description,
+			&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
+			&capabilitiesJSON, &bot.RateLimitPerMinute, &bot.MaxConcurrentRequests,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse capabilities JSON
+		if len(capabilitiesJSON) > 0 {
+			var capabilities map[string]any
+			if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
+			}
+			bot.Capabilities = database.JSONBObject(capabilities)
+		}
+
+		bots = append(bots, &bot)
+	}
+
+	return bots, nil
 }
 
 // Count returns the total number of platform bots
@@ -535,7 +583,7 @@ func (r *thirdPartyBotRepository) Create(ctx context.Context, entity *database.T
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(entity.Capabilities)
+	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
 	if err != nil {
 		return fmt.Errorf("failed to marshal capabilities: %w", err)
 	}
@@ -551,11 +599,30 @@ func (r *thirdPartyBotRepository) Create(ctx context.Context, entity *database.T
 // GetByID retrieves a third-party bot by ID
 func (r *thirdPartyBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.ThirdPartyBot, error) {
 	var bot database.ThirdPartyBot
-	query := `SELECT * FROM third_party_bots WHERE id = $1`
-	err := r.db.GetContext(ctx, &bot, query, id)
+	var capabilitiesJSON []byte
+	query := `SELECT id, created_at, updated_at, company_id, name, description, app_id, app_password_hash, 
+			  tenant_id, status, webhook_url, api_endpoint, api_key_hash, capabilities, rate_limit_per_minute, 
+			  max_concurrent_requests, contact_email, contact_phone, created_by 
+			  FROM third_party_bots WHERE id = $1`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.CompanyID, &bot.Name, &bot.Description,
+		&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
+		&bot.APIEndpoint, &bot.APIKeyHash, &capabilitiesJSON, &bot.RateLimitPerMinute,
+		&bot.MaxConcurrentRequests, &bot.ContactEmail, &bot.ContactPhone, &bot.CreatedBy,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Parse capabilities JSON
+	if len(capabilitiesJSON) > 0 {
+		var capabilities map[string]any
+		if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
+		}
+		bot.Capabilities = database.JSONBObject(capabilities)
+	}
+
 	return &bot, nil
 }
 
@@ -567,7 +634,7 @@ func (r *thirdPartyBotRepository) Update(ctx context.Context, entity *database.T
 			  WHERE id = $1`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(entity.Capabilities)
+	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
 	if err != nil {
 		return fmt.Errorf("failed to marshal capabilities: %w", err)
 	}
@@ -589,10 +656,43 @@ func (r *thirdPartyBotRepository) Delete(ctx context.Context, id uuid.UUID) erro
 
 // List retrieves third-party bots with pagination
 func (r *thirdPartyBotRepository) List(ctx context.Context, limit, offset int) ([]*database.ThirdPartyBot, error) {
+	query := `SELECT id, created_at, updated_at, company_id, name, description, app_id, app_password_hash, 
+			  tenant_id, status, webhook_url, api_endpoint, api_key_hash, capabilities, rate_limit_per_minute, 
+			  max_concurrent_requests, contact_email, contact_phone, created_by 
+			  FROM third_party_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
 	var bots []*database.ThirdPartyBot
-	query := `SELECT * FROM third_party_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	err := r.db.SelectContext(ctx, &bots, query, limit, offset)
-	return bots, err
+	for rows.Next() {
+		var bot database.ThirdPartyBot
+		var capabilitiesJSON []byte
+		err := rows.Scan(
+			&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.CompanyID, &bot.Name, &bot.Description,
+			&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
+			&bot.APIEndpoint, &bot.APIKeyHash, &capabilitiesJSON, &bot.RateLimitPerMinute,
+			&bot.MaxConcurrentRequests, &bot.ContactEmail, &bot.ContactPhone, &bot.CreatedBy,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse capabilities JSON
+		if len(capabilitiesJSON) > 0 {
+			var capabilities map[string]any
+			if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
+			}
+			bot.Capabilities = database.JSONBObject(capabilities)
+		}
+
+		bots = append(bots, &bot)
+	}
+
+	return bots, nil
 }
 
 // Count returns the total number of third-party bots
