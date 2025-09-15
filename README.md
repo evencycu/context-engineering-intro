@@ -111,6 +111,18 @@ make run
 
 ## 🧪 Testing and Validation
 
+### Automated API Testing
+
+```bash
+# Run comprehensive API tests
+./test/scripts/test_api.sh
+
+# View detailed test documentation
+cat test/docs/API_TEST_GUIDE.md
+```
+
+### Development Testing
+
 ```bash
 # Run all validations (format, vet, lint, test)
 make validate
@@ -127,6 +139,16 @@ make build
 # Check environment variables
 make env-check
 ```
+
+### Test Coverage
+
+The project includes comprehensive testing for:
+- ✅ **All 7 API modules** (Company, User, Project, Bot, Destination, Notification)
+- ✅ **CRUD operations** and special functions
+- ✅ **JSONB field handling** for complex data structures
+- ✅ **Chinese content support** for internationalization
+- ✅ **Performance monitoring** with response time tracking
+- ✅ **Error handling** and edge cases
 
 ## 🐳 Docker Commands
 
