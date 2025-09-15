@@ -43,27 +43,29 @@ paths:
               text_message:
                 summary: Text message
                 value:
-                  message:
-                    type: text
-                    content: "Hello from API!"
-                    mentions: ["@user1", "@user2"]
-                  sender: "api-user@company.com"
-                  notificationKey: "daily-reminder"
+                  project_id: "198f1130-20a9-4c7c-a504-6a055d27e8db"
+                  sender_id: "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+                  message_type: "text"
+                  content: "Hello from API!"
+                  mentions: ["@user1", "@user2"]
                   priority: "normal"
+                  metadata:
+                    source: "swagger_ui"
               file_message:
                 summary: File attachment message
                 value:
-                  message:
-                    type: file
-                    content: "請查看附件報告"
-                    attachment:
-                      fileName: "monthly-report.pdf"
-                      fileUrl: "https://storage.company.com/reports/monthly-report.pdf"
-                      fileSize: 2048576
-                      mimeType: "application/pdf"
-                  sender: "system@company.com"
-                  notificationKey: "monthly-report"
+                  project_id: "198f1130-20a9-4c7c-a504-6a055d27e8db"
+                  sender_id: "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+                  message_type: "file"
+                  content: "請查看附件報告"
+                  attachment:
+                    fileName: "monthly-report.pdf"
+                    fileUrl: "https://storage.company.com/reports/monthly-report.pdf"
+                    fileSize: 2048576
+                    mimeType: "application/pdf"
                   priority: "high"
+                  metadata:
+                    source: "swagger_ui"
       responses:
         "200":
           description: Notification sent successfully
@@ -334,19 +336,36 @@ components:
     NotificationRequest:
       type: object
       required:
-        - message
-        - sender
-        - notificationKey
+        - project_id
+        - sender_id
+        - message_type
+        - content
       properties:
-        message:
-          $ref: "#/components/schemas/Message"
-        sender:
+        project_id:
           type: string
-          format: email
-          description: Sender email address
-        notificationKey:
+          format: uuid
+          description: Project ID for the notification
+        sender_id:
           type: string
-          description: Pre-registered notification key for target mapping
+          format: uuid
+          description: Sender user ID
+        message_type:
+          type: string
+          enum: [text, file, adaptive_card]
+          description: Type of message content
+        content:
+          type: string
+          maxLength: 4000
+          description: Message content
+        mentions:
+          type: array
+          items:
+            type: string
+          description: List of mentioned users
+        attachment:
+          $ref: "#/components/schemas/Attachment"
+        adaptive_card:
+          $ref: "#/components/schemas/AdaptiveCard"
         priority:
           type: string
           enum: [low, normal, high, urgent]
