@@ -26,6 +26,47 @@ security:
   - BearerAuth: []
 
 paths:
+  /companies:
+    get:
+      summary: List companies
+      description: Get a list of all companies
+      operationId: listCompanies
+      tags:
+        - Companies
+      responses:
+        "200":
+          description: Companies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Company"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+              examples:
+                companies_list:
+                  summary: List of companies
+                  value:
+                    data:
+                      - id: "a0d47a6e-8d48-4081-8e08-44a26eeb9d9a"
+                        created_at: "2025-09-15T01:12:08.644576Z"
+                        updated_at: "2025-09-15T01:12:08.644576Z"
+                        name: "台灣科技股份有限公司"
+                        contact_email: "info@taiwan-tech.com"
+                        contact_phone: "+886-2-2345-6789"
+                        address: "台北市信義區信義路五段7號101大樓"
+                        status: "active"
+                        billing_enabled: true
+                    pagination:
+                      limit: 10
+                      offset: 0
+                      pages: 1
+                      total: 8
+
   /notifications:
     post:
       summary: Send notification
@@ -73,12 +114,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationResponse"
+              examples:
+                success_response:
+                  summary: Successful notification
+                  value:
+                    data:
+                      notification_id: "97129969-be84-4be8-8c89-4fec064e3c3d"
+                      status: "pending"
+                      message: "Notification queued successfully"
+                      destinations_count: 0
+                      estimated_delivery_time: "5-10 minutes"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                bad_request:
+                  summary: Invalid request body
+                  value:
+                    error: "Invalid request body"
+                    details: "invalid UUID length: 12"
         "401":
           description: Unauthorized
           content:
@@ -299,6 +356,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+              examples:
+                healthy_response:
+                  summary: Service is healthy
+                  value:
+                    status: "healthy"
+                    timestamp: "2025-09-15T02:13:25.459512Z"
+                    version: "1.0.0"
         "503":
           description: Service is unhealthy
           content:
@@ -333,6 +397,42 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Company ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        name:
+          type: string
+          description: Company name
+        contact_email:
+          type: string
+          format: email
+          description: Contact email
+        contact_phone:
+          type: string
+          description: Contact phone number
+        address:
+          type: string
+          description: Company address
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: Company status
+        billing_enabled:
+          type: boolean
+          description: Whether billing is enabled
+
     NotificationRequest:
       type: object
       required:
@@ -513,20 +613,26 @@ components:
     NotificationResponse:
       type: object
       properties:
-        notificationId:
-          type: string
-          description: Unique notification identifier
-        status:
-          type: string
-          enum: [pending, sent, failed, scheduled]
-          description: Notification status
-        message:
-          type: string
-          description: Response message
-        timestamp:
-          type: string
-          format: date-time
-          description: Response timestamp
+        data:
+          type: object
+          properties:
+            notification_id:
+              type: string
+              format: uuid
+              description: Unique notification identifier
+            status:
+              type: string
+              enum: [pending, processing, sent, failed, cancelled]
+              description: Notification status
+            message:
+              type: string
+              description: Response message
+            destinations_count:
+              type: integer
+              description: Number of destinations for this notification
+            estimated_delivery_time:
+              type: string
+              description: Estimated delivery time
 
     ScheduledNotificationResponse:
       type: object
@@ -655,15 +761,14 @@ components:
         status:
           type: string
           enum: [healthy, unhealthy]
+          description: Service health status
         timestamp:
           type: string
           format: date-time
+          description: Health check timestamp
         version:
           type: string
-        services:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ServiceStatus"
+          description: Service version
 
     ServiceStatus:
       type: object
@@ -720,22 +825,14 @@ components:
       properties:
         error:
           type: string
-          description: Error code
-        message:
-          type: string
-          description: Error message
+          description: Error code or message
         details:
-          type: object
-          additionalProperties: true
+          type: string
           description: Additional error details
-        timestamp:
-          type: string
-          format: date-time
-        requestId:
-          type: string
-          description: Unique request identifier
 
 tags:
+  - name: Companies
+    description: Company management operations
   - name: Notifications
     description: Notification management operations
   - name: Billing
