@@ -567,6 +567,63 @@ type ThirdPartyBotRepository interface {
 	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.ThirdPartyBot, error)
 }
 
+// BotInstallationRepository defines operations for bot_installations
+type BotInstallationRepository interface {
+    Upsert(ctx context.Context, entity *database.BotInstallation) error
+}
+
+type botInstallationRepository struct {
+    db *sqlx.DB
+}
+
+// NewBotInstallationRepository creates a new bot installation repository
+func NewBotInstallationRepository(db *sqlx.DB) BotInstallationRepository {
+    return &botInstallationRepository{db: db}
+}
+
+// Upsert inserts or updates a bot installation record based on unique keys
+func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database.BotInstallation) error {
+    metadataJSON, err := json.Marshal(entity.Metadata)
+    if err != nil {
+        return fmt.Errorf("failed to marshal metadata: %w", err)
+    }
+
+    query := `
+        INSERT INTO bot_installations (
+            id, bot_id, bot_type, teams_tenant_id, teams_team_id, teams_channel_id, teams_user_id,
+            installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, COALESCE($9, NOW()), $10, $11, COALESCE($12, NOW()), COALESCE($13, NOW())
+        )
+        ON CONFLICT (bot_id, bot_type, teams_tenant_id, teams_team_id, teams_channel_id, teams_user_id)
+        DO UPDATE SET
+            installation_status = EXCLUDED.installation_status,
+            uninstalled_at = EXCLUDED.uninstalled_at,
+            metadata = EXCLUDED.metadata,
+            updated_at = NOW();
+    `
+
+    _, err = r.db.ExecContext(
+        ctx,
+        query,
+        entity.ID,
+        entity.BotID,
+        entity.BotType,
+        entity.TeamsTenantID,
+        entity.TeamsTeamID,
+        entity.TeamsChannelID,
+        entity.TeamsUserID,
+        entity.InstallationStatus,
+        entity.InstalledAt,
+        entity.UninstalledAt,
+        metadataJSON,
+        entity.CreatedAt,
+        entity.UpdatedAt,
+    )
+    return err
+}
+
 // thirdPartyBotRepository implements ThirdPartyBotRepository
 type thirdPartyBotRepository struct {
 	db *sqlx.DB

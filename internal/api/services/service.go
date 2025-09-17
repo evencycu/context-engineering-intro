@@ -1,14 +1,16 @@
 package services
 
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "strings"
+    "time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+    "github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
+    "github.com/evencycu/TeamsNotifyGoV2/internal/database"
+    "github.com/google/uuid"
+    "golang.org/x/crypto/bcrypt"
 )
 
 // Service interface defines common service operations
@@ -447,6 +449,92 @@ type NotificationService interface {
 	SendNotification(ctx context.Context, req *SendNotificationRequest) (*database.Notification, error)
 	RetryNotification(ctx context.Context, id uuid.UUID) error
 	CancelNotification(ctx context.Context, id uuid.UUID) error
+}
+
+// =============================================
+// Messages (Bot Installation) Service
+// =============================================
+
+// Activity minimal for Bot Framework events
+type Activity struct {
+    Type       string `json:"type"`
+    ServiceURL string `json:"serviceUrl"`
+    From       struct{ ID string `json:"id"` } `json:"from"`
+    Recipient  struct{ ID string `json:"id"` } `json:"recipient"`
+    Conversation struct{ ID string `json:"id"` } `json:"conversation"`
+    ChannelID string           `json:"channelId"`
+    Locale    string           `json:"locale"`
+    ChannelData map[string]any `json:"channelData"`
+}
+
+type MessagesService interface {
+    HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error
+}
+
+type messagesService struct {
+    platformRepo repositories.PlatformBotRepository
+    installRepo  repositories.BotInstallationRepository
+    defaultTenantID string
+}
+
+func NewMessagesService(platformRepo repositories.PlatformBotRepository, installRepo repositories.BotInstallationRepository, defaultTenantID string) MessagesService {
+    return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
+}
+
+func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error {
+    if act == nil {
+        return errors.New("nil activity")
+    }
+    // Extract appId from recipient.id like "28:<APPID>"
+    appID := ""
+    if rid := act.Recipient.ID; rid != "" {
+        if strings.HasPrefix(rid, "28:") && len(rid) > 3 {
+            appID = rid[3:]
+        }
+    }
+    if appID == "" {
+        return errors.New("cannot determine app_id from recipient.id")
+    }
+
+    // Find platform bot by app_id
+    bot, err := s.platformRepo.GetByAppID(ctx, appID)
+    if err != nil {
+        return err
+    }
+
+    // Determine tenant id
+    tenantID := s.defaultTenantID
+    if t, ok := rawPayload["tenant"].(map[string]any); ok {
+        if tid, ok2 := t["id"].(string); ok2 && tid != "" {
+            tenantID = tid
+        }
+    }
+    if tenantID == "" {
+        if cd, ok := act.ChannelData["tenant"].(map[string]any); ok {
+            if tid, ok2 := cd["id"].(string); ok2 && tid != "" {
+                tenantID = tid
+            }
+        }
+    }
+    if tenantID == "" {
+        tenantID = "unknown-tenant"
+    }
+
+    // Prepare installation entity
+    now := time.Now()
+    inst := &database.BotInstallation{
+        BotID:              bot.ID,
+        BotType:            database.BotType("platform"),
+        TeamsTenantID:      tenantID,
+        TeamsTeamID:        "",
+        TeamsChannelID:     act.Conversation.ID,
+        TeamsUserID:        act.From.ID,
+        InstallationStatus: "active",
+        InstalledAt:        now,
+        UninstalledAt:      nil,
+        Metadata:           rawPayload,
+    }
+    return s.installRepo.Upsert(ctx, inst)
 }
 
 // SendNotificationRequest represents a send notification request

@@ -8,6 +8,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
@@ -61,6 +62,8 @@ func main() {
 
 	platformBotRepo := repositories.NewPlatformBotRepository(db)
 	platformBotService := services.NewPlatformBotService(platformBotRepo)
+	installationRepo := repositories.NewBotInstallationRepository(db)
+	messagesService := services.NewMessagesService(platformBotRepo, installationRepo, getEnv("TEAMS_TENANT_ID", ""))
 	thirdPartyBotRepo := repositories.NewThirdPartyBotRepository(db)
 	thirdPartyBotService := services.NewThirdPartyBotService(thirdPartyBotRepo)
 
@@ -75,6 +78,7 @@ func main() {
 	userHandler := users.NewHandler(userService)
 	projectHandler := projects.NewHandler(projectService)
 	botHandler := bots.NewHandler(platformBotService, thirdPartyBotService)
+	messagesHandler := messages.NewHandler(messagesService)
 	destinationHandler := destinations.NewHandler(destinationService)
 	notificationHandler := notifications.NewHandler(notificationService)
 
@@ -117,7 +121,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler)
+	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)
