@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+    "log"
 	"net/http"
 	"net/url"
 	"os"
@@ -486,18 +487,24 @@ type MessagesService interface {
 
 type messagesService struct {
 	platformRepo    repositories.PlatformBotRepository
+    thirdPartyRepo  repositories.ThirdPartyBotRepository
 	installRepo     repositories.BotInstallationRepository
 	defaultTenantID string
 }
 
 func NewMessagesService(platformRepo repositories.PlatformBotRepository, installRepo repositories.BotInstallationRepository, defaultTenantID string) MessagesService {
-	return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
+    // Backward-compat for callers not yet updated; thirdPartyRepo can be set later if needed
+    return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
 }
 
 func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error {
 	if act == nil {
 		return errors.New("nil activity")
 	}
+    // Only handle installationUpdate events here
+    if strings.TrimSpace(strings.ToLower(act.Type)) != "installationupdate" {
+        return nil
+    }
 	// Extract appId from recipient.id like "28:<APPID>"
 	appID := ""
 	if rid := act.Recipient.ID; rid != "" {
@@ -509,11 +516,19 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		return errors.New("cannot determine app_id from recipient.id")
 	}
 
-	// Find platform bot by app_id
-	bot, err := s.platformRepo.GetByAppID(ctx, appID)
-	if err != nil {
-		return err
-	}
+    // Find platform bot by app_id; if missing, log and return nil (no creation here)
+    bot, err := s.platformRepo.GetByAppID(ctx, appID)
+    if err != nil {
+        log.Printf("installationUpdate: platform bot not found for app_id=%s: %v", appID, err)
+        return nil
+    }
+
+    // Also check if any third-party bot shares this app_id (for observability only)
+    if s.thirdPartyRepo != nil {
+        if _, err := s.thirdPartyRepo.GetByAppID(ctx, appID); err != nil {
+            log.Printf("installationUpdate: third_party_bots no record for app_id=%s (expected provision-managed). err=%v", appID, err)
+        }
+    }
 
 	// Determine tenant id
 	tenantID := s.defaultTenantID
@@ -575,7 +590,13 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		}
 	}
 
-	// Prepare installation entity
+    // Determine action (add/remove)
+    action := "add"
+    if a, ok := rawPayload["action"].(string); ok && a != "" {
+        action = a
+    }
+
+    // Prepare installation entity
 	now := time.Now()
 	inst := &database.BotInstallation{
 		BotID:              bot.ID,
@@ -589,13 +610,18 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		FromID:             act.From.ID,
 		FromName:           fromName,
 		FromAADObjectID:    aadObjectID,
-		InstallationStatus: "active",
-		InstalledAt:        now,
-		UninstalledAt:      nil,
+        InstallationStatus: "active",
+        InstalledAt:        now,
+        UninstalledAt:      nil,
 		LastActivityAt:     &now,
 		Metadata:           rawPayload,
 	}
-	return s.installRepo.Upsert(ctx, inst)
+    if strings.EqualFold(action, "remove") || strings.EqualFold(action, "uninstall") {
+        inst.InstallationStatus = "uninstalled"
+        inst.UninstalledAt = &now
+    }
+
+    return s.installRepo.Upsert(ctx, inst)
 }
 
 // SendProactiveTest sends a simple proactive text message using provided activity payload (no DB)
