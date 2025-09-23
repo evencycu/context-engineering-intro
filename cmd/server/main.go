@@ -71,7 +71,8 @@ func main() {
 	destinationService := services.NewDestinationService(destinationRepo)
 
 	notificationRepo := repositories.NewNotificationRepository(db)
-	notificationService := services.NewNotificationService(notificationRepo)
+	broadcaster := services.NewBroadcastService(platformBotRepo, thirdPartyBotRepo, installationRepo, destinationRepo)
+	notificationService := services.NewNotificationService(notificationRepo, broadcaster)
 
 	// Create handlers
 	companyHandler := companies.NewHandler(companyService)

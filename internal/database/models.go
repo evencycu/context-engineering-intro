@@ -120,16 +120,25 @@ type ThirdPartyBot struct {
 // BotInstallation represents a bot installation
 type BotInstallation struct {
 	BaseModel
-	BotID              uuid.UUID      `json:"bot_id" db:"bot_id"`
-	BotType            BotType        `json:"bot_type" db:"bot_type"`
-	TeamsTenantID      string         `json:"teams_tenant_id" db:"teams_tenant_id"`
-	TeamsTeamID        string         `json:"teams_team_id" db:"teams_team_id"`
-	TeamsChannelID     string         `json:"teams_channel_id" db:"teams_channel_id"`
-	TeamsUserID        string         `json:"teams_user_id" db:"teams_user_id"`
-	InstallationStatus string         `json:"installation_status" db:"installation_status"`
-	InstalledAt        time.Time      `json:"installed_at" db:"installed_at"`
-	UninstalledAt      *time.Time     `json:"uninstalled_at" db:"uninstalled_at"`
-	Metadata           map[string]any `json:"metadata" db:"metadata"`
+	BotID         uuid.UUID `json:"bot_id" db:"bot_id"`
+	BotType       BotType   `json:"bot_type" db:"bot_type"`
+	TeamsTenantID string    `json:"teams_tenant_id" db:"teams_tenant_id"`
+	// Conversation type and identification
+	ConversationType string `json:"conversation_type" db:"conversation_type"` // personal, channel, groupChat
+	ConversationID   string `json:"conversation_id" db:"conversation_id"`
+	ServiceURL       string `json:"service_url" db:"service_url"`
+	// Bot and user identification
+	RecipientID     string `json:"recipient_id" db:"recipient_id"`
+	RecipientName   string `json:"recipient_name" db:"recipient_name"`
+	FromID          string `json:"from_id" db:"from_id"`
+	FromName        string `json:"from_name" db:"from_name"`
+	FromAADObjectID string `json:"from_aad_object_id" db:"from_aad_object_id"`
+	// Status and lifecycle
+	InstallationStatus string      `json:"installation_status" db:"installation_status"`
+	InstalledAt        time.Time   `json:"installed_at" db:"installed_at"`
+	UninstalledAt      *time.Time  `json:"uninstalled_at" db:"uninstalled_at"`
+	LastActivityAt     *time.Time  `json:"last_activity_at" db:"last_activity_at"`
+	Metadata           JSONBObject `json:"metadata" db:"metadata"`
 }
 
 // =============================================
@@ -138,14 +147,19 @@ type BotInstallation struct {
 
 // TeamsTarget represents a single Teams target
 type TeamsTarget struct {
-	Type        string         `json:"type"` // person, channel, chatgroup
-	TeamID      string         `json:"team_id,omitempty"`
-	ChannelID   string         `json:"channel_id,omitempty"`
-	UserID      string         `json:"user_id,omitempty"`
-	GroupID     string         `json:"group_id,omitempty"`
-	DisplayName string         `json:"display_name,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	Type           string         `json:"type"` // person, channel, chatgroup
+	TeamID         string         `json:"team_id,omitempty"`
+	ChannelID      string         `json:"channel_id,omitempty"`
+	UserID         string         `json:"user_id,omitempty"`
+	AADObjectID    string         `json:"aad_object_id,omitempty"` // User's AAD Object ID
+	GroupID        string         `json:"group_id,omitempty"`
+	ChatID         string         `json:"chat_id,omitempty"`         // Group chat ID
+	ConversationID string         `json:"conversation_id,omitempty"` // Direct conversation ID
+	DisplayName    string         `json:"display_name,omitempty"`
+	Description    string         `json:"description,omitempty"`
+	TenantID       string         `json:"tenant_id,omitempty"`   // AAD Tenant ID
+	ServiceURL     string         `json:"service_url,omitempty"` // Bot Framework service URL
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 // JSONBTargets is a JSONB-backed slice of TeamsTarget for DB scanning/valuing
@@ -326,7 +340,7 @@ type Destination struct {
 type Notification struct {
 	BaseModel
 	ProjectID    uuid.UUID            `json:"project_id" db:"project_id"`
-	SenderID     uuid.UUID            `json:"sender_id" db:"sender_id"`
+	SenderID     *uuid.UUID           `json:"sender_id" db:"sender_id"`
 	MessageType  string               `json:"message_type" db:"message_type"` // text, file, adaptive_card
 	Content      string               `json:"content" db:"content"`
 	Mentions     JSONBStringArray     `json:"mentions" db:"mentions"`

@@ -569,59 +569,176 @@ type ThirdPartyBotRepository interface {
 
 // BotInstallationRepository defines operations for bot_installations
 type BotInstallationRepository interface {
-    Upsert(ctx context.Context, entity *database.BotInstallation) error
+	Upsert(ctx context.Context, entity *database.BotInstallation) error
+	GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error)
+	GetByConversationType(ctx context.Context, conversationType string, status string) ([]*database.BotInstallation, error)
+	GetByConversationID(ctx context.Context, conversationID string) (*database.BotInstallation, error)
+	GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error)
+	GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error)
+	UpdateActivity(ctx context.Context, id uuid.UUID) error
+	MarkAsStale(ctx context.Context, id uuid.UUID) error
 }
 
 type botInstallationRepository struct {
-    db *sqlx.DB
+	db *sqlx.DB
 }
 
 // NewBotInstallationRepository creates a new bot installation repository
 func NewBotInstallationRepository(db *sqlx.DB) BotInstallationRepository {
-    return &botInstallationRepository{db: db}
+	return &botInstallationRepository{db: db}
 }
 
 // Upsert inserts or updates a bot installation record based on unique keys
 func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database.BotInstallation) error {
-    metadataJSON, err := json.Marshal(entity.Metadata)
-    if err != nil {
-        return fmt.Errorf("failed to marshal metadata: %w", err)
-    }
+	metadataJSON, err := json.Marshal(entity.Metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
 
-    query := `
+	query := `
         INSERT INTO bot_installations (
-            id, bot_id, bot_type, teams_tenant_id, teams_team_id, teams_channel_id, teams_user_id,
+            id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+            recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
             installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7,
-            $8, COALESCE($9, NOW()), $10, $11, COALESCE($12, NOW()), COALESCE($13, NOW())
+            $8, $9, $10, $11, $12,
+            $13, COALESCE($14, NOW()), $15, $16, COALESCE($17, NOW()), COALESCE($18, NOW())
         )
-        ON CONFLICT (bot_id, bot_type, teams_tenant_id, teams_team_id, teams_channel_id, teams_user_id)
+        ON CONFLICT (bot_id, bot_type, teams_tenant_id, conversation_id)
         DO UPDATE SET
+            conversation_type = EXCLUDED.conversation_type,
+            service_url = EXCLUDED.service_url,
+            recipient_id = EXCLUDED.recipient_id,
+            recipient_name = EXCLUDED.recipient_name,
+            from_id = EXCLUDED.from_id,
+            from_name = EXCLUDED.from_name,
+            from_aad_object_id = EXCLUDED.from_aad_object_id,
             installation_status = EXCLUDED.installation_status,
             uninstalled_at = EXCLUDED.uninstalled_at,
             metadata = EXCLUDED.metadata,
             updated_at = NOW();
     `
 
-    _, err = r.db.ExecContext(
-        ctx,
-        query,
-        entity.ID,
-        entity.BotID,
-        entity.BotType,
-        entity.TeamsTenantID,
-        entity.TeamsTeamID,
-        entity.TeamsChannelID,
-        entity.TeamsUserID,
-        entity.InstallationStatus,
-        entity.InstalledAt,
-        entity.UninstalledAt,
-        metadataJSON,
-        entity.CreatedAt,
-        entity.UpdatedAt,
-    )
-    return err
+	_, err = r.db.ExecContext(
+		ctx,
+		query,
+		entity.ID,
+		entity.BotID,
+		entity.BotType,
+		entity.TeamsTenantID,
+		entity.ConversationType,
+		entity.ConversationID,
+		entity.ServiceURL,
+		entity.RecipientID,
+		entity.RecipientName,
+		entity.FromID,
+		entity.FromName,
+		entity.FromAADObjectID,
+		entity.InstallationStatus,
+		entity.InstalledAt,
+		entity.UninstalledAt,
+		metadataJSON,
+		entity.CreatedAt,
+		entity.UpdatedAt,
+	)
+	return err
+}
+
+// GetByBotAndTenant retrieves installations for a specific bot and tenant
+func (r *botInstallationRepository) GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        FROM bot_installations
+        WHERE bot_id = $1 AND bot_type = $2 AND teams_tenant_id = $3
+        ORDER BY installed_at DESC
+    `
+
+	var installations []*database.BotInstallation
+	err := r.db.SelectContext(ctx, &installations, query, botID, botType, tenantID)
+	return installations, err
+}
+
+// GetByConversationType retrieves installations by conversation type and status
+func (r *botInstallationRepository) GetByConversationType(ctx context.Context, conversationType string, status string) ([]*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        FROM bot_installations
+        WHERE conversation_type = $1 AND installation_status = $2
+        ORDER BY installed_at DESC
+    `
+
+	var installations []*database.BotInstallation
+	err := r.db.SelectContext(ctx, &installations, query, conversationType, status)
+	return installations, err
+}
+
+// GetByConversationID retrieves installation by conversation ID
+func (r *botInstallationRepository) GetByConversationID(ctx context.Context, conversationID string) (*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        FROM bot_installations
+        WHERE conversation_id = $1
+    `
+
+	var installation database.BotInstallation
+	err := r.db.GetContext(ctx, &installation, query, conversationID)
+	if err != nil {
+		return nil, err
+	}
+	return &installation, nil
+}
+
+// GetActiveInstallations retrieves active installations for a bot and tenant
+func (r *botInstallationRepository) GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        FROM bot_installations
+        WHERE bot_id = $1 AND bot_type = $2 AND teams_tenant_id = $3 AND installation_status = 'active'
+        ORDER BY installed_at DESC
+    `
+
+	var installations []*database.BotInstallation
+	err := r.db.SelectContext(ctx, &installations, query, botID, botType, tenantID)
+	return installations, err
+}
+
+// GetActiveInstallationsByTenant retrieves all active installations for a tenant
+func (r *botInstallationRepository) GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
+        FROM bot_installations
+        WHERE teams_tenant_id = $1 AND installation_status = 'active'
+        ORDER BY installed_at DESC
+    `
+
+	var installations []*database.BotInstallation
+	err := r.db.SelectContext(ctx, &installations, query, tenantID)
+	return installations, err
+}
+
+// UpdateActivity updates the last activity timestamp
+func (r *botInstallationRepository) UpdateActivity(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE bot_installations SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+// MarkAsStale marks an installation as stale
+func (r *botInstallationRepository) MarkAsStale(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE bot_installations SET installation_status = 'stale', updated_at = NOW() WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
 }
 
 // thirdPartyBotRepository implements ThirdPartyBotRepository

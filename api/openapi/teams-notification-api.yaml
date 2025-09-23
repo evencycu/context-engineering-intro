@@ -958,6 +958,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationHistoryResponse"
 
+  /messages/proactive/test:
+    post:
+      summary: Send proactive test message (no DB)
+      description: Send a proactive text message to a Teams conversation using the provided installationUpdate activity. Does not access the database.
+      operationId: sendProactiveTest
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activity:
+                  type: object
+                  description: Bot Framework installationUpdate payload containing serviceUrl, conversation.id, from.id, recipient.id, tenantId
+                  additionalProperties: true
+                text:
+                  type: string
+                  description: Text message to send
+                  default: Hello from proactive test
+            examples:
+              proactive_test_example:
+                summary: Proactive test request
+                value:
+                  activity:
+                    type: installationUpdate
+                    serviceUrl: https://smba.trafficmanager.net/apac/051cece0-e4dc-4aed-b471-bf29824e1ee6/
+                    channelId: msteams
+                    conversation:
+                      conversationType: personal
+                      id: a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR
+                      tenantId: 051cece0-e4dc-4aed-b471-bf29824e1ee6
+                    from:
+                      id: 29:1hr09MmriLZ1ymlHMEG_kFBtId2m8WRHaaxLtgJipvUflqrdoeOatXhzKA1LsQGZPOAMqrSEvoRNThsTlBxUcLw
+                    recipient:
+                      id: 28:844146d7-4ac9-4e4d-a463-d6e027714e81
+                    channelData:
+                      tenant:
+                        id: 051cece0-e4dc-4aed-b471-bf29824e1ee6
+                  text: 這是一個主動訊息測試
+      responses:
+        "200":
+          description: Proactive message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: sent
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /billing/summary:
     get:
       summary: Get billing summary

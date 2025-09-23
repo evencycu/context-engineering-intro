@@ -88,6 +88,28 @@ docker compose -f deployments/docker/docker-compose.yml up -d postgres redis
 make dev
 ```
 
+### Start API Server with Teams Bot credentials and log to file
+
+每次啟動本機伺服器，請先設定 Teams Bot 相關環境變數，並將日誌寫入 `/tmp/teamsnotify_server.log`：
+
+```bash
+export TEAMS_BOT_APP_ID=844146d7-4ac9-4e4d-a463-d6e027714e81
+export TEAMS_TENANT_ID=051cece0-e4dc-4aed-b471-bf29824e1ee6
+export TEAMS_BOT_APP_PASSWORD='HVW8Q~-HmVPi_W0EzIFPbZiL4G1czV8WBMUjQdfy'
+
+nohup env \
+  TEAMS_BOT_APP_ID=$TEAMS_BOT_APP_ID \
+  TEAMS_TENANT_ID=$TEAMS_TENANT_ID \
+  TEAMS_BOT_APP_PASSWORD=$TEAMS_BOT_APP_PASSWORD \
+  go run ./cmd/server > /tmp/teamsnotify_server.log 2>&1 & echo $!
+```
+
+查看日誌：
+
+```bash
+tail -f /tmp/teamsnotify_server.log
+```
+
 ### Option 3: VS Code Debugging
 
 The project includes VS Code debugging configuration:

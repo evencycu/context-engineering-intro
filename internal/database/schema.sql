@@ -103,7 +103,7 @@ CREATE TABLE third_party_bots (
     max_concurrent_requests INTEGER DEFAULT 10,
     contact_email VARCHAR(255),
     contact_phone VARCHAR(50),
-    created_by UUID NOT NULL REFERENCES users(id),
+    created_by UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(company_id, app_id)
@@ -115,16 +115,27 @@ CREATE TABLE bot_installations (
     bot_id UUID NOT NULL,
     bot_type bot_type NOT NULL,
     teams_tenant_id VARCHAR(255) NOT NULL,
-    teams_team_id VARCHAR(255),
-    teams_channel_id VARCHAR(255),
-    teams_user_id VARCHAR(255),
-    installation_status VARCHAR(20) DEFAULT 'active' CHECK (installation_status IN ('active', 'inactive', 'uninstalled')),
+    -- Conversation type and identification
+    conversation_type VARCHAR(20) NOT NULL CHECK (conversation_type IN ('personal', 'channel', 'groupChat')),
+    conversation_id VARCHAR(500), -- Teams conversation ID for sending messages
+    service_url VARCHAR(500), -- Bot Framework service URL
+    -- Bot and user identification
+    recipient_id VARCHAR(255), -- Bot member ID (usually 28:app_id)
+    recipient_name VARCHAR(255), -- Bot display name
+    from_id VARCHAR(255), -- Source member ID from Teams event
+    from_name VARCHAR(255), -- User display name
+    from_aad_object_id VARCHAR(255), -- User's AAD Object ID
+    -- Status and lifecycle
+    installation_status VARCHAR(20) DEFAULT 'active' CHECK (installation_status IN ('active', 'inactive', 'uninstalled', 'stale')),
     installed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     uninstalled_at TIMESTAMP WITH TIME ZONE,
+    last_activity_at TIMESTAMP WITH TIME ZONE, -- Last successful message sent/received
+    -- Metadata and configuration
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(bot_id, bot_type, teams_tenant_id, teams_team_id, teams_channel_id, teams_user_id)
+    -- Unique constraint for preventing duplicates (per bot, tenant, conversation)
+    UNIQUE(bot_id, bot_type, teams_tenant_id, conversation_id)
 );
 
 -- =============================================
@@ -144,7 +155,7 @@ CREATE TABLE destinations (
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
     validation_status VARCHAR(20) DEFAULT 'pending' CHECK (validation_status IN ('pending', 'validated', 'failed')),
     last_validated_at TIMESTAMP WITH TIME ZONE,
-    created_by UUID NOT NULL REFERENCES users(id),
+    created_by UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT valid_targets_array CHECK (jsonb_array_length(targets) > 0)
@@ -158,7 +169,7 @@ CREATE TABLE destinations (
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id),
-    sender_id UUID NOT NULL REFERENCES users(id),
+    sender_id UUID,
     message_type VARCHAR(20) NOT NULL CHECK (message_type IN ('text', 'file', 'adaptive_card')),
     content TEXT NOT NULL,
     mentions JSONB DEFAULT '[]'::jsonb,
@@ -237,7 +248,7 @@ CREATE TABLE third_party_bot_api_keys (
     rate_limit_per_minute INTEGER DEFAULT 100,
     expires_at TIMESTAMP WITH TIME ZONE,
     is_active BOOLEAN DEFAULT true,
-    created_by UUID NOT NULL REFERENCES users(id),
+    created_by UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -296,7 +307,7 @@ CREATE TABLE usage_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     project_id UUID REFERENCES projects(id),
-    user_id UUID REFERENCES users(id),
+    user_id UUID,
     notification_id UUID REFERENCES notifications(id),
     bot_id UUID,
     bot_type bot_type,
@@ -316,7 +327,7 @@ CREATE TABLE usage_records (
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID REFERENCES companies(id),
-    user_id UUID REFERENCES users(id),
+    user_id UUID,
     action VARCHAR(100) NOT NULL,
     resource_type VARCHAR(50) NOT NULL,
     resource_id UUID,
@@ -397,7 +408,13 @@ CREATE INDEX idx_third_party_bots_status ON third_party_bots(status);
 CREATE INDEX idx_bot_installations_bot_id ON bot_installations(bot_id);
 CREATE INDEX idx_bot_installations_bot_type ON bot_installations(bot_type);
 CREATE INDEX idx_bot_installations_teams_tenant_id ON bot_installations(teams_tenant_id);
+CREATE INDEX idx_bot_installations_conversation_type ON bot_installations(conversation_type);
+CREATE INDEX idx_bot_installations_conversation_id ON bot_installations(conversation_id);
+CREATE INDEX idx_bot_installations_from_aad_object_id ON bot_installations(from_aad_object_id);
 CREATE INDEX idx_bot_installations_status ON bot_installations(installation_status);
+CREATE INDEX idx_bot_installations_bot_tenant ON bot_installations(bot_id, bot_type, teams_tenant_id);
+CREATE INDEX idx_bot_installations_team_channel ON bot_installations(teams_team_id, teams_channel_id) WHERE teams_team_id IS NOT NULL;
+CREATE INDEX idx_bot_installations_user ON bot_installations(teams_user_id) WHERE teams_user_id IS NOT NULL;
 
 -- Destinations indexes
 CREATE INDEX idx_destinations_project_id ON destinations(project_id);
@@ -480,6 +497,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECU
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_platform_bots_updated_at BEFORE UPDATE ON platform_bots FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_third_party_bots_updated_at BEFORE UPDATE ON third_party_bots FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_bot_installations_updated_at BEFORE UPDATE ON bot_installations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_destinations_updated_at BEFORE UPDATE ON destinations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notification_destinations_updated_at BEFORE UPDATE ON notification_destinations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -514,7 +532,7 @@ SELECT
 FROM notifications n
 JOIN projects p ON n.project_id = p.id
 JOIN companies c ON p.company_id = c.id
-JOIN users u ON n.sender_id = u.id
+LEFT JOIN users u ON n.sender_id = u.id
 LEFT JOIN notification_destinations nd ON n.id = nd.notification_id
 GROUP BY n.id, p.key_name, p.company_id, c.name, u.email, n.message_type, n.content, n.priority, n.status, n.created_at, n.sent_at;
 
@@ -563,6 +581,28 @@ SELECT
 FROM usage_records ur
 JOIN companies c ON ur.company_id = c.id
 GROUP BY ur.company_id, c.name, ur.billing_period, ur.record_type, ur.bot_type;
+
+-- =============================================
+-- Indexes for Performance
+-- =============================================
+
+-- Bot installations indexes
+CREATE INDEX idx_bot_installations_bot_tenant ON bot_installations(bot_id, bot_type, teams_tenant_id);
+CREATE INDEX idx_bot_installations_scope_status ON bot_installations(scope, installation_status);
+CREATE INDEX idx_bot_installations_conversation ON bot_installations(conversation_id);
+CREATE INDEX idx_bot_installations_team_channel ON bot_installations(teams_team_id, teams_channel_id) WHERE teams_team_id IS NOT NULL;
+CREATE INDEX idx_bot_installations_chat ON bot_installations(teams_chat_id) WHERE teams_chat_id IS NOT NULL;
+CREATE INDEX idx_bot_installations_user ON bot_installations(teams_user_id) WHERE teams_user_id IS NOT NULL;
+CREATE INDEX idx_bot_installations_activity ON bot_installations(last_activity_at) WHERE last_activity_at IS NOT NULL;
+
+-- Destinations targets indexes (GIN for JSONB queries)
+CREATE INDEX idx_destinations_targets_gin ON destinations USING GIN(targets);
+CREATE INDEX idx_destinations_tenant_status ON destinations(teams_tenant_id, status);
+
+-- Notifications indexes
+CREATE INDEX idx_notifications_project_status ON notifications(project_id, status);
+CREATE INDEX idx_notifications_sender ON notifications(sender_id);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
 -- =============================================
 -- Initial Data

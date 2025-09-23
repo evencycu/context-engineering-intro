@@ -234,5 +234,6 @@ func (s *Server) RegisterRoutes(
 
 		// Bot Framework messages webhook
 		v1.POST("/messages", messagesHandler.Handle)
+		v1.POST("/messages/proactive/test", messagesHandler.ProactiveTest)
 	}
 }

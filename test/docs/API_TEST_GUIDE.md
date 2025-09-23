@@ -1,11 +1,13 @@
 # Teams Notification API 測試指南
 
 ## 概述
+
 本文件提供了 Teams Notification Bot 平台所有 API 端點的測試方法和範例。
 
 ## 環境準備
 
 ### 啟動服務器
+
 ```bash
 # 編譯並啟動服務器
 go run ./cmd/server
@@ -15,6 +17,7 @@ docker-compose up -d
 ```
 
 ### 健康檢查
+
 ```bash
 curl -sS http://localhost:8080/health | jq .
 ```
@@ -24,11 +27,13 @@ curl -sS http://localhost:8080/health | jq .
 ### 1. Company API 測試
 
 #### 1.1 獲取所有公司
+
 ```bash
 curl -sS http://localhost:8080/api/v1/companies | jq .
 ```
 
 #### 1.2 創建新公司
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/companies \
   -H "Content-Type: application/json" \
@@ -42,12 +47,47 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
   }' | jq .
 ```
 
+#### 1.2.1 創建國泰投信公司 (實際範例)
+
+```bash
+# 新增國泰投信公司
+curl -X POST http://localhost:8080/api/v1/companies \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "國泰投信",
+    "contact_email": "admin@cathaysite.com.tw",
+    "contact_phone": "+1-555-0104",
+    "address": "777 Enterprise Cathay, Taipei City, Taiwan",
+    "billing_enabled": true
+  }'
+```
+
+**回應範例：**
+```json
+{
+  "data": {
+    "id": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
+    "created_at": "2025-09-22T03:42:20.425588Z",
+    "updated_at": "2025-09-22T03:42:20.425589Z",
+    "name": "國泰投信",
+    "contact_email": "admin@cathaysite.com.tw",
+    "contact_phone": "+1-555-0104",
+    "address": "777 Enterprise Cathay, Taipei City, Taiwan",
+    "status": "active",
+    "billing_enabled": true
+  },
+  "message": "Company created successfully"
+}
+```
+
 #### 1.3 獲取特定公司
+
 ```bash
 curl -sS http://localhost:8080/api/v1/companies/{company_id} | jq .
 ```
 
 #### 1.4 更新公司
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/companies/{company_id} \
   -H "Content-Type: application/json" \
@@ -59,6 +99,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/companies/{company_id} \
 ```
 
 #### 1.5 更新公司狀態
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/companies/{company_id}/status \
   -H "Content-Type: application/json" \
@@ -66,6 +107,7 @@ curl -sS -X PATCH http://localhost:8080/api/v1/companies/{company_id}/status \
 ```
 
 #### 1.6 刪除公司
+
 ```bash
 curl -sS -X DELETE http://localhost:8080/api/v1/companies/{company_id} | jq .
 ```
@@ -73,11 +115,13 @@ curl -sS -X DELETE http://localhost:8080/api/v1/companies/{company_id} | jq .
 ### 2. User API 測試
 
 #### 2.1 獲取所有用戶
+
 ```bash
 curl -sS http://localhost:8080/api/v1/users | jq .
 ```
 
 #### 2.2 創建新用戶
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
@@ -91,12 +135,48 @@ curl -sS -X POST http://localhost:8080/api/v1/users \
   }' | jq .
 ```
 
+#### 2.2.1 創建國泰投信用戶 DoDoMan (實際範例)
+
+```bash
+# 新增國泰投信用戶 - 使用實際的資料庫 ID
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_id": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
+    "email": "admin@cathaysite.com.tw",
+    "name": "DoDoMan",
+    "role": "user",
+    "password": "password123"
+  }'
+```
+
+**回應範例：**
+```json
+{
+  "data": {
+    "id": "438bad46-a020-4ed7-a64a-7a3ce0432f7a",
+    "created_at": "2025-09-22T03:44:34.834365Z",
+    "updated_at": "2025-09-22T03:44:34.834365Z",
+    "company_id": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
+    "email": "admin@cathaysite.com.tw",
+    "name": "DoDoMan",
+    "role": "user",
+    "status": "active",
+    "last_login_at": null,
+    "api_key_expires_at": null
+  },
+  "message": "User created successfully"
+}
+```
+
 #### 2.3 獲取特定用戶
+
 ```bash
 curl -sS http://localhost:8080/api/v1/users/{user_id} | jq .
 ```
 
 #### 2.4 更新用戶
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/users/{user_id} \
   -H "Content-Type: application/json" \
@@ -108,6 +188,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/users/{user_id} \
 ```
 
 #### 2.5 修改密碼
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/users/{user_id}/password \
   -H "Content-Type: application/json" \
@@ -118,11 +199,13 @@ curl -sS -X PATCH http://localhost:8080/api/v1/users/{user_id}/password \
 ```
 
 #### 2.6 生成 API Key
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/users/{user_id}/api-key | jq .
 ```
 
 #### 2.7 按公司獲取用戶
+
 ```bash
 curl -sS http://localhost:8080/api/v1/users/company/{company_id} | jq .
 ```
@@ -130,11 +213,13 @@ curl -sS http://localhost:8080/api/v1/users/company/{company_id} | jq .
 ### 3. Project API 測試
 
 #### 3.1 獲取所有項目
+
 ```bash
 curl -sS http://localhost:8080/api/v1/projects | jq .
 ```
 
 #### 3.2 創建新項目
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/projects \
   -H "Content-Type: application/json" \
@@ -151,11 +236,13 @@ curl -sS -X POST http://localhost:8080/api/v1/projects \
 ```
 
 #### 3.3 獲取特定項目
+
 ```bash
 curl -sS http://localhost:8080/api/v1/projects/{project_id} | jq .
 ```
 
 #### 3.4 更新項目
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/projects/{project_id} \
   -H "Content-Type: application/json" \
@@ -167,6 +254,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/projects/{project_id} \
 ```
 
 #### 3.5 更新項目限制
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/projects/{project_id}/limits \
   -H "Content-Type: application/json" \
@@ -177,11 +265,13 @@ curl -sS -X PATCH http://localhost:8080/api/v1/projects/{project_id}/limits \
 ```
 
 #### 3.6 按公司獲取項目
+
 ```bash
 curl -sS http://localhost:8080/api/v1/projects/company/{company_id} | jq .
 ```
 
 #### 3.7 按 Key Name 獲取項目
+
 ```bash
 curl -sS http://localhost:8080/api/v1/projects/key/{key_name} | jq .
 ```
@@ -191,11 +281,13 @@ curl -sS http://localhost:8080/api/v1/projects/key/{key_name} | jq .
 #### 4.1 Platform Bot 測試
 
 ##### 獲取所有平台機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/platform | jq .
 ```
 
 ##### 創建平台機器人
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/bots/platform \
   -H "Content-Type: application/json" \
@@ -218,11 +310,13 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/platform \
 ```
 
 ##### 獲取特定平台機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/platform/{bot_id} | jq .
 ```
 
 ##### 更新平台機器人
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/bots/platform/{bot_id} \
   -H "Content-Type: application/json" \
@@ -239,6 +333,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/bots/platform/{bot_id} \
 ```
 
 ##### 更新機器人狀態
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/bots/platform/{bot_id}/status \
   -H "Content-Type: application/json" \
@@ -246,6 +341,7 @@ curl -sS -X PATCH http://localhost:8080/api/v1/bots/platform/{bot_id}/status \
 ```
 
 ##### 測試機器人連接
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/bots/platform/{bot_id}/test | jq .
 ```
@@ -253,11 +349,13 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/platform/{bot_id}/test | jq .
 #### 4.2 Third Party Bot 測試
 
 ##### 獲取所有第三方機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/third-party | jq .
 ```
 
 ##### 創建第三方機器人
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/bots/third-party \
   -H "Content-Type: application/json" \
@@ -287,11 +385,13 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/third-party \
 ```
 
 ##### 獲取特定第三方機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/third-party/{bot_id} | jq .
 ```
 
 ##### 更新第三方機器人
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/bots/third-party/{bot_id} \
   -H "Content-Type: application/json" \
@@ -303,6 +403,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/bots/third-party/{bot_id} \
 ```
 
 ##### 更新 API Key
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/bots/third-party/{bot_id}/api-key \
   -H "Content-Type: application/json" \
@@ -310,6 +411,7 @@ curl -sS -X PATCH http://localhost:8080/api/v1/bots/third-party/{bot_id}/api-key
 ```
 
 ##### 測試第三方機器人連接
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/bots/third-party/{bot_id}/test | jq .
 ```
@@ -317,11 +419,13 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/third-party/{bot_id}/test | j
 #### 4.3 通用 Bot 查詢
 
 ##### 按公司獲取機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/company/{company_id} | jq .
 ```
 
 ##### 按狀態獲取機器人
+
 ```bash
 curl -sS http://localhost:8080/api/v1/bots/status/{status} | jq .
 ```
@@ -329,11 +433,13 @@ curl -sS http://localhost:8080/api/v1/bots/status/{status} | jq .
 ### 5. Destination API 測試
 
 #### 5.1 獲取所有目的地
+
 ```bash
 curl -sS http://localhost:8080/api/v1/destinations | jq .
 ```
 
 #### 5.2 創建新目的地
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/destinations \
   -H "Content-Type: application/json" \
@@ -361,12 +467,78 @@ curl -sS -X POST http://localhost:8080/api/v1/destinations \
   }' | jq .
 ```
 
+#### 5.2.1 創建個人通知目的地 (實際範例)
+
+```bash
+# 新增個人通知目的地 - 使用實際的資料庫 ID 和 conversation ID
+curl -X POST http://localhost:8080/api/v1/destinations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "750e8400-e29b-41d4-a716-446655440001",
+    "name": "Personal Conversation Target",
+    "description": "Personal conversation destination for proactive messaging",
+    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "targets": [
+      {
+        "type": "person",
+        "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
+        "user_id": "29:1hr09MmriLZ1ymlHMEG_kFBtId2m8WRHaaxLtgJipvUflqrdoeOatXhzKA1LsQGZPOAMqrSEvoRNThsTlBxUcLw",
+        "aad_object_id": "8d40db4b-935f-4e5a-aaae-ba86faad0e12",
+        "display_name": "Test User",
+        "description": "Personal conversation target for proactive messaging"
+      }
+    ],
+    "bot_id": "850e8400-e29b-41d4-a716-446655440001",
+    "bot_type": "platform",
+    "created_by": "650e8400-e29b-41d4-a716-446655440001"
+  }'
+```
+
+**回應範例：**
+```json
+{
+  "data": {
+    "id": "922c78f0-382c-4893-bae3-dc4bd38d7a0b",
+    "created_at": "2025-09-22T05:17:24.270033Z",
+    "updated_at": "2025-09-22T05:17:24.270033Z",
+    "project_id": "750e8400-e29b-41d4-a716-446655440001",
+    "name": "Personal Conversation Target",
+    "description": "Personal conversation destination for proactive messaging",
+    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "targets": [
+      {
+        "type": "person",
+        "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
+        "user_id": "29:1hr09MmriLZ1ymlHMEG_kFBtId2m8WRHaaxLtgJipvUflqrdoeOatXhzKA1LsQGZPOAMqrSEvoRNThsTlBxUcLw",
+        "aad_object_id": "8d40db4b-935f-4e5a-aaae-ba86faad0e12",
+        "display_name": "Test User",
+        "description": "Personal conversation target for proactive messaging"
+      }
+    ],
+    "bot_id": "850e8400-e29b-41d4-a716-446655440001",
+    "bot_type": "platform",
+    "status": "active",
+    "validation_status": "pending",
+    "last_validated_at": null,
+    "created_by": "650e8400-e29b-41d4-a716-446655440001"
+  },
+  "message": "Destination created successfully"
+}
+```
+
+**重要說明：**
+- `conversation_id` 是發送 proactive message 的關鍵欄位
+- 這個 ID 來自 Teams 的 installationUpdate 事件中的 `conversation.id`
+- 用於 Bot Framework 的 proactive messaging API 端點
+
 #### 5.3 獲取特定目的地
+
 ```bash
 curl -sS http://localhost:8080/api/v1/destinations/{destination_id} | jq .
 ```
 
 #### 5.4 更新目的地
+
 ```bash
 curl -sS -X PUT http://localhost:8080/api/v1/destinations/{destination_id} \
   -H "Content-Type: application/json" \
@@ -378,6 +550,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/destinations/{destination_id} \
 ```
 
 #### 5.5 更新目的地目標
+
 ```bash
 curl -sS -X PATCH http://localhost:8080/api/v1/destinations/{destination_id}/targets \
   -H "Content-Type: application/json" \
@@ -394,21 +567,25 @@ curl -sS -X PATCH http://localhost:8080/api/v1/destinations/{destination_id}/tar
 ```
 
 #### 5.6 驗證目的地目標
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/destinations/{destination_id}/validate | jq .
 ```
 
 #### 5.7 按項目獲取目的地
+
 ```bash
 curl -sS http://localhost:8080/api/v1/destinations/project/{project_id} | jq .
 ```
 
 #### 5.8 按機器人獲取目的地
+
 ```bash
 curl -sS http://localhost:8080/api/v1/destinations/bot/{bot_id} | jq .
 ```
 
 #### 5.9 搜索目的地
+
 ```bash
 curl -sS "http://localhost:8080/api/v1/destinations/search?q=測試" | jq .
 ```
@@ -416,11 +593,13 @@ curl -sS "http://localhost:8080/api/v1/destinations/search?q=測試" | jq .
 ### 6. Notification API 測試
 
 #### 6.1 獲取所有通知
+
 ```bash
 curl -sS http://localhost:8080/api/v1/notifications | jq .
 ```
 
 #### 6.2 發送通知
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
@@ -436,6 +615,7 @@ curl -sS -X POST http://localhost:8080/api/v1/notifications \
 ```
 
 #### 6.3 發送帶附件的通知
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
@@ -456,6 +636,7 @@ curl -sS -X POST http://localhost:8080/api/v1/notifications \
 ```
 
 #### 6.4 發送 Adaptive Card 通知
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
@@ -482,43 +663,153 @@ curl -sS -X POST http://localhost:8080/api/v1/notifications \
 ```
 
 #### 6.5 獲取特定通知
+
 ```bash
 curl -sS http://localhost:8080/api/v1/notifications/{notification_id} | jq .
 ```
 
 #### 6.6 重試通知
+
 ```bash
 curl -sS -X POST http://localhost:8080/api/v1/notifications/{notification_id}/retry | jq .
 ```
 
 #### 6.7 取消通知
+
 ```bash
 curl -sS -X DELETE http://localhost:8080/api/v1/notifications/{notification_id} | jq .
 ```
 
 #### 6.8 按項目獲取通知
+
 ```bash
 curl -sS http://localhost:8080/api/v1/notifications/project/{project_id} | jq .
 ```
 
 #### 6.9 按發送者獲取通知
+
 ```bash
 curl -sS http://localhost:8080/api/v1/notifications/sender/{sender_id} | jq .
 ```
 
 #### 6.10 按狀態獲取通知
+
 ```bash
 curl -sS http://localhost:8080/api/v1/notifications/status/{status} | jq .
 ```
 
 #### 6.11 按日期範圍獲取通知
+
 ```bash
 curl -sS "http://localhost:8080/api/v1/notifications/date-range?start_date=2025-09-01&end_date=2025-09-30" | jq .
 ```
 
+### 7. Messages / 主動訊息（Proactive）測試
+
+本節提供臨時測試端點，用於不經過資料庫，直接以 Bot Framework 主動發送簡訊給指定的 Teams 會話。
+
+#### 7.1 必填環境變數
+
+- `TEAMS_BOT_APP_ID`: 機器人 App ID
+- `TEAMS_BOT_APP_PASSWORD`: 機器人密鑰
+
+請在啟動服務前匯出環境變數：
+
+```bash
+export TEAMS_BOT_APP_ID="<your-bot-app-id>"
+export TEAMS_BOT_APP_PASSWORD="<your-bot-app-password>"
+go run ./cmd/server
+```
+
+#### 7.2 最小可用請求 Payload（需自行帶入實際值）
+
+```json
+{
+  "activity": {
+    "type": "installationUpdate",
+    "channelId": "msteams",
+    "serviceUrl": "https://smba.trafficmanager.net/apac/<tenantId>/",
+    "conversation": {
+      "conversationType": "personal",
+      "id": "<conversationId>",
+      "tenantId": "<tenantId>"
+    },
+    "from": {
+      "id": "<fromId>",
+      "aadObjectId": "<aadObjectId>"
+    },
+    "recipient": {
+      "id": "28:<TEAMS_BOT_APP_ID>"
+    },
+    "channelData": {
+      "tenant": {
+        "id": "<tenantId>"
+      }
+    }
+  },
+  "text": "這是一個主動訊息測試"
+}
+```
+
+必填欄位與說明：
+
+- `activity.serviceUrl`: Bot Framework endpoint（依租戶/區域）。
+- `activity.channelId`: 固定 `msteams`。
+- `activity.type`: 建議 `installationUpdate`，便於服務端解析欄位。
+- `activity.conversation.id`: 目標會話 ID（個人/群組/頻道）。
+- `activity.conversation.tenantId`: AAD 租戶 ID。
+- `activity.channelData.tenant.id`: AAD 租戶 ID（與上方一致）。
+- `activity.recipient.id`: Bot 成員 ID，通常為 `28:<TEAMS_BOT_APP_ID>`。
+- `activity.from.id`: 來源成員 ID（常由 Teams 事件提供）。
+- `text`: 要發送的訊息文字內容。
+
+#### 7.3 範例：使用現有測試資料發送
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/messages/proactive/test \
+  -H 'Content-Type: application/json' \
+  -d @- <<'JSON'
+{
+  "activity": {
+    "type": "installationUpdate",
+    "channelId": "msteams",
+    "serviceUrl": "https://smba.trafficmanager.net/apac/051cece0-e4dc-4aed-b471-bf29824e1ee6/",
+    "conversation": {
+      "conversationType": "personal",
+      "id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+    },
+    "from": {
+      "id": "29:1hr09MmriLZ1ymlHMEG_kFBtId2m8WRHaaxLtgJipvUflqrdoeOatXhzKA1LsQGZPOAMqrSEvoRNThsTlBxUcLw",
+      "aadObjectId": "8d40db4b-935f-4e5a-aaae-ba86faad0e12"
+    },
+    "recipient": {
+      "id": "28:844146d7-4ac9-4e4d-a463-d6e027714e81"
+    },
+    "channelData": {
+      "tenant": {
+        "id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+      }
+    }
+  },
+  "text": "這是一個主動訊息測試"
+}
+JSON
+```
+
+成功條件速查：
+
+- Token 取得：以 `tenantId` 組合 `https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token`。
+- 發送目的地：使用 `serviceUrl` 與 `conversation.id`。
+- 常見錯誤：
+  - 未設定或錯誤的 `TEAMS_BOT_APP_ID/TEAMS_BOT_APP_PASSWORD`
+  - `serviceUrl` 與租戶/區域不一致
+  - `conversation.id` 過期或非該租戶
+
 ## 批量測試腳本
 
 ### 完整 API 測試腳本
+
 ```bash
 #!/bin/bash
 
@@ -545,6 +836,7 @@ echo "✅ 所有 API 測試完成！"
 ```
 
 ### 性能測試腳本
+
 ```bash
 #!/bin/bash
 
@@ -566,6 +858,7 @@ echo "通知 API: $(curl -sS -w "%{time_total}s" -o /dev/null http://localhost:8
 ## 錯誤處理測試
 
 ### 測試無效的 ID
+
 ```bash
 # 測試不存在的公司 ID
 curl -sS http://localhost:8080/api/v1/companies/00000000-0000-0000-0000-000000000000 | jq .
@@ -575,6 +868,7 @@ curl -sS http://localhost:8080/api/v1/companies/invalid-uuid | jq .
 ```
 
 ### 測試無效的請求數據
+
 ```bash
 # 測試缺少必填字段
 curl -sS -X POST http://localhost:8080/api/v1/companies \
@@ -590,6 +884,7 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
 ## 數據驗證測試
 
 ### 測試 JSONB 字段
+
 ```bash
 # 測試複雜的 targets 數組
 curl -sS -X POST http://localhost:8080/api/v1/destinations \
@@ -624,6 +919,7 @@ curl -sS -X POST http://localhost:8080/api/v1/destinations \
 ```
 
 ### 測試中文內容
+
 ```bash
 # 測試中文公司名稱
 curl -sS -X POST http://localhost:8080/api/v1/companies \
@@ -650,12 +946,14 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
 ## 故障排除
 
 ### 常見錯誤
+
 1. **500 Internal Server Error**: 檢查服務器日誌
 2. **404 Not Found**: 檢查 API 路徑和 ID
 3. **400 Bad Request**: 檢查請求數據格式
 4. **422 Unprocessable Entity**: 檢查數據驗證規則
 
 ### 日誌查看
+
 ```bash
 # 查看服務器日誌
 tail -f server.log

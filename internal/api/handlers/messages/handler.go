@@ -1,49 +1,84 @@
 package messages
 
 import (
-    "encoding/json"
-    "net/http"
+	"encoding/json"
+	"log"
+	"net/http"
 
-    "github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-    "github.com/gin-gonic/gin"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
+	"github.com/gin-gonic/gin"
 )
 
 // Handler handles /api/messages webhook from Bot Framework
 type Handler struct {
-    service services.MessagesService
+	service services.MessagesService
 }
 
 func NewHandler(service services.MessagesService) *Handler {
-    return &Handler{service: service}
+	return &Handler{service: service}
 }
 
 // Handle receives Bot Framework Activity and persists installation info
 func (h *Handler) Handle(c *gin.Context) {
-    var act services.Activity
-    var raw map[string]any
+	var act services.Activity
+	var raw map[string]any
 
-    if err := c.ShouldBindJSON(&raw); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload", "details": err.Error()})
-        return
-    }
+	if err := c.ShouldBindJSON(&raw); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload", "details": err.Error()})
+		return
+	}
 
-    // Best-effort map to typed Activity
-    if err := mapToStruct(raw, &act); err != nil {
-        // proceed with minimal fields if mapping fails
-    }
+	// Log full payload
+	if b, err := json.MarshalIndent(raw, "", "  "); err == nil {
+		log.Printf("/api/v1/messages payload: %s", string(b))
+	}
 
-    if err := h.service.HandleActivity(c.Request.Context(), &act, raw); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	// Best-effort map to typed Activity
+	if err := mapToStruct(raw, &act); err != nil {
+		// proceed with minimal fields if mapping fails
+	}
+
+	if err := h.service.HandleActivity(c.Request.Context(), &act, raw); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// ProactiveTestRequest represents the payload to send a proactive message without DB
+type ProactiveTestRequest struct {
+	Activity map[string]any `json:"activity"` // the installationUpdate payload
+	Text     string         `json:"text"`     // message to send
+}
+
+// ProactiveTest sends a proactive message to the provided conversation using env creds
+func (h *Handler) ProactiveTest(c *gin.Context) {
+	var req ProactiveTestRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload", "details": err.Error()})
+		return
+	}
+	if req.Activity == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "activity is required"})
+		return
+	}
+	if req.Text == "" {
+		req.Text = "Hello from proactive test"
+	}
+
+	// Use service to send proactive without DB
+	if err := h.service.SendProactiveTest(c.Request.Context(), req.Activity, req.Text); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "sent"})
 }
 
 // mapToStruct marshals then unmarshals to map into struct
 func mapToStruct(m map[string]any, out any) error {
-    b, err := json.Marshal(m)
-    if err != nil { return err }
-    return json.Unmarshal(b, out)
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, out)
 }
-
-

@@ -142,7 +142,8 @@ func handleMessages(w http.ResponseWriter, r *http.Request) {
 	// 	// 不阻擋 200，避免 Teams 重送（你也可回 502 讓它重試）
 	// }
 	// log.Printf("ReplyText: end")
-	singleConversation := "a:1TRu8CjpyEoKXjA2TUhxbLN-5TvJKwzuzwcyTvxkOmBC7A3Ty2GbGiO14h_ZpT4OUaExpjc1xnwNEJkJ9UsSD3pIrLHIZP9LB1KMTuvbfrQtW829RkSazvaIztlqg8P3L"
+	// `singleConversation := "a:1TRu8CjpyEoKXjA2TUhxbLN-5TvJKwzuzwcyTvxkOmBC7A3Ty2GbGiO14h_ZpT4OUaExpjc1xnwNEJkJ9UsSD3pIrLHIZP9LB1KMTuvbfrQtW829RkSazvaIztlqg8P3L"
+	singleConversation := "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
 	// groupConversation := "19:7f469298f07f4abca81d21ad980095fb@thread.v2"
 	groupConversation := "19:0a608973d8484d30981e68f1ed45a5c8@thread.v2" // test group
 	conversationID := ""
@@ -184,7 +185,7 @@ func handleProactive(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	serviceUrl := "https://smba.trafficmanager.net/apac/051cece0-e4dc-4aed-b471-bf29824e1ee6/"
 	conversationID := "a:1TRu8CjpyEoKXjA2TUhxbLN-5TvJKwzuzwcyTvxkOmBC7A3Ty2GbGiO14h_ZpT4OUaExpjc1xnwNEJkJ9UsSD3pIrLHIZP9LB1KMTuvbfrQtW829RkSazvaIztlqg8P3L"
-	userID := "29:1FrpqFNZ44LuLurxUt5tpSed4vXWXTdi428VAbwv9FSK-cI4UWRtIKdwEwFKCehU48w1hrQvIc5AXAoUtNKKBYg "
+	userID := "29:1FrpqFNZ44LuLurxUt5tpSed4vXWXTdi428VAbwv9FSK-cI4UWRtIKdwEwFKCehU48w1hrQvIc5AXAoUtNKKBYg"
 	botID := "28:844146d7-4ac9-4e4d-a463-d6e027714e81"
 
 	for i := 0; i < 1000; i++ {

@@ -1,16 +1,22 @@
 package services
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "strings"
-    "time"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 
-    "github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-    "github.com/evencycu/TeamsNotifyGoV2/internal/database"
-    "github.com/google/uuid"
-    "golang.org/x/crypto/bcrypt"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Service interface defines common service operations
@@ -457,90 +463,270 @@ type NotificationService interface {
 
 // Activity minimal for Bot Framework events
 type Activity struct {
-    Type       string `json:"type"`
-    ServiceURL string `json:"serviceUrl"`
-    From       struct{ ID string `json:"id"` } `json:"from"`
-    Recipient  struct{ ID string `json:"id"` } `json:"recipient"`
-    Conversation struct{ ID string `json:"id"` } `json:"conversation"`
-    ChannelID string           `json:"channelId"`
-    Locale    string           `json:"locale"`
-    ChannelData map[string]any `json:"channelData"`
+	Type       string `json:"type"`
+	ServiceURL string `json:"serviceUrl"`
+	From       struct {
+		ID string `json:"id"`
+	} `json:"from"`
+	Recipient struct {
+		ID string `json:"id"`
+	} `json:"recipient"`
+	Conversation struct {
+		ID string `json:"id"`
+	} `json:"conversation"`
+	ChannelID   string         `json:"channelId"`
+	Locale      string         `json:"locale"`
+	ChannelData map[string]any `json:"channelData"`
 }
 
 type MessagesService interface {
-    HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error
+	HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error
+	SendProactiveTest(ctx context.Context, activity map[string]any, text string) error
 }
 
 type messagesService struct {
-    platformRepo repositories.PlatformBotRepository
-    installRepo  repositories.BotInstallationRepository
-    defaultTenantID string
+	platformRepo    repositories.PlatformBotRepository
+	installRepo     repositories.BotInstallationRepository
+	defaultTenantID string
 }
 
 func NewMessagesService(platformRepo repositories.PlatformBotRepository, installRepo repositories.BotInstallationRepository, defaultTenantID string) MessagesService {
-    return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
+	return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
 }
 
 func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error {
-    if act == nil {
-        return errors.New("nil activity")
-    }
-    // Extract appId from recipient.id like "28:<APPID>"
-    appID := ""
-    if rid := act.Recipient.ID; rid != "" {
-        if strings.HasPrefix(rid, "28:") && len(rid) > 3 {
-            appID = rid[3:]
-        }
-    }
-    if appID == "" {
-        return errors.New("cannot determine app_id from recipient.id")
-    }
+	if act == nil {
+		return errors.New("nil activity")
+	}
+	// Extract appId from recipient.id like "28:<APPID>"
+	appID := ""
+	if rid := act.Recipient.ID; rid != "" {
+		if strings.HasPrefix(rid, "28:") && len(rid) > 3 {
+			appID = rid[3:]
+		}
+	}
+	if appID == "" {
+		return errors.New("cannot determine app_id from recipient.id")
+	}
 
-    // Find platform bot by app_id
-    bot, err := s.platformRepo.GetByAppID(ctx, appID)
-    if err != nil {
-        return err
-    }
+	// Find platform bot by app_id
+	bot, err := s.platformRepo.GetByAppID(ctx, appID)
+	if err != nil {
+		return err
+	}
 
-    // Determine tenant id
-    tenantID := s.defaultTenantID
-    if t, ok := rawPayload["tenant"].(map[string]any); ok {
-        if tid, ok2 := t["id"].(string); ok2 && tid != "" {
-            tenantID = tid
-        }
-    }
-    if tenantID == "" {
-        if cd, ok := act.ChannelData["tenant"].(map[string]any); ok {
-            if tid, ok2 := cd["id"].(string); ok2 && tid != "" {
-                tenantID = tid
-            }
-        }
-    }
-    if tenantID == "" {
-        tenantID = "unknown-tenant"
-    }
+	// Determine tenant id
+	tenantID := s.defaultTenantID
+	if t, ok := rawPayload["tenant"].(map[string]any); ok {
+		if tid, ok2 := t["id"].(string); ok2 && tid != "" {
+			tenantID = tid
+		}
+	}
+	if tenantID == "" {
+		if cd, ok := act.ChannelData["tenant"].(map[string]any); ok {
+			if tid, ok2 := cd["id"].(string); ok2 && tid != "" {
+				tenantID = tid
+			}
+		}
+	}
+	if tenantID == "" {
+		tenantID = "unknown-tenant"
+	}
 
-    // Prepare installation entity
-    now := time.Now()
-    inst := &database.BotInstallation{
-        BotID:              bot.ID,
-        BotType:            database.BotType("platform"),
-        TeamsTenantID:      tenantID,
-        TeamsTeamID:        "",
-        TeamsChannelID:     act.Conversation.ID,
-        TeamsUserID:        act.From.ID,
-        InstallationStatus: "active",
-        InstalledAt:        now,
-        UninstalledAt:      nil,
-        Metadata:           rawPayload,
-    }
-    return s.installRepo.Upsert(ctx, inst)
+	// Determine conversation details
+	conversationID := act.Conversation.ID
+	serviceURL := ""
+
+	// Extract service URL from raw payload
+	if su, ok := rawPayload["serviceUrl"].(string); ok && su != "" {
+		serviceURL = su
+	}
+
+	// Determine conversation type from Teams event
+	conversationType := "personal"
+	if convType, ok := rawPayload["conversation"].(map[string]any); ok {
+		if ct, ok := convType["conversationType"].(string); ok {
+			switch ct {
+			case "personal":
+				conversationType = "personal"
+			case "channel":
+				conversationType = "channel"
+			case "groupChat":
+				conversationType = "groupChat"
+			}
+		}
+	}
+
+	// Extract AAD Object ID and names
+	aadObjectID := ""
+	fromName := ""
+	recipientName := ""
+	if from, ok := rawPayload["from"].(map[string]any); ok {
+		if aad, ok := from["aadObjectId"].(string); ok {
+			aadObjectID = aad
+		}
+		if name, ok := from["name"].(string); ok {
+			fromName = name
+		}
+	}
+	if recipient, ok := rawPayload["recipient"].(map[string]any); ok {
+		if name, ok := recipient["name"].(string); ok {
+			recipientName = name
+		}
+	}
+
+	// Prepare installation entity
+	now := time.Now()
+	inst := &database.BotInstallation{
+		BotID:              bot.ID,
+		BotType:            database.BotType("platform"),
+		TeamsTenantID:      tenantID,
+		ConversationType:   conversationType,
+		ConversationID:     conversationID,
+		ServiceURL:         serviceURL,
+		RecipientID:        act.Recipient.ID,
+		RecipientName:      recipientName,
+		FromID:             act.From.ID,
+		FromName:           fromName,
+		FromAADObjectID:    aadObjectID,
+		InstallationStatus: "active",
+		InstalledAt:        now,
+		UninstalledAt:      nil,
+		LastActivityAt:     &now,
+		Metadata:           rawPayload,
+	}
+	return s.installRepo.Upsert(ctx, inst)
+}
+
+// SendProactiveTest sends a simple proactive text message using provided activity payload (no DB)
+func (s *messagesService) SendProactiveTest(ctx context.Context, activity map[string]any, text string) error {
+	// Extract required fields
+	serviceURL, _ := activity["serviceUrl"].(string)
+	if serviceURL == "" {
+		return errors.New("serviceUrl missing in activity")
+	}
+	conv, _ := activity["conversation"].(map[string]any)
+	convID, _ := conv["id"].(string)
+	if convID == "" {
+		return errors.New("conversation.id missing in activity")
+	}
+	// tenant id from conversation.tenantId or channelData.tenant.id
+	tenantID, _ := conv["tenantId"].(string)
+	if tenantID == "" {
+		if cd, ok := activity["channelData"].(map[string]any); ok {
+			if t, ok2 := cd["tenant"].(map[string]any); ok2 {
+				if tid, ok3 := t["id"].(string); ok3 {
+					tenantID = tid
+				}
+			}
+		}
+	}
+	if tenantID == "" {
+		tenantID = s.defaultTenantID
+	}
+	recipient, _ := activity["recipient"].(map[string]any)
+	recipientID, _ := recipient["id"].(string) // e.g., "28:<APPID>"
+	from, _ := activity["from"].(map[string]any)
+	fromID, _ := from["id"].(string)
+	// In proactive sample: from = botID, recipient = userID
+	botID := recipientID
+	userID := fromID
+
+	// Acquire token from Bot Framework (using env vars)
+	clientID := getEnv("TEAMS_BOT_APP_ID", "")
+	clientSecret := getEnv("TEAMS_BOT_APP_PASSWORD", "")
+	if clientID == "" || clientSecret == "" {
+		return errors.New("TEAMS_BOT_APP_ID/TEAMS_BOT_APP_PASSWORD are required in env")
+	}
+	token, err := fetchBotFrameworkToken(ctx, tenantID, clientID, clientSecret)
+	if err != nil {
+		return fmt.Errorf("failed to fetch token: %w", err)
+	}
+
+	// Build activity payload
+	msg := map[string]any{
+		"type":         "message",
+		"text":         text,
+		"from":         map[string]any{"id": botID},
+		"recipient":    map[string]any{"id": userID},
+		"conversation": map[string]any{"id": convID},
+	}
+	body, _ := jsonMarshal(msg)
+
+	// POST to {serviceUrl}/v3/conversations/{conversationId}/activities
+	endpoint := strings.TrimRight(serviceURL, "/") + "/v3/conversations/" + url.PathEscape(convID) + "/activities"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("botframework send failed: %s: %s", resp.Status, string(b))
+	}
+	return nil
+}
+
+// fetchBotFrameworkToken performs client credentials to get BF token
+func fetchBotFrameworkToken(ctx context.Context, tenantID, clientID, clientSecret string) (string, error) {
+	if tenantID == "" {
+		tenantID = "botframework.com"
+	}
+	form := url.Values{}
+	form.Set("grant_type", "client_credentials")
+	form.Set("client_id", clientID)
+	form.Set("client_secret", clientSecret)
+	form.Set("scope", "https://api.botframework.com/.default")
+	tokenURL := "https://login.microsoftonline.com/" + url.PathEscape(tenantID) + "/oauth2/v2.0/token"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("token request failed: %s: %s", resp.Status, string(b))
+	}
+	var tr struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := jsonNewDecoder(resp.Body).Decode(&tr); err != nil {
+		return "", err
+	}
+	if tr.AccessToken == "" {
+		return "", errors.New("empty access_token")
+	}
+	return tr.AccessToken, nil
+}
+
+// Helpers for local package to avoid importing encoding/json directly at top
+func jsonMarshal(v any) ([]byte, error)        { return json.Marshal(v) }
+func jsonNewDecoder(r io.Reader) *json.Decoder { return json.NewDecoder(r) }
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
 	ProjectID    uuid.UUID              `json:"project_id" validate:"required"`
-	SenderID     uuid.UUID              `json:"sender_id" validate:"required"`
+	SenderID     *uuid.UUID             `json:"sender_id"`
 	MessageType  string                 `json:"message_type" validate:"required,oneof=text file adaptive_card"`
 	Content      string                 `json:"content" validate:"required,max=4000"`
 	Mentions     []string               `json:"mentions"`
@@ -1093,12 +1279,13 @@ func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) 
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository) NotificationService {
-	return &notificationService{repo: repo}
+func NewNotificationService(repo repositories.NotificationRepository, broadcaster BroadcastService) NotificationService {
+	return &notificationService{repo: repo, broadcaster: broadcaster}
 }
 
 type notificationService struct {
-	repo repositories.NotificationRepository
+	repo        repositories.NotificationRepository
+	broadcaster BroadcastService
 }
 
 // Create creates a new notification
@@ -1207,12 +1394,18 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 		Attachment:   attachment,
 		AdaptiveCard: adaptiveCard,
 		Priority:     req.Priority,
-		Status:       "pending",
+		Status:       "sent",
 		Metadata:     database.JSONBObject(req.Metadata),
 	}
 
-	// TODO: Implement actual notification sending logic
-	// For now, just create the notification record
+	// Send to destinations first
+	if s.broadcaster != nil && len(req.Destinations) > 0 {
+		if _, err := s.broadcaster.SendToDestinations(ctx, req.Destinations, req.Content); err != nil {
+			return nil, fmt.Errorf("failed to send message to destinations: %w", err)
+		}
+	}
+
+	// After successful send, persist the record
 	notification.ID = uuid.New()
 	notification.CreatedAt = time.Now()
 	notification.UpdatedAt = time.Now()

@@ -42,7 +42,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
 	ProjectID    uuid.UUID              `json:"project_id" validate:"required"`
-	SenderID     uuid.UUID              `json:"sender_id" validate:"required"`
+	SenderID     *uuid.UUID             `json:"sender_id"`
 	MessageType  string                 `json:"message_type" validate:"required,oneof=text file adaptive_card"`
 	Content      string                 `json:"content" validate:"required,max=4000"`
 	Mentions     []string               `json:"mentions"`
