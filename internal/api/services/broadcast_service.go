@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -310,15 +312,19 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 			}
 
 			// Get bot credentials
-			// 若 DB 取不到，退回使用環境變數
+			// 優先從資料庫獲取，如果沒有則使用環境變數
 			appID := ""
 			appPassword := ""
+
 			if bot, err := s.platformRepo.GetByID(ctx, matchedInstallation.BotID); err == nil {
 				appID = bot.AppID
 				appPassword = bot.AppPasswordHash
+				log.Printf("Using DB credentials: appID=%s, password length=%d", appID, len(appPassword))
 			} else {
+				// 如果資料庫獲取失敗，使用環境變數
 				appID = os.Getenv("TEAMS_BOT_APP_ID")
 				appPassword = os.Getenv("TEAMS_BOT_APP_PASSWORD")
+				log.Printf("Using env credentials: appID=%s, password length=%d", appID, len(appPassword))
 			}
 
 			// Send message
@@ -349,10 +355,13 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 // sendToInstallation sends a message to a specific installation
 func (s *broadcastService) sendToInstallation(ctx context.Context, inst *database.BotInstallation, appID, appPassword, message string) TargetResult {
 	start := time.Now()
+	log.Printf("sendToInstallation: Starting for installation %s, conversation %s", inst.ID, inst.ConversationID)
 
 	// Get token
+	log.Printf("sendToInstallation: Getting token for tenant %s, appID %s", inst.TeamsTenantID, appID)
 	token, err := s.getConnectorToken(ctx, inst.TeamsTenantID, appID, appPassword)
 	if err != nil {
+		log.Printf("sendToInstallation: Failed to get token: %v", err)
 		return TargetResult{
 			TargetID:       inst.ConversationID,
 			ConversationID: inst.ConversationID,
@@ -362,6 +371,7 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 			ResponseTime:   time.Since(start),
 		}
 	}
+	log.Printf("sendToInstallation: Successfully got token")
 
 	// Prepare message payload
 	payload := map[string]any{
@@ -384,9 +394,11 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 	// Send message
 	url := inst.ServiceURL + "/v3/conversations/" + inst.ConversationID + "/activities"
 	reqBody, _ := json.Marshal(payload)
+	log.Printf("sendToInstallation: Prepared payload: %s", string(reqBody))
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, strings.NewReader(string(reqBody)))
 	if err != nil {
+		log.Printf("sendToInstallation: Failed to create request: %v", err)
 		return TargetResult{
 			TargetID:       inst.ConversationID,
 			ConversationID: inst.ConversationID,
@@ -399,10 +411,11 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
-
+	log.Printf("sendToInstallation: Sending request to %s, conversation_id=%s", url, inst.ConversationID)
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("sendToInstallation: Failed to send request: %v", err)
 		return TargetResult{
 			TargetID:       inst.ConversationID,
 			ConversationID: inst.ConversationID,
@@ -414,7 +427,11 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 	}
 	defer resp.Body.Close()
 
+	log.Printf("sendToInstallation: Received response status %d: %s", resp.StatusCode, resp.Status)
+
 	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("sendToInstallation: Error response body: %s", string(body))
 		return TargetResult{
 			TargetID:       inst.ConversationID,
 			ConversationID: inst.ConversationID,
@@ -455,52 +472,59 @@ func (s *broadcastService) getConnectorToken(ctx context.Context, tenantID, appI
 	// In production, you'd implement proper OAuth2 Client Credentials flow
 	// For now, we'll use the same logic as in the existing MessagesService
 
-	// Use tenant-specific endpoint
-	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID)
-
-	// Prepare request
-	data := map[string]string{
-		"grant_type":    "client_credentials",
-		"client_id":     appID,
-		"client_secret": appPassword,
-		"scope":         "https://api.botframework.com/.default",
+	// Use the same implementation as proactive message test
+	if tenantID == "" {
+		tenantID = "botframework.com"
 	}
 
-	// Send request
-	reqBody := make([]string, 0, len(data))
-	for k, v := range data {
-		reqBody = append(reqBody, fmt.Sprintf("%s=%s", k, v))
-	}
+	log.Printf("getConnectorToken: Requesting token from tenant %s, appID %s", tenantID, appID)
 
-	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, strings.NewReader(strings.Join(reqBody, "&")))
+	form := url.Values{}
+	form.Set("grant_type", "client_credentials")
+	form.Set("client_id", appID)
+	form.Set("client_secret", appPassword)
+	form.Set("scope", "https://api.botframework.com/.default")
+
+	tokenURL := "https://login.microsoftonline.com/" + url.PathEscape(tenantID) + "/oauth2/v2.0/token"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
+		log.Printf("getConnectorToken: Failed to create request: %v", err)
 		return "", err
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	resp, err := httpClient.Do(req)
 	if err != nil {
+		log.Printf("getConnectorToken: HTTP request failed: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("token request failed: %d %s", resp.StatusCode, resp.Status)
+	log.Printf("getConnectorToken: Response status: %d %s", resp.StatusCode, resp.Status)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("getConnectorToken: Error response body: %s", string(body))
+		return "", fmt.Errorf("token request failed: %s: %s", resp.Status, string(body))
 	}
 
-	var tokenResp map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+	var tr struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tr); err != nil {
+		log.Printf("getConnectorToken: Failed to decode response: %v", err)
 		return "", err
 	}
 
-	accessToken, ok := tokenResp["access_token"].(string)
-	if !ok {
-		return "", fmt.Errorf("no access token in response")
+	if tr.AccessToken == "" {
+		log.Printf("getConnectorToken: Empty access token in response")
+		return "", fmt.Errorf("empty access_token")
 	}
 
-	return accessToken, nil
+	log.Printf("getConnectorToken: Successfully got token")
+	return tr.AccessToken, nil
 }
 
 // matchesTarget checks if an installation matches a target
