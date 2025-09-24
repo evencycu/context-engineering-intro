@@ -23,7 +23,7 @@ CREATE TABLE destinations (
     teams_tenant_id VARCHAR(255) NOT NULL,
     targets JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of Teams targets
     bot_id UUID, -- 主要使用的 Bot
-    bot_type bot_type,
+    -- bot_type removed; destination always implies platform bot
     status VARCHAR(20) DEFAULT 'active',
     validation_status VARCHAR(20) DEFAULT 'pending',
     last_validated_at TIMESTAMP WITH TIME ZONE,

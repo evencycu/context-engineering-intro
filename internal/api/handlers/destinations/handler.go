@@ -47,16 +47,14 @@ type CreateDestinationRequest struct {
 	TeamsTenantID string                `json:"teams_tenant_id" validate:"required"`
 	Targets       database.JSONBTargets `json:"targets" validate:"required,min=1"`
 	BotID         *uuid.UUID            `json:"bot_id,omitempty"`
-	BotType       *database.BotType     `json:"bot_type,omitempty"`
 	CreatedBy     uuid.UUID             `json:"created_by" validate:"required"`
 }
 
 // UpdateDestinationRequest represents an update destination request
 type UpdateDestinationRequest struct {
-	Name        string            `json:"name" validate:"omitempty,min=2,max=255"`
-	Description string            `json:"description" validate:"omitempty,min=10,max=500"`
-	BotID       *uuid.UUID        `json:"bot_id,omitempty"`
-	BotType     *database.BotType `json:"bot_type,omitempty"`
+	Name        string     `json:"name" validate:"omitempty,min=2,max=255"`
+	Description string     `json:"description" validate:"omitempty,min=10,max=500"`
+	BotID       *uuid.UUID `json:"bot_id,omitempty"`
 }
 
 // UpdateTargetsRequest represents an update targets request
@@ -101,7 +99,6 @@ func (h *Handler) CreateDestination(c *gin.Context) {
 		TeamsTenantID:    req.TeamsTenantID,
 		Targets:          req.Targets,
 		BotID:            req.BotID,
-		BotType:          req.BotType,
 		Status:           "active",  // Default status
 		ValidationStatus: "pending", // Default validation status
 		CreatedBy:        req.CreatedBy,
@@ -268,9 +265,7 @@ func (h *Handler) UpdateDestination(c *gin.Context) {
 	if req.BotID != nil {
 		existingDestination.BotID = req.BotID
 	}
-	if req.BotType != nil {
-		existingDestination.BotType = req.BotType
-	}
+	// bot_type removed; destination always implies platform bot
 
 	// Update destination
 	updateReq := &services.UpdateRequest[database.Destination]{

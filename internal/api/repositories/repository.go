@@ -30,10 +30,10 @@ type CompanyRepository interface {
 
 // BotRepository defines bot-specific operations
 type BotRepository interface {
-	Repository[database.PlatformBot]
-	GetByAppID(ctx context.Context, appID string) (*database.PlatformBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.PlatformBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.PlatformBot, error)
+	Repository[database.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
 }
 
 // DestinationRepository defines destination-specific operations
@@ -385,29 +385,29 @@ func (r *projectRepository) GetByStatus(ctx context.Context, status string) ([]*
 	return projects, err
 }
 
-// PlatformBotRepository defines the interface for platform bot operations
-type PlatformBotRepository interface {
-	Repository[database.PlatformBot]
-	GetByAppID(ctx context.Context, appID string) (*database.PlatformBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.PlatformBot, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.PlatformBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.PlatformBot, error)
+// TeamsBotRepository defines the interface for bot operations
+type TeamsBotRepository interface {
+	Repository[database.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
 }
 
-// platformBotRepository implements PlatformBotRepository
-type platformBotRepository struct {
+// teamsBotRepository implements TeamsBotRepository
+type teamsBotRepository struct {
 	db *sqlx.DB
 }
 
-// NewPlatformBotRepository creates a new platform bot repository
-func NewPlatformBotRepository(db *sqlx.DB) PlatformBotRepository {
-	return &platformBotRepository{db: db}
+// NewTeamsBotRepository creates a new bot repository
+func NewTeamsBotRepository(db *sqlx.DB) TeamsBotRepository {
+	return &teamsBotRepository{db: db}
 }
 
 // Create creates a new platform bot
-func (r *platformBotRepository) Create(ctx context.Context, entity *database.PlatformBot) error {
-	query := `INSERT INTO platform_bots (id, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+func (r *teamsBotRepository) Create(ctx context.Context, entity *database.TeamsBot) error {
+	query := `INSERT INTO teams_bots (id, type, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) 
+			  VALUES ($1, 'platform', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	// Convert capabilities to JSONB
 	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
@@ -423,12 +423,12 @@ func (r *platformBotRepository) Create(ctx context.Context, entity *database.Pla
 }
 
 // GetByID retrieves a platform bot by ID
-func (r *platformBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.PlatformBot, error) {
-	var bot database.PlatformBot
+func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.TeamsBot, error) {
+	var bot database.TeamsBot
 	var capabilitiesJSON []byte
 	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
 			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
-			  FROM platform_bots WHERE id = $1`
+			  FROM teams_bots WHERE type = 'platform' AND id = $1`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.Name, &bot.Description,
 		&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
@@ -451,11 +451,11 @@ func (r *platformBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*dat
 }
 
 // Update updates an existing platform bot
-func (r *platformBotRepository) Update(ctx context.Context, entity *database.PlatformBot) error {
-	query := `UPDATE platform_bots SET name = $2, description = $3, app_id = $4, app_password_hash = $5, 
+func (r *teamsBotRepository) Update(ctx context.Context, entity *database.TeamsBot) error {
+	query := `UPDATE teams_bots SET name = $2, description = $3, app_id = $4, app_password_hash = $5, 
 			  tenant_id = $6, status = $7, webhook_url = $8, capabilities = $9, rate_limit_per_minute = $10, 
 			  max_concurrent_requests = $11, updated_at = $12 
-			  WHERE id = $1`
+			  WHERE id = $1 AND type = 'platform'`
 
 	// Convert capabilities to JSONB
 	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
@@ -471,26 +471,26 @@ func (r *platformBotRepository) Update(ctx context.Context, entity *database.Pla
 }
 
 // Delete deletes a platform bot by ID
-func (r *platformBotRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM platform_bots WHERE id = $1`
+func (r *teamsBotRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM teams_bots WHERE id = $1 AND type = 'platform'`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
 
 // List retrieves platform bots with pagination
-func (r *platformBotRepository) List(ctx context.Context, limit, offset int) ([]*database.PlatformBot, error) {
+func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*database.TeamsBot, error) {
 	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
 			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
-			  FROM platform_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+			  FROM teams_bots WHERE type = 'platform' ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	rows, err := r.db.QueryContext(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var bots []*database.PlatformBot
+	var bots []*database.TeamsBot
 	for rows.Next() {
-		var bot database.PlatformBot
+		var bot database.TeamsBot
 		var capabilitiesJSON []byte
 		err := rows.Scan(
 			&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.Name, &bot.Description,
@@ -517,17 +517,17 @@ func (r *platformBotRepository) List(ctx context.Context, limit, offset int) ([]
 }
 
 // Count returns the total number of platform bots
-func (r *platformBotRepository) Count(ctx context.Context) (int64, error) {
+func (r *teamsBotRepository) Count(ctx context.Context) (int64, error) {
 	var count int64
-	query := `SELECT COUNT(*) FROM platform_bots`
+	query := `SELECT COUNT(*) FROM teams_bots WHERE type = 'platform'`
 	err := r.db.GetContext(ctx, &count, query)
 	return count, err
 }
 
-// GetByAppID retrieves a platform bot by app ID
-func (r *platformBotRepository) GetByAppID(ctx context.Context, appID string) (*database.PlatformBot, error) {
-	var bot database.PlatformBot
-	query := `SELECT * FROM platform_bots WHERE app_id = $1`
+// GetByAppID retrieves a bot by app ID (any type)
+func (r *teamsBotRepository) GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error) {
+	var bot database.TeamsBot
+	query := `SELECT * FROM teams_bots WHERE app_id = $1`
 	err := r.db.GetContext(ctx, &bot, query, appID)
 	if err != nil {
 		return nil, err
@@ -536,35 +536,27 @@ func (r *platformBotRepository) GetByAppID(ctx context.Context, appID string) (*
 }
 
 // GetByStatus retrieves platform bots by status
-func (r *platformBotRepository) GetByStatus(ctx context.Context, status string) ([]*database.PlatformBot, error) {
-	var bots []*database.PlatformBot
-	query := `SELECT * FROM platform_bots WHERE status = $1 ORDER BY created_at DESC`
+func (r *teamsBotRepository) GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error) {
+	var bots []*database.TeamsBot
+	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, status)
 	return bots, err
 }
 
 // GetByCompanyID retrieves platform bots by company ID
-func (r *platformBotRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.PlatformBot, error) {
-	var bots []*database.PlatformBot
-	query := `SELECT * FROM platform_bots WHERE company_id = $1 ORDER BY created_at DESC`
+func (r *teamsBotRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error) {
+	var bots []*database.TeamsBot
+	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND company_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, companyID)
 	return bots, err
 }
 
 // GetByTenantID retrieves platform bots by tenant ID
-func (r *platformBotRepository) GetByTenantID(ctx context.Context, tenantID string) ([]*database.PlatformBot, error) {
-	var bots []*database.PlatformBot
-	query := `SELECT * FROM platform_bots WHERE tenant_id = $1 ORDER BY created_at DESC`
+func (r *teamsBotRepository) GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error) {
+	var bots []*database.TeamsBot
+	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND tenant_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, tenantID)
 	return bots, err
-}
-
-// ThirdPartyBotRepository defines the interface for third-party bot operations
-type ThirdPartyBotRepository interface {
-	Repository[database.ThirdPartyBot]
-	GetByAppID(ctx context.Context, appID string) (*database.ThirdPartyBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.ThirdPartyBot, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.ThirdPartyBot, error)
 }
 
 // BotInstallationRepository defines operations for bot_installations
@@ -577,6 +569,7 @@ type BotInstallationRepository interface {
 	GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error)
 	UpdateActivity(ctx context.Context, id uuid.UUID) error
 	MarkAsStale(ctx context.Context, id uuid.UUID) error
+	MarkAsUninstalled(ctx context.Context, id uuid.UUID) error
 }
 
 type botInstallationRepository struct {
@@ -597,13 +590,13 @@ func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database
 
 	query := `
         INSERT INTO bot_installations (
-            id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
-            recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+            bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+            recipient_id, recipient_name, from_id, from_name, from_aad_object_id, email, description_name,
             installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7,
-            $8, $9, $10, $11, $12,
-            $13, COALESCE($14, NOW()), $15, $16, COALESCE($17, NOW()), COALESCE($18, NOW())
+            $1, $2, $3, $4, $5, $6,
+            $7, $8, $9, $10, $11, $12, $13,
+            $14, COALESCE($15, NOW()), $16, $17, COALESCE($18, NOW()), COALESCE($19, NOW())
         )
         ON CONFLICT (bot_id, bot_type, teams_tenant_id, conversation_id)
         DO UPDATE SET
@@ -614,16 +607,18 @@ func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database
             from_id = EXCLUDED.from_id,
             from_name = EXCLUDED.from_name,
             from_aad_object_id = EXCLUDED.from_aad_object_id,
+            email = EXCLUDED.email,
+            description_name = EXCLUDED.description_name,
             installation_status = EXCLUDED.installation_status,
             uninstalled_at = EXCLUDED.uninstalled_at,
             metadata = EXCLUDED.metadata,
-            updated_at = NOW();
+            updated_at = NOW()
+        RETURNING id;
     `
 
-	_, err = r.db.ExecContext(
+	return r.db.QueryRowContext(
 		ctx,
 		query,
-		entity.ID,
 		entity.BotID,
 		entity.BotType,
 		entity.TeamsTenantID,
@@ -635,14 +630,15 @@ func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database
 		entity.FromID,
 		entity.FromName,
 		entity.FromAADObjectID,
+		entity.Email,
+		entity.DescriptionName,
 		entity.InstallationStatus,
 		entity.InstalledAt,
 		entity.UninstalledAt,
 		metadataJSON,
 		entity.CreatedAt,
 		entity.UpdatedAt,
-	)
-	return err
+	).Scan(&entity.ID)
 }
 
 // GetByBotAndTenant retrieves installations for a specific bot and tenant
@@ -741,167 +737,11 @@ func (r *botInstallationRepository) MarkAsStale(ctx context.Context, id uuid.UUI
 	return err
 }
 
-// thirdPartyBotRepository implements ThirdPartyBotRepository
-type thirdPartyBotRepository struct {
-	db *sqlx.DB
-}
-
-// NewThirdPartyBotRepository creates a new third-party bot repository
-func NewThirdPartyBotRepository(db *sqlx.DB) ThirdPartyBotRepository {
-	return &thirdPartyBotRepository{db: db}
-}
-
-// Create creates a new third-party bot
-func (r *thirdPartyBotRepository) Create(ctx context.Context, entity *database.ThirdPartyBot) error {
-	query := `INSERT INTO third_party_bots (id, company_id, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, api_endpoint, api_key_hash, capabilities, rate_limit_per_minute, max_concurrent_requests, contact_email, contact_phone, created_by, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`
-
-	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
-	if err != nil {
-		return fmt.Errorf("failed to marshal capabilities: %w", err)
-	}
-
-	_, err = r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.Name, entity.Description, entity.AppID, entity.AppPasswordHash,
-		entity.TenantID, entity.Status, entity.WebhookURL, entity.APIEndpoint, entity.APIKeyHash,
-		capabilitiesJSON, entity.RateLimitPerMinute, entity.MaxConcurrentRequests,
-		entity.ContactEmail, entity.ContactPhone, entity.CreatedBy, entity.CreatedAt, entity.UpdatedAt)
-	return err
-}
-
-// GetByID retrieves a third-party bot by ID
-func (r *thirdPartyBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.ThirdPartyBot, error) {
-	var bot database.ThirdPartyBot
-	var capabilitiesJSON []byte
-	query := `SELECT id, created_at, updated_at, company_id, name, description, app_id, app_password_hash, 
-			  tenant_id, status, webhook_url, api_endpoint, api_key_hash, capabilities, rate_limit_per_minute, 
-			  max_concurrent_requests, contact_email, contact_phone, created_by 
-			  FROM third_party_bots WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.CompanyID, &bot.Name, &bot.Description,
-		&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
-		&bot.APIEndpoint, &bot.APIKeyHash, &capabilitiesJSON, &bot.RateLimitPerMinute,
-		&bot.MaxConcurrentRequests, &bot.ContactEmail, &bot.ContactPhone, &bot.CreatedBy,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse capabilities JSON
-	if len(capabilitiesJSON) > 0 {
-		var capabilities map[string]any
-		if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
-		}
-		bot.Capabilities = database.JSONBObject(capabilities)
-	}
-
-	return &bot, nil
-}
-
-// Update updates an existing third-party bot
-func (r *thirdPartyBotRepository) Update(ctx context.Context, entity *database.ThirdPartyBot) error {
-	query := `UPDATE third_party_bots SET company_id = $2, name = $3, description = $4, app_id = $5, app_password_hash = $6, 
-			  tenant_id = $7, status = $8, webhook_url = $9, api_endpoint = $10, api_key_hash = $11, capabilities = $12, 
-			  rate_limit_per_minute = $13, max_concurrent_requests = $14, contact_email = $15, contact_phone = $16, updated_at = $17 
-			  WHERE id = $1`
-
-	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
-	if err != nil {
-		return fmt.Errorf("failed to marshal capabilities: %w", err)
-	}
-
-	_, err = r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.Name, entity.Description, entity.AppID, entity.AppPasswordHash,
-		entity.TenantID, entity.Status, entity.WebhookURL, entity.APIEndpoint, entity.APIKeyHash,
-		capabilitiesJSON, entity.RateLimitPerMinute, entity.MaxConcurrentRequests,
-		entity.ContactEmail, entity.ContactPhone, entity.UpdatedAt)
-	return err
-}
-
-// Delete deletes a third-party bot by ID
-func (r *thirdPartyBotRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM third_party_bots WHERE id = $1`
+// MarkAsUninstalled marks an installation as uninstalled and sets uninstalled_at
+func (r *botInstallationRepository) MarkAsUninstalled(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE bot_installations SET installation_status = 'uninstalled', uninstalled_at = NOW(), updated_at = NOW() WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
-}
-
-// List retrieves third-party bots with pagination
-func (r *thirdPartyBotRepository) List(ctx context.Context, limit, offset int) ([]*database.ThirdPartyBot, error) {
-	query := `SELECT id, created_at, updated_at, company_id, name, description, app_id, app_password_hash, 
-			  tenant_id, status, webhook_url, api_endpoint, api_key_hash, capabilities, rate_limit_per_minute, 
-			  max_concurrent_requests, contact_email, contact_phone, created_by 
-			  FROM third_party_bots ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	rows, err := r.db.QueryContext(ctx, query, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var bots []*database.ThirdPartyBot
-	for rows.Next() {
-		var bot database.ThirdPartyBot
-		var capabilitiesJSON []byte
-		err := rows.Scan(
-			&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.CompanyID, &bot.Name, &bot.Description,
-			&bot.AppID, &bot.AppPasswordHash, &bot.TenantID, &bot.Status, &bot.WebhookURL,
-			&bot.APIEndpoint, &bot.APIKeyHash, &capabilitiesJSON, &bot.RateLimitPerMinute,
-			&bot.MaxConcurrentRequests, &bot.ContactEmail, &bot.ContactPhone, &bot.CreatedBy,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Parse capabilities JSON
-		if len(capabilitiesJSON) > 0 {
-			var capabilities map[string]any
-			if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
-			}
-			bot.Capabilities = database.JSONBObject(capabilities)
-		}
-
-		bots = append(bots, &bot)
-	}
-
-	return bots, nil
-}
-
-// Count returns the total number of third-party bots
-func (r *thirdPartyBotRepository) Count(ctx context.Context) (int64, error) {
-	var count int64
-	query := `SELECT COUNT(*) FROM third_party_bots`
-	err := r.db.GetContext(ctx, &count, query)
-	return count, err
-}
-
-// GetByAppID retrieves a third-party bot by app ID
-func (r *thirdPartyBotRepository) GetByAppID(ctx context.Context, appID string) (*database.ThirdPartyBot, error) {
-	var bot database.ThirdPartyBot
-	query := `SELECT * FROM third_party_bots WHERE app_id = $1`
-	err := r.db.GetContext(ctx, &bot, query, appID)
-	if err != nil {
-		return nil, err
-	}
-	return &bot, nil
-}
-
-// GetByStatus retrieves third-party bots by status
-func (r *thirdPartyBotRepository) GetByStatus(ctx context.Context, status string) ([]*database.ThirdPartyBot, error) {
-	var bots []*database.ThirdPartyBot
-	query := `SELECT * FROM third_party_bots WHERE status = $1 ORDER BY created_at DESC`
-	err := r.db.SelectContext(ctx, &bots, query, status)
-	return bots, err
-}
-
-// GetByCompanyID retrieves third-party bots by company ID
-func (r *thirdPartyBotRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.ThirdPartyBot, error) {
-	var bots []*database.ThirdPartyBot
-	query := `SELECT * FROM third_party_bots WHERE company_id = $1 ORDER BY created_at DESC`
-	err := r.db.SelectContext(ctx, &bots, query, companyID)
-	return bots, err
 }
 
 // =============================================
@@ -925,12 +765,12 @@ func (r *destinationRepository) Create(ctx context.Context, entity *database.Des
 		return fmt.Errorf("failed to marshal targets: %w", err)
 	}
 
-	query := `INSERT INTO destinations (id, project_id, name, description, teams_tenant_id, targets, bot_id, bot_type, status, validation_status, last_validated_at, created_by, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+	query := `INSERT INTO destinations (id, project_id, name, description, teams_tenant_id, targets, bot_id, status, validation_status, last_validated_at, created_by, created_at, updated_at) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	_, err = r.db.ExecContext(ctx, query,
 		entity.ID, entity.ProjectID, entity.Name, entity.Description, entity.TeamsTenantID,
-		targetsJSON, entity.BotID, entity.BotType, entity.Status, entity.ValidationStatus,
+		targetsJSON, entity.BotID, entity.Status, entity.ValidationStatus,
 		entity.LastValidatedAt, entity.CreatedBy, entity.CreatedAt, entity.UpdatedAt)
 
 	return err
@@ -956,14 +796,14 @@ func (r *destinationRepository) Update(ctx context.Context, entity *database.Des
 	}
 
 	query := `UPDATE destinations SET 
-			  project_id = $2, name = $3, description = $4, teams_tenant_id = $5, 
-			  targets = $6, bot_id = $7, bot_type = $8, status = $9, 
-			  validation_status = $10, last_validated_at = $11, updated_at = $12
-			  WHERE id = $1`
+              project_id = $2, name = $3, description = $4, teams_tenant_id = $5, 
+              targets = $6, bot_id = $7, status = $8, 
+              validation_status = $9, last_validated_at = $10, updated_at = $11
+              WHERE id = $1`
 
 	_, err = r.db.ExecContext(ctx, query,
 		entity.ID, entity.ProjectID, entity.Name, entity.Description, entity.TeamsTenantID,
-		targetsJSON, entity.BotID, entity.BotType, entity.Status, entity.ValidationStatus,
+		targetsJSON, entity.BotID, entity.Status, entity.ValidationStatus,
 		entity.LastValidatedAt, entity.UpdatedAt)
 
 	return err

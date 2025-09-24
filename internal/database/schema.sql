@@ -68,9 +68,13 @@ CREATE TYPE bot_type AS ENUM ('platform', 'third_party');
 -- Bot Status
 CREATE TYPE bot_status AS ENUM ('active', 'inactive', 'suspended', 'maintenance');
 
--- Platform Bots (中台統一管理的 Bot)
-CREATE TABLE platform_bots (
+-- Unified Teams Bots (platform + third_party)
+CREATE TABLE teams_bots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('platform','third_party')),
+    company_id UUID,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     app_id VARCHAR(255) NOT NULL UNIQUE,
@@ -79,34 +83,13 @@ CREATE TABLE platform_bots (
     status bot_status DEFAULT 'active',
     webhook_url VARCHAR(500),
     capabilities JSONB DEFAULT '{}'::jsonb,
-    rate_limit_per_minute INTEGER DEFAULT 600,
-    max_concurrent_requests INTEGER DEFAULT 100,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Third Party Bots (第三方 Bot 註冊)
-CREATE TABLE third_party_bots (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    app_id VARCHAR(255) NOT NULL,
-    app_password_hash VARCHAR(255) NOT NULL,
-    tenant_id VARCHAR(255),
-    status bot_status DEFAULT 'active',
-    webhook_url VARCHAR(500),
+    rate_limit_per_minute INTEGER DEFAULT 60,
+    max_concurrent_requests INTEGER DEFAULT 10,
     api_endpoint VARCHAR(500),
     api_key_hash VARCHAR(255),
-    capabilities JSONB DEFAULT '{}'::jsonb,
-    rate_limit_per_minute INTEGER DEFAULT 100,
-    max_concurrent_requests INTEGER DEFAULT 10,
     contact_email VARCHAR(255),
     contact_phone VARCHAR(50),
-    created_by UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(company_id, app_id)
+    created_by UUID
 );
 
 -- Bot Installations (Bot 安裝記錄)
@@ -125,6 +108,8 @@ CREATE TABLE bot_installations (
     from_id VARCHAR(255), -- Source member ID from Teams event
     from_name VARCHAR(255), -- User display name
     from_aad_object_id VARCHAR(255), -- User's AAD Object ID
+    email VARCHAR(255), -- User email address
+    description_name VARCHAR(255), -- User description or display name
     -- Status and lifecycle
     installation_status VARCHAR(20) DEFAULT 'active' CHECK (installation_status IN ('active', 'inactive', 'uninstalled', 'stale')),
     installed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -150,8 +135,7 @@ CREATE TABLE destinations (
     description TEXT,
     teams_tenant_id VARCHAR(255) NOT NULL,
     targets JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of Teams targets
-    bot_id UUID, -- 主要使用的 Bot
-    bot_type bot_type,
+    bot_id UUID,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
     validation_status VARCHAR(20) DEFAULT 'pending' CHECK (validation_status IN ('pending', 'validated', 'failed')),
     last_validated_at TIMESTAMP WITH TIME ZONE,
@@ -395,14 +379,12 @@ CREATE INDEX idx_users_api_key_hash ON users(api_key_hash);
 CREATE INDEX idx_projects_company_id ON projects(company_id);
 CREATE INDEX idx_projects_status ON projects(status);
 
--- Platform Bots indexes
-CREATE INDEX idx_platform_bots_app_id ON platform_bots(app_id);
-CREATE INDEX idx_platform_bots_status ON platform_bots(status);
-
--- Third Party Bots indexes
-CREATE INDEX idx_third_party_bots_company_id ON third_party_bots(company_id);
-CREATE INDEX idx_third_party_bots_app_id ON third_party_bots(app_id);
-CREATE INDEX idx_third_party_bots_status ON third_party_bots(status);
+-- Teams Bots indexes
+CREATE INDEX idx_teams_bots_type ON teams_bots(type);
+CREATE INDEX idx_teams_bots_app_id ON teams_bots(app_id);
+CREATE INDEX idx_teams_bots_status ON teams_bots(status);
+CREATE INDEX idx_teams_bots_tenant ON teams_bots(tenant_id);
+CREATE INDEX idx_teams_bots_company ON teams_bots(company_id);
 
 -- Bot Installations indexes
 CREATE INDEX idx_bot_installations_bot_id ON bot_installations(bot_id);
@@ -413,22 +395,21 @@ CREATE INDEX idx_bot_installations_conversation_id ON bot_installations(conversa
 CREATE INDEX idx_bot_installations_from_aad_object_id ON bot_installations(from_aad_object_id);
 CREATE INDEX idx_bot_installations_status ON bot_installations(installation_status);
 CREATE INDEX idx_bot_installations_bot_tenant ON bot_installations(bot_id, bot_type, teams_tenant_id);
-CREATE INDEX idx_bot_installations_team_channel ON bot_installations(teams_team_id, teams_channel_id) WHERE teams_team_id IS NOT NULL;
-CREATE INDEX idx_bot_installations_user ON bot_installations(teams_user_id) WHERE teams_user_id IS NOT NULL;
+-- removed legacy columns
 
 -- Destinations indexes
 CREATE INDEX idx_destinations_project_id ON destinations(project_id);
 CREATE INDEX idx_destinations_status ON destinations(status);
 CREATE INDEX idx_destinations_teams_tenant_id ON destinations(teams_tenant_id);
 CREATE INDEX idx_destinations_bot_id ON destinations(bot_id);
-CREATE INDEX idx_destinations_bot_type ON destinations(bot_type);
+-- removed: destination has no bot_type now
 -- JSONB indexes for targets array
 CREATE INDEX idx_destinations_targets_gin ON destinations USING GIN (targets);
 CREATE INDEX idx_destinations_targets_type ON destinations USING GIN ((targets->'type'));
-CREATE INDEX idx_destinations_targets_team_id ON destinations USING GIN ((targets->'team_id'));
-CREATE INDEX idx_destinations_targets_channel_id ON destinations USING GIN ((targets->'channel_id'));
-CREATE INDEX idx_destinations_targets_user_id ON destinations USING GIN ((targets->'user_id'));
-CREATE INDEX idx_destinations_targets_group_id ON destinations USING GIN ((targets->'group_id'));
+-- New fields per TeamsTarget: email, conversation_id, tenant_id
+CREATE INDEX idx_destinations_targets_conversation_id ON destinations USING GIN ((targets->'conversation_id'));
+CREATE INDEX idx_destinations_targets_email ON destinations USING GIN ((targets->'email'));
+CREATE INDEX idx_destinations_targets_tenant_id ON destinations USING GIN ((targets->'tenant_id'));
 
 -- Notifications indexes
 CREATE INDEX idx_notifications_project_id ON notifications(project_id);
@@ -495,8 +476,7 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_companies_updated_at BEFORE UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_platform_bots_updated_at BEFORE UPDATE ON platform_bots FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_third_party_bots_updated_at BEFORE UPDATE ON third_party_bots FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_teams_bots_updated_at BEFORE UPDATE ON teams_bots FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bot_installations_updated_at BEFORE UPDATE ON bot_installations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_destinations_updated_at BEFORE UPDATE ON destinations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -537,34 +517,30 @@ LEFT JOIN notification_destinations nd ON n.id = nd.notification_id
 GROUP BY n.id, p.key_name, p.company_id, c.name, u.email, n.message_type, n.content, n.priority, n.status, n.created_at, n.sent_at;
 
 -- Bot Status Summary View
-CREATE VIEW bot_status_summary AS
+CREATE OR REPLACE VIEW bot_status_summary AS
 SELECT 
-    COALESCE(pb.id, tpb.id) as bot_id,
-    COALESCE(pb.name, tpb.name) as bot_name,
-    COALESCE(pb.status::text, tpb.status::text) as status,
-    CASE 
-        WHEN pb.id IS NOT NULL THEN 'platform'::bot_type
-        ELSE 'third_party'::bot_type
-    END as bot_type,
-    COALESCE(pb.app_id, tpb.app_id) as app_id,
-    COUNT(DISTINCT bi.id) as installation_count,
-    COUNT(DISTINCT CASE WHEN bi.installation_status = 'active' THEN bi.id END) as active_installations,
-    h.status as health_status,
+    tb.id AS bot_id,
+    tb.name AS bot_name,
+    tb.status::text AS status,
+    CASE WHEN tb.type='platform' THEN 'platform'::bot_type ELSE 'third_party'::bot_type END AS bot_type,
+    tb.app_id,
+    COUNT(DISTINCT bi.id) AS installation_count,
+    COUNT(DISTINCT CASE WHEN bi.installation_status = 'active' THEN bi.id END) AS active_installations,
+    h.status AS health_status,
     h.last_check_at,
     h.response_time_ms
-FROM platform_bots pb
-FULL OUTER JOIN third_party_bots tpb ON false
-LEFT JOIN bot_installations bi ON (pb.id = bi.bot_id AND bi.bot_type = 'platform') OR (tpb.id = bi.bot_id AND bi.bot_type = 'third_party')
+FROM teams_bots tb
+LEFT JOIN bot_installations bi 
+  ON bi.bot_id = tb.id 
+ AND bi.bot_type = CASE WHEN tb.type='platform' THEN 'platform' ELSE 'third_party' END
 LEFT JOIN LATERAL (
     SELECT status, last_check_at, response_time_ms
     FROM bot_health_status bhs
-    WHERE (pb.id IS NOT NULL AND bhs.bot_id = pb.id AND bhs.bot_type = 'platform') OR
-          (tpb.id IS NOT NULL AND bhs.bot_id = tpb.id AND bhs.bot_type = 'third_party')
+    WHERE bhs.bot_id = tb.id AND bhs.bot_type = CASE WHEN tb.type='platform' THEN 'platform' ELSE 'third_party' END
     ORDER BY last_check_at DESC
     LIMIT 1
 ) h ON true
-GROUP BY COALESCE(pb.id, tpb.id), COALESCE(pb.name, tpb.name), COALESCE(pb.status::text, tpb.status::text), 
-         COALESCE(pb.app_id, tpb.app_id), h.status, h.last_check_at, h.response_time_ms;
+GROUP BY tb.id, tb.name, tb.status, tb.app_id, h.status, h.last_check_at, h.response_time_ms;
 
 -- Usage Summary View
 CREATE VIEW usage_summary AS

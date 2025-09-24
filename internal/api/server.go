@@ -189,24 +189,17 @@ func (s *Server) RegisterRoutes(
 		v1.GET("/projects/key/:keyName", projectHandler.GetProjectByKeyName)
 
 		// Bot routes
-		v1.POST("/bots/platform", botHandler.CreatePlatformBot)
-		v1.GET("/bots/platform", botHandler.ListPlatformBots)
-		v1.GET("/bots/platform/:id", botHandler.GetPlatformBot)
-		v1.PUT("/bots/platform/:id", botHandler.UpdatePlatformBot)
-		v1.DELETE("/bots/platform/:id", botHandler.DeletePlatformBot)
-		v1.PATCH("/bots/platform/:id/status", botHandler.UpdatePlatformBotStatus)
-		v1.PATCH("/bots/platform/:id/capabilities", botHandler.UpdatePlatformBotCapabilities)
-		v1.POST("/bots/platform/:id/test", botHandler.TestPlatformBotConnection)
+		v1.POST("/bots/platform", botHandler.CreateTeamsBotService)
+		v1.GET("/bots/platform", botHandler.ListteamsBotServices)
+		v1.GET("/bots/platform/:id", botHandler.GetteamsBotService)
+		v1.PUT("/bots/platform/:id", botHandler.UpdateteamsBotService)
+		v1.DELETE("/bots/platform/:id", botHandler.DeleteteamsBotService)
+		v1.PATCH("/bots/platform/:id/status", botHandler.UpdateteamsBotServiceStatus)
+		v1.PATCH("/bots/platform/:id/capabilities", botHandler.UpdateteamsBotServiceCapabilities)
+		v1.POST("/bots/platform/:id/test", botHandler.TestteamsBotServiceConnection)
 
-		v1.POST("/bots/third-party", botHandler.CreateThirdPartyBot)
-		v1.GET("/bots/third-party", botHandler.ListThirdPartyBots)
-		v1.GET("/bots/third-party/:id", botHandler.GetThirdPartyBot)
-		v1.PUT("/bots/third-party/:id", botHandler.UpdateThirdPartyBot)
-		v1.DELETE("/bots/third-party/:id", botHandler.DeleteThirdPartyBot)
-		v1.PATCH("/bots/third-party/:id/status", botHandler.UpdateThirdPartyBotStatus)
-		v1.PATCH("/bots/third-party/:id/api-key", botHandler.UpdateThirdPartyBotAPIKey)
-		v1.POST("/bots/third-party/:id/test", botHandler.TestThirdPartyBotConnection)
-		v1.GET("/bots/company/:companyId", botHandler.GetBotsByCompany)
+		// third-party routes removed
+		// v1.GET("/bots/company/:companyId", botHandler.GetBotsByCompany) // removed with third-party
 		v1.GET("/bots/status/:status", botHandler.GetBotsByStatus)
 
 		// Destination routes

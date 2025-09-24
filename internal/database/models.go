@@ -36,8 +36,6 @@ const (
 )
 
 // =============================================
-// Core Platform Models
-// =============================================
 
 // Company represents a company/organization
 type Company struct {
@@ -81,9 +79,11 @@ type Project struct {
 // Bot Management Models
 // =============================================
 
-// PlatformBot represents a platform-managed bot
-type PlatformBot struct {
+// TeamsBot represents a platform bot or third-party bot
+type TeamsBot struct {
 	BaseModel
+	Type                  string      `json:"type" db:"type"`             // 'platform' or 'third_party'
+	CompanyID             *uuid.UUID  `json:"company_id" db:"company_id"` // Only for third_party bots
 	Name                  string      `json:"name" db:"name"`
 	Description           string      `json:"description" db:"description"`
 	AppID                 string      `json:"app_id" db:"app_id"`
@@ -94,27 +94,11 @@ type PlatformBot struct {
 	Capabilities          JSONBObject `json:"capabilities" db:"capabilities"`
 	RateLimitPerMinute    int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
 	MaxConcurrentRequests int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
-}
-
-// ThirdPartyBot represents a third-party bot
-type ThirdPartyBot struct {
-	BaseModel
-	CompanyID             uuid.UUID   `json:"company_id" db:"company_id"`
-	Name                  string      `json:"name" db:"name"`
-	Description           string      `json:"description" db:"description"`
-	AppID                 string      `json:"app_id" db:"app_id"`
-	AppPasswordHash       string      `json:"-" db:"app_password_hash"`
-	TenantID              string      `json:"tenant_id" db:"tenant_id"`
-	Status                BotStatus   `json:"status" db:"status"`
-	WebhookURL            string      `json:"webhook_url" db:"webhook_url"`
-	APIEndpoint           string      `json:"api_endpoint" db:"api_endpoint"`
-	APIKeyHash            string      `json:"-" db:"api_key_hash"`
-	Capabilities          JSONBObject `json:"capabilities" db:"capabilities"`
-	RateLimitPerMinute    int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
-	MaxConcurrentRequests int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
-	ContactEmail          string      `json:"contact_email" db:"contact_email"`
-	ContactPhone          string      `json:"contact_phone" db:"contact_phone"`
-	CreatedBy             uuid.UUID   `json:"created_by" db:"created_by"`
+	APIEndpoint           *string     `json:"api_endpoint" db:"api_endpoint"`   // Only for third_party bots
+	APIKeyHash            *string     `json:"-" db:"api_key_hash"`              // Only for third_party bots
+	ContactEmail          *string     `json:"contact_email" db:"contact_email"` // Only for third_party bots
+	ContactPhone          *string     `json:"contact_phone" db:"contact_phone"` // Only for third_party bots
+	CreatedBy             *uuid.UUID  `json:"created_by" db:"created_by"`       // Only for third_party bots
 }
 
 // BotInstallation represents a bot installation
@@ -133,6 +117,8 @@ type BotInstallation struct {
 	FromID          string `json:"from_id" db:"from_id"`
 	FromName        string `json:"from_name" db:"from_name"`
 	FromAADObjectID string `json:"from_aad_object_id" db:"from_aad_object_id"`
+	Email           string `json:"email" db:"email"`                       // User email address
+	DescriptionName string `json:"description_name" db:"description_name"` // User description or display name
 	// Status and lifecycle
 	InstallationStatus string      `json:"installation_status" db:"installation_status"`
 	InstalledAt        time.Time   `json:"installed_at" db:"installed_at"`
@@ -147,19 +133,11 @@ type BotInstallation struct {
 
 // TeamsTarget represents a single Teams target
 type TeamsTarget struct {
-	Type           string         `json:"type"` // person, channel, chatgroup
-	TeamID         string         `json:"team_id,omitempty"`
-	ChannelID      string         `json:"channel_id,omitempty"`
-	UserID         string         `json:"user_id,omitempty"`
-	AADObjectID    string         `json:"aad_object_id,omitempty"` // User's AAD Object ID
-	GroupID        string         `json:"group_id,omitempty"`
-	ChatID         string         `json:"chat_id,omitempty"`         // Group chat ID
-	ConversationID string         `json:"conversation_id,omitempty"` // Direct conversation ID
-	DisplayName    string         `json:"display_name,omitempty"`
-	Description    string         `json:"description,omitempty"`
-	TenantID       string         `json:"tenant_id,omitempty"`   // AAD Tenant ID
-	ServiceURL     string         `json:"service_url,omitempty"` // Bot Framework service URL
-	Metadata       map[string]any `json:"metadata,omitempty"`
+	Type           string `json:"type"` // person, channel, chatgroup
+	Email          string `json:"email,omitempty"`
+	ConversationID string `json:"conversation_id,omitempty"` // Direct conversation ID
+	DisplayName    string `json:"display_name,omitempty"`
+	TenantID       string `json:"tenant_id,omitempty"` // AAD Tenant ID
 }
 
 // JSONBTargets is a JSONB-backed slice of TeamsTarget for DB scanning/valuing
@@ -325,7 +303,6 @@ type Destination struct {
 	TeamsTenantID    string       `json:"teams_tenant_id" db:"teams_tenant_id"`
 	Targets          JSONBTargets `json:"targets" db:"targets"`
 	BotID            *uuid.UUID   `json:"bot_id" db:"bot_id"`
-	BotType          *BotType     `json:"bot_type" db:"bot_type"`
 	Status           string       `json:"status" db:"status"`
 	ValidationStatus string       `json:"validation_status" db:"validation_status"`
 	LastValidatedAt  *time.Time   `json:"last_validated_at" db:"last_validated_at"`

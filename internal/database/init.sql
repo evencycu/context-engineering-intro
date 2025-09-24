@@ -18,10 +18,10 @@ INSERT INTO projects (id, company_id, key_name, description, status, daily_limit
 ('750e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'cfh-alert-gogo', 'Holdings notification alerts', 'active', 1000, 30000, 'normal', '650e8400-e29b-41d4-a716-446655440001', NOW(), NOW()),
 ('750e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'techstart-monitoring', 'TechStart monitoring notifications', 'active', 500, 15000, 'high', '650e8400-e29b-41d4-a716-446655440003', NOW(), NOW());
 
--- Insert sample platform bots
-INSERT INTO platform_bots (id, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) VALUES
-('850e8400-e29b-41d4-a716-446655440001', 'Main Notification Bot', 'Primary bot for sending notifications', 'app-12345', '$2a$10$example.hash', 'tenant-12345', 'active', 'https://api.teams.com/webhook/12345', '{"send_message": true, "send_file": true, "send_adaptive_card": true}', 60, 10, NOW(), NOW()),
-('850e8400-e29b-41d4-a716-446655440002', 'Lab Test Teams Notify', 'Lab test bot for Teams notifications', '844146d7-4ac9-4e4d-a463-d6e027714e81', '$2a$10$example.hash', '051cece0-e4dc-4aed-b471-bf29824e1ee6', 'active', 'https://smba.trafficmanager.net/apac/051cece0-e4dc-4aed-b471-bf29824e1ee6/', '{"send_message": true, "send_file": true, "send_adaptive_card": true}', 60, 10, NOW(), NOW());
+-- Insert sample teams bots (type = platform)
+INSERT INTO teams_bots (id, type, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) VALUES
+('850e8400-e29b-41d4-a716-446655440001', 'platform', 'Main Notification Bot', 'Primary bot for sending notifications', 'app-12345', '$2a$10$example.hash', 'tenant-12345', 'active', 'https://api.teams.com/webhook/12345', '{"send_message": true, "send_file": true, "send_adaptive_card": true}', 60, 10, NOW(), NOW()),
+('850e8400-e29b-41d4-a716-446655440002', 'platform', 'Lab Test Teams Notify', 'Lab test bot for Teams notifications', '844146d7-4ac9-4e4d-a463-d6e027714e81', 'HVW8Q~-HmVPi_W0EzIFPbZiL4G1czV8WBMUjQdfy', '051cece0-e4dc-4aed-b471-bf29824e1ee6', 'active', 'https://smba.trafficmanager.net/apac/051cece0-e4dc-4aed-b471-bf29824e1ee6/', '{"send_message": true, "send_file": true, "send_adaptive_card": true}', 60, 10, NOW(), NOW());
 
 -- Insert sample bot installations
 INSERT INTO bot_installations (id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url, recipient_id, recipient_name, from_id, from_name, from_aad_object_id, installation_status, installed_at, last_activity_at, metadata, created_at, updated_at) VALUES

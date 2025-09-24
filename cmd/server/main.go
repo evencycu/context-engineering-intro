@@ -60,25 +60,23 @@ func main() {
 	projectRepo := repositories.NewProjectRepository(db)
 	projectService := services.NewProjectService(projectRepo)
 
-	platformBotRepo := repositories.NewPlatformBotRepository(db)
-	platformBotService := services.NewPlatformBotService(platformBotRepo)
+	teamsBotRepo := repositories.NewTeamsBotRepository(db)
+	teamsBotService := services.NewteamsBotService(teamsBotRepo)
 	installationRepo := repositories.NewBotInstallationRepository(db)
-	messagesService := services.NewMessagesService(platformBotRepo, installationRepo, getEnv("TEAMS_TENANT_ID", ""))
-	thirdPartyBotRepo := repositories.NewThirdPartyBotRepository(db)
-	thirdPartyBotService := services.NewThirdPartyBotService(thirdPartyBotRepo)
+	messagesService := services.NewMessagesService(teamsBotRepo, installationRepo, getEnv("TEAMS_TENANT_ID", ""))
 
 	destinationRepo := repositories.NewDestinationRepository(db)
 	destinationService := services.NewDestinationService(destinationRepo)
 
 	notificationRepo := repositories.NewNotificationRepository(db)
-	broadcaster := services.NewBroadcastService(platformBotRepo, thirdPartyBotRepo, installationRepo, destinationRepo)
+	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
 	notificationService := services.NewNotificationService(notificationRepo, broadcaster)
 
 	// Create handlers
 	companyHandler := companies.NewHandler(companyService)
 	userHandler := users.NewHandler(userService)
 	projectHandler := projects.NewHandler(projectService)
-	botHandler := bots.NewHandler(platformBotService, thirdPartyBotService)
+	botHandler := bots.NewHandler(teamsBotService)
 	messagesHandler := messages.NewHandler(messagesService)
 	destinationHandler := destinations.NewHandler(destinationService)
 	notificationHandler := notifications.NewHandler(notificationService)

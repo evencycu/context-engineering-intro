@@ -2,4 +2,9 @@ venv
 venv_linux
 __pycache__
 .ruff_cache
-.pytest_cache
+.pytest_cacheserver
+*.log
+nohup.out
+/bin/
+/dist/
+.DS_Store

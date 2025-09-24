@@ -1,3 +1,21 @@
+## Local server start (with Teams bot env)
+
+Use this to start the API server locally with the Teams Bot credentials and log output to a file for debugging:
+
+```bash
+export TEAMS_BOT_APP_ID=844146d7-4ac9-4e4d-a463-d6e027714e81
+export TEAMS_TENANT_ID=051cece0-e4dc-4aed-b471-bf29824e1ee6
+export TEAMS_BOT_APP_PASSWORD='HVW8Q~-HmVPi_W0EzIFPbZiL4G1czV8WBMUjQdfy'
+nohup env TEAMS_BOT_APP_ID=$TEAMS_BOT_APP_ID TEAMS_TENANT_ID=$TEAMS_TENANT_ID TEAMS_BOT_APP_PASSWORD=$TEAMS_BOT_APP_PASSWORD \
+  go run ./cmd/server > /tmp/teamsnotify_server.log 2>&1 & echo $!
+```
+
+To stop the server listening on 8080 quickly:
+
+```bash
+lsof -t -i :8080 | xargs kill -9 2>/dev/null
+```
+
 # Teams Notification API 測試指南
 
 ## 概述
@@ -63,6 +81,7 @@ curl -X POST http://localhost:8080/api/v1/companies \
 ```
 
 **回應範例：**
+
 ```json
 {
   "data": {
@@ -151,6 +170,7 @@ curl -X POST http://localhost:8080/api/v1/users \
 ```
 
 **回應範例：**
+
 ```json
 {
   "data": {
@@ -495,6 +515,7 @@ curl -X POST http://localhost:8080/api/v1/destinations \
 ```
 
 **回應範例：**
+
 ```json
 {
   "data": {
@@ -527,6 +548,7 @@ curl -X POST http://localhost:8080/api/v1/destinations \
 ```
 
 **重要說明：**
+
 - `conversation_id` 是發送 proactive message 的關鍵欄位
 - 這個 ID 來自 Teams 的 installationUpdate 事件中的 `conversation.id`
 - 用於 Bot Framework 的 proactive messaging API 端點

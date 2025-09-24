@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-    "log"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -413,24 +413,13 @@ type ProjectService interface {
 }
 
 // BotService defines bot-specific operations
-type BotService interface {
-	Service[database.PlatformBot]
-	GetByAppID(ctx context.Context, appID string) (*database.PlatformBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.PlatformBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.PlatformBot, error)
+type TeamsBotService interface {
+	Service[database.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	UpdateCapabilities(ctx context.Context, id uuid.UUID, capabilities map[string]any) error
-	TestConnection(ctx context.Context, id uuid.UUID) error
-}
-
-// ThirdPartyBotService defines third-party bot operations
-type ThirdPartyBotService interface {
-	Service[database.ThirdPartyBot]
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.ThirdPartyBot, error)
-	GetByAppID(ctx context.Context, appID string) (*database.ThirdPartyBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.ThirdPartyBot, error)
-	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
-	UpdateAPIKey(ctx context.Context, id uuid.UUID, apiKey string) error
 	TestConnection(ctx context.Context, id uuid.UUID) error
 }
 
@@ -486,25 +475,35 @@ type MessagesService interface {
 }
 
 type messagesService struct {
-	platformRepo    repositories.PlatformBotRepository
-    thirdPartyRepo  repositories.ThirdPartyBotRepository
+	teamsBotRepo    repositories.TeamsBotRepository
 	installRepo     repositories.BotInstallationRepository
 	defaultTenantID string
 }
 
-func NewMessagesService(platformRepo repositories.PlatformBotRepository, installRepo repositories.BotInstallationRepository, defaultTenantID string) MessagesService {
-    // Backward-compat for callers not yet updated; thirdPartyRepo can be set later if needed
-    return &messagesService{platformRepo: platformRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
+func NewMessagesService(teamsBotRepo repositories.TeamsBotRepository, installRepo repositories.BotInstallationRepository, defaultTenantID string) MessagesService {
+	return &messagesService{teamsBotRepo: teamsBotRepo, installRepo: installRepo, defaultTenantID: defaultTenantID}
 }
 
 func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error {
 	if act == nil {
 		return errors.New("nil activity")
 	}
-    // Only handle installationUpdate events here
-    if strings.TrimSpace(strings.ToLower(act.Type)) != "installationupdate" {
-        return nil
-    }
+	activityType := strings.ToLower(strings.TrimSpace(act.Type))
+	switch activityType {
+	case "installationupdate":
+		return s.handleInstallationUpdate(ctx, act, rawPayload)
+	case "message":
+		return s.handleMessage(ctx, act, rawPayload)
+	case "conversationupdate":
+		return s.handleConversationUpdate(ctx, act, rawPayload)
+	default:
+		log.Printf("messages: unhandled activity type=%s", activityType)
+		return nil
+	}
+}
+
+// handleInstallationUpdate processes Teams installation add/remove events
+func (s *messagesService) handleInstallationUpdate(ctx context.Context, act *Activity, rawPayload map[string]any) error {
 	// Extract appId from recipient.id like "28:<APPID>"
 	appID := ""
 	if rid := act.Recipient.ID; rid != "" {
@@ -516,20 +515,15 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		return errors.New("cannot determine app_id from recipient.id")
 	}
 
-    // Find platform bot by app_id; if missing, log and return nil (no creation here)
-    bot, err := s.platformRepo.GetByAppID(ctx, appID)
-    if err != nil {
-        log.Printf("installationUpdate: platform bot not found for app_id=%s: %v", appID, err)
-        return nil
-    }
+	// Resolve bot presence: proceed if either platform or third-party bot exists
+	var bot *database.TeamsBot
+	var botErr error
+	bot, botErr = s.teamsBotRepo.GetByAppID(ctx, appID)
 
-    // Also check if any third-party bot shares this app_id (for observability only)
-    if s.thirdPartyRepo != nil {
-        if _, err := s.thirdPartyRepo.GetByAppID(ctx, appID); err != nil {
-            log.Printf("installationUpdate: third_party_bots no record for app_id=%s (expected provision-managed). err=%v", appID, err)
-        }
-    }
-
+	if bot == nil || botErr != nil {
+		log.Printf("installationUpdate: teams bot not found for app_id=%s, skip upsert. err=%v", appID, botErr)
+		return nil
+	}
 	// Determine tenant id
 	tenantID := s.defaultTenantID
 	if t, ok := rawPayload["tenant"].(map[string]any); ok {
@@ -537,9 +531,18 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 			tenantID = tid
 		}
 	}
+	// Try channelData.tenant.id
 	if tenantID == "" {
 		if cd, ok := act.ChannelData["tenant"].(map[string]any); ok {
 			if tid, ok2 := cd["id"].(string); ok2 && tid != "" {
+				tenantID = tid
+			}
+		}
+	}
+	// Try conversation.tenantId
+	if tenantID == "" {
+		if convAny, ok := rawPayload["conversation"].(map[string]any); ok {
+			if tid, ok2 := convAny["tenantId"].(string); ok2 && tid != "" {
 				tenantID = tid
 			}
 		}
@@ -590,13 +593,44 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		}
 	}
 
-    // Determine action (add/remove)
-    action := "add"
-    if a, ok := rawPayload["action"].(string); ok && a != "" {
-        action = a
-    }
+	// Query additional information based on conversation type
+	email := ""
+	descriptionName := ""
 
-    // Prepare installation entity
+	switch conversationType {
+	case "personal":
+		// For personal chat, get user email from Graph API
+		if aadObjectID != "" {
+			email = s.getUserEmailFromGraphAPI(ctx, aadObjectID, tenantID)
+		}
+		descriptionName = fromName // Use from name as description for personal
+
+	case "groupChat":
+		// For group chat, get topic from conversation
+		if conv, ok := rawPayload["conversation"].(map[string]any); ok {
+			if topic, ok := conv["name"].(string); ok {
+				descriptionName = topic
+			}
+		}
+
+	case "channel":
+		// For channel, get team name from channel data
+		if channelData, ok := rawPayload["channelData"].(map[string]any); ok {
+			if team, ok := channelData["team"].(map[string]any); ok {
+				if teamName, ok := team["name"].(string); ok {
+					descriptionName = teamName
+				}
+			}
+		}
+	}
+
+	// Determine action (add/remove)
+	action := "add"
+	if a, ok := rawPayload["action"].(string); ok && a != "" {
+		action = a
+	}
+
+	// Prepare installation entity
 	now := time.Now()
 	inst := &database.BotInstallation{
 		BotID:              bot.ID,
@@ -610,18 +644,39 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		FromID:             act.From.ID,
 		FromName:           fromName,
 		FromAADObjectID:    aadObjectID,
-        InstallationStatus: "active",
-        InstalledAt:        now,
-        UninstalledAt:      nil,
+		Email:              email,
+		DescriptionName:    descriptionName,
+		InstallationStatus: "active",
+		InstalledAt:        now,
+		UninstalledAt:      nil,
 		LastActivityAt:     &now,
 		Metadata:           rawPayload,
 	}
-    if strings.EqualFold(action, "remove") || strings.EqualFold(action, "uninstall") {
-        inst.InstallationStatus = "uninstalled"
-        inst.UninstalledAt = &now
-    }
+	if strings.EqualFold(action, "remove") || strings.EqualFold(action, "uninstall") {
+		// Prefer marking existing row as uninstalled to preserve original installed_at
+		// We don't necessarily know the ID here (Upsert assigns), so try update by unique keys via Upsert fallback
+		inst.InstallationStatus = "uninstalled"
+		inst.UninstalledAt = &now
+		return s.installRepo.Upsert(ctx, inst)
+	}
+	return s.installRepo.Upsert(ctx, inst)
+}
 
-    return s.installRepo.Upsert(ctx, inst)
+// handleMessage processes regular chat messages (stub for future use)
+func (s *messagesService) handleMessage(ctx context.Context, act *Activity, rawPayload map[string]any) error {
+	// Log basic message info only
+	convID := ""
+	if act != nil {
+		convID = act.Conversation.ID
+	}
+	log.Printf("messages: received message event. conversation_id=%s channel_id=%s", convID, act.ChannelID)
+	return nil
+}
+
+// handleConversationUpdate processes member added/removed, etc. (stub)
+func (s *messagesService) handleConversationUpdate(ctx context.Context, act *Activity, rawPayload map[string]any) error {
+	// Intentionally no-op for now
+	return nil
 }
 
 // SendProactiveTest sends a simple proactive text message using provided activity payload (no DB)
@@ -911,18 +966,18 @@ func (s *projectService) CheckLimit(ctx context.Context, id uuid.UUID) (bool, er
 	return true, nil
 }
 
-// platformBotService implements BotService
-type platformBotService struct {
-	repo repositories.PlatformBotRepository
+// teamsBotService implements BotService
+type teamsBotService struct {
+	repo repositories.TeamsBotRepository
 }
 
-// NewPlatformBotService creates a new platform bot service
-func NewPlatformBotService(repo repositories.PlatformBotRepository) BotService {
-	return &platformBotService{repo: repo}
+// NewteamsBotService creates a new platform bot service
+func NewteamsBotService(repo repositories.TeamsBotRepository) TeamsBotService {
+	return &teamsBotService{repo: repo}
 }
 
 // Create creates a new platform bot
-func (s *platformBotService) Create(ctx context.Context, req *CreateRequest[database.PlatformBot]) (*database.PlatformBot, error) {
+func (s *teamsBotService) Create(ctx context.Context, req *CreateRequest[database.TeamsBot]) (*database.TeamsBot, error) {
 	// Set default values
 	req.Data.ID = uuid.New()
 	req.Data.CreatedAt = time.Now()
@@ -938,12 +993,12 @@ func (s *platformBotService) Create(ctx context.Context, req *CreateRequest[data
 }
 
 // GetByID retrieves a platform bot by ID
-func (s *platformBotService) GetByID(ctx context.Context, id uuid.UUID) (*database.PlatformBot, error) {
+func (s *teamsBotService) GetByID(ctx context.Context, id uuid.UUID) (*database.TeamsBot, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates an existing platform bot
-func (s *platformBotService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.PlatformBot]) (*database.PlatformBot, error) {
+func (s *teamsBotService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.TeamsBot]) (*database.TeamsBot, error) {
 	req.Data.ID = id
 	req.Data.UpdatedAt = time.Now()
 
@@ -956,12 +1011,12 @@ func (s *platformBotService) Update(ctx context.Context, id uuid.UUID, req *Upda
 }
 
 // Delete deletes a platform bot by ID
-func (s *platformBotService) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *teamsBotService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
 // List retrieves platform bots with pagination
-func (s *platformBotService) List(ctx context.Context, req *ListRequest) ([]*database.PlatformBot, error) {
+func (s *teamsBotService) List(ctx context.Context, req *ListRequest) ([]*database.TeamsBot, error) {
 	bots, err := s.repo.List(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list platform bots: %w", err)
@@ -971,32 +1026,32 @@ func (s *platformBotService) List(ctx context.Context, req *ListRequest) ([]*dat
 }
 
 // Count returns the total number of platform bots
-func (s *platformBotService) Count(ctx context.Context, req *CountRequest) (int64, error) {
+func (s *teamsBotService) Count(ctx context.Context, req *CountRequest) (int64, error) {
 	return s.repo.Count(ctx)
 }
 
 // GetByAppID retrieves a platform bot by app ID
-func (s *platformBotService) GetByAppID(ctx context.Context, appID string) (*database.PlatformBot, error) {
+func (s *teamsBotService) GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error) {
 	return s.repo.GetByAppID(ctx, appID)
 }
 
 // GetByStatus retrieves platform bots by status
-func (s *platformBotService) GetByStatus(ctx context.Context, status string) ([]*database.PlatformBot, error) {
+func (s *teamsBotService) GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
 // GetByCompanyID retrieves platform bots by company ID
-func (s *platformBotService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.PlatformBot, error) {
+func (s *teamsBotService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error) {
 	return s.repo.GetByCompanyID(ctx, companyID)
 }
 
 // GetByTenantID retrieves platform bots by tenant ID
-func (s *platformBotService) GetByTenantID(ctx context.Context, tenantID string) ([]*database.PlatformBot, error) {
+func (s *teamsBotService) GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error) {
 	return s.repo.GetByTenantID(ctx, tenantID)
 }
 
 // UpdateStatus updates platform bot status
-func (s *platformBotService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (s *teamsBotService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	bot, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get platform bot: %w", err)
@@ -1009,7 +1064,7 @@ func (s *platformBotService) UpdateStatus(ctx context.Context, id uuid.UUID, sta
 }
 
 // UpdateCapabilities updates platform bot capabilities
-func (s *platformBotService) UpdateCapabilities(ctx context.Context, id uuid.UUID, capabilities map[string]interface{}) error {
+func (s *teamsBotService) UpdateCapabilities(ctx context.Context, id uuid.UUID, capabilities map[string]interface{}) error {
 	bot, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get platform bot: %w", err)
@@ -1022,133 +1077,10 @@ func (s *platformBotService) UpdateCapabilities(ctx context.Context, id uuid.UUI
 }
 
 // TestConnection tests platform bot connection
-func (s *platformBotService) TestConnection(ctx context.Context, id uuid.UUID) error {
+func (s *teamsBotService) TestConnection(ctx context.Context, id uuid.UUID) error {
 	_, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get platform bot: %w", err)
-	}
-
-	// TODO: Implement actual connection testing logic
-	// This would typically make a test API call to the bot's webhook URL
-	return nil
-}
-
-// thirdPartyBotService implements ThirdPartyBotService
-type thirdPartyBotService struct {
-	repo repositories.ThirdPartyBotRepository
-}
-
-// NewThirdPartyBotService creates a new third-party bot service
-func NewThirdPartyBotService(repo repositories.ThirdPartyBotRepository) ThirdPartyBotService {
-	return &thirdPartyBotService{repo: repo}
-}
-
-// Create creates a new third-party bot
-func (s *thirdPartyBotService) Create(ctx context.Context, req *CreateRequest[database.ThirdPartyBot]) (*database.ThirdPartyBot, error) {
-	// Set default values
-	req.Data.ID = uuid.New()
-	req.Data.CreatedAt = time.Now()
-	req.Data.UpdatedAt = time.Now()
-	req.Data.Status = database.BotStatusActive
-
-	err := s.repo.Create(ctx, &req.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create third-party bot: %w", err)
-	}
-
-	return &req.Data, nil
-}
-
-// GetByID retrieves a third-party bot by ID
-func (s *thirdPartyBotService) GetByID(ctx context.Context, id uuid.UUID) (*database.ThirdPartyBot, error) {
-	return s.repo.GetByID(ctx, id)
-}
-
-// Update updates an existing third-party bot
-func (s *thirdPartyBotService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.ThirdPartyBot]) (*database.ThirdPartyBot, error) {
-	req.Data.ID = id
-	req.Data.UpdatedAt = time.Now()
-
-	err := s.repo.Update(ctx, &req.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update third-party bot: %w", err)
-	}
-
-	return &req.Data, nil
-}
-
-// Delete deletes a third-party bot by ID
-func (s *thirdPartyBotService) Delete(ctx context.Context, id uuid.UUID) error {
-	return s.repo.Delete(ctx, id)
-}
-
-// List retrieves third-party bots with pagination
-func (s *thirdPartyBotService) List(ctx context.Context, req *ListRequest) ([]*database.ThirdPartyBot, error) {
-	bots, err := s.repo.List(ctx, req.Limit, req.Offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list third-party bots: %w", err)
-	}
-
-	return bots, nil
-}
-
-// Count returns the total number of third-party bots
-func (s *thirdPartyBotService) Count(ctx context.Context, req *CountRequest) (int64, error) {
-	return s.repo.Count(ctx)
-}
-
-// GetByAppID retrieves a third-party bot by app ID
-func (s *thirdPartyBotService) GetByAppID(ctx context.Context, appID string) (*database.ThirdPartyBot, error) {
-	return s.repo.GetByAppID(ctx, appID)
-}
-
-// GetByStatus retrieves third-party bots by status
-func (s *thirdPartyBotService) GetByStatus(ctx context.Context, status string) ([]*database.ThirdPartyBot, error) {
-	return s.repo.GetByStatus(ctx, status)
-}
-
-// GetByCompanyID retrieves third-party bots by company ID
-func (s *thirdPartyBotService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.ThirdPartyBot, error) {
-	return s.repo.GetByCompanyID(ctx, companyID)
-}
-
-// UpdateStatus updates third-party bot status
-func (s *thirdPartyBotService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
-	bot, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to get third-party bot: %w", err)
-	}
-
-	bot.Status = database.BotStatus(status)
-	bot.UpdatedAt = time.Now()
-
-	return s.repo.Update(ctx, bot)
-}
-
-// UpdateAPIKey updates third-party bot API key
-func (s *thirdPartyBotService) UpdateAPIKey(ctx context.Context, id uuid.UUID, apiKey string) error {
-	bot, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to get third-party bot: %w", err)
-	}
-
-	// Hash the API key
-	hashedKey, err := bcrypt.GenerateFromPassword([]byte(apiKey), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("failed to hash API key: %w", err)
-	}
-
-	bot.APIKeyHash = string(hashedKey)
-	bot.UpdatedAt = time.Now()
-
-	return s.repo.Update(ctx, bot)
-}
-
-// TestConnection tests third-party bot connection
-func (s *thirdPartyBotService) TestConnection(ctx context.Context, id uuid.UUID) error {
-	_, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to get third-party bot: %w", err)
 	}
 
 	// TODO: Implement actual connection testing logic
@@ -1173,6 +1105,10 @@ type destinationService struct {
 func (s *destinationService) Create(ctx context.Context, req *CreateRequest[database.Destination]) (*database.Destination, error) {
 	// Set default values
 	destination := req.Data
+	// validate targets before create
+	if err := validateTeamsTargets(destination.Targets); err != nil {
+		return nil, fmt.Errorf("invalid targets: %w", err)
+	}
 	destination.ID = uuid.New()
 	destination.CreatedAt = time.Now()
 	destination.UpdatedAt = time.Now()
@@ -1201,6 +1137,12 @@ func (s *destinationService) GetByID(ctx context.Context, id uuid.UUID) (*databa
 func (s *destinationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Destination]) (*database.Destination, error) {
 	destination := req.Data
 	destination.ID = id
+	// validate if targets provided (Update via this path might include targets)
+	if len(destination.Targets) > 0 {
+		if err := validateTeamsTargets(destination.Targets); err != nil {
+			return nil, fmt.Errorf("invalid targets: %w", err)
+		}
+	}
 	destination.UpdatedAt = time.Now()
 
 	err := s.repo.Update(ctx, &destination)
@@ -1267,6 +1209,11 @@ func (s *destinationService) UpdateTargets(ctx context.Context, id uuid.UUID, ta
 		return nil, fmt.Errorf("failed to get destination: %w", err)
 	}
 
+	// validate targets before update
+	if err := validateTeamsTargets(targets); err != nil {
+		return nil, fmt.Errorf("invalid targets: %w", err)
+	}
+
 	destination.Targets = targets
 	destination.UpdatedAt = time.Now()
 
@@ -1285,8 +1232,10 @@ func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) 
 		return nil, fmt.Errorf("failed to get destination: %w", err)
 	}
 
-	// TODO: Implement actual target validation logic
-	// This would typically validate Teams channels, chat groups, or users
+	// perform validation
+	if err := validateTeamsTargets(destination.Targets); err != nil {
+		return nil, fmt.Errorf("invalid targets: %w", err)
+	}
 	destination.ValidationStatus = "validated"
 	destination.LastValidatedAt = &time.Time{}
 	*destination.LastValidatedAt = time.Now()
@@ -1298,6 +1247,35 @@ func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) 
 	}
 
 	return destination, nil
+}
+
+// validateTeamsTargets enforces per-type requirements for TeamsTarget
+func validateTeamsTargets(targets database.JSONBTargets) error {
+	if len(targets) == 0 {
+		return fmt.Errorf("targets cannot be empty")
+	}
+	for idx, t := range targets {
+		tt := strings.TrimSpace(strings.ToLower(t.Type))
+		switch tt {
+		case "personal":
+			// personal allows either conversation_id or email
+			if strings.TrimSpace(t.ConversationID) == "" && strings.TrimSpace(t.Email) == "" {
+				return fmt.Errorf("targets[%d]: personal requires conversation_id or email", idx)
+			}
+		case "channel", "groupchat":
+			// channel and groupChat must provide conversation_id
+			if strings.TrimSpace(t.ConversationID) == "" {
+				return fmt.Errorf("targets[%d]: %s requires conversation_id", idx, tt)
+			}
+		default:
+			return fmt.Errorf("targets[%d]: unsupported type %q", idx, t.Type)
+		}
+		// tenant id recommended for routing
+		if strings.TrimSpace(t.TenantID) == "" {
+			return fmt.Errorf("targets[%d]: tenant_id is required", idx)
+		}
+	}
+	return nil
 }
 
 // =============================================
@@ -1491,4 +1469,123 @@ func (s *notificationService) CancelNotification(ctx context.Context, id uuid.UU
 	notification.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, notification)
+}
+
+// getUserEmailFromGraphAPI queries Microsoft Graph API to get user email
+func (s *messagesService) getUserEmailFromGraphAPI(ctx context.Context, aadObjectID, tenantID string) string {
+	// Get access token for Graph API
+	accessToken, err := s.getGraphAPIAccessToken(ctx, tenantID)
+	if err != nil {
+		log.Printf("messages: failed to get Graph API access token: %v", err)
+		return ""
+	}
+
+	// Make HTTP request to Graph API
+	url := fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", aadObjectID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		log.Printf("messages: failed to create Graph API request: %v", err)
+		return ""
+	}
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("messages: failed to call Graph API: %v", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("messages: Graph API returned status %d", resp.StatusCode)
+		return ""
+	}
+
+	// Parse response
+	var userInfo struct {
+		Mail              string `json:"mail"`
+		UserPrincipalName string `json:"userPrincipalName"`
+		DisplayName       string `json:"displayName"`
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("messages: failed to read Graph API response: %v", err)
+		return ""
+	}
+
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		log.Printf("messages: failed to parse Graph API response: %v", err)
+		return ""
+	}
+
+	// Return mail if available, otherwise userPrincipalName
+	if userInfo.Mail != "" {
+		return userInfo.Mail
+	}
+	return userInfo.UserPrincipalName
+}
+
+// getGraphAPIAccessToken gets access token for Microsoft Graph API
+func (s *messagesService) getGraphAPIAccessToken(ctx context.Context, tenantID string) (string, error) {
+	// Use the same bot credentials to get Graph API access token
+	// This uses Client Credentials flow for application permissions
+
+	// Get bot credentials from environment or database
+	appID := os.Getenv("TEAMS_BOT_APP_ID")
+	appPassword := os.Getenv("TEAMS_BOT_APP_PASSWORD")
+
+	if appID == "" || appPassword == "" {
+		return "", fmt.Errorf("TEAMS_BOT_APP_ID or TEAMS_BOT_APP_PASSWORD not set")
+	}
+
+	// Microsoft Graph API token endpoint
+	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID)
+
+	// Prepare token request
+	data := url.Values{}
+	data.Set("client_id", appID)
+	data.Set("client_secret", appPassword)
+	data.Set("scope", "https://graph.microsoft.com/.default")
+	data.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("failed to create token request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to get access token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("token request failed: %d %s", resp.StatusCode, string(body))
+	}
+
+	// Parse token response
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read token response: %w", err)
+	}
+
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
+		return "", fmt.Errorf("failed to parse token response: %w", err)
+	}
+
+	return tokenResp.AccessToken, nil
 }

@@ -418,7 +418,7 @@ paths:
     get:
       summary: List platform bots
       description: Get a list of all platform bots
-      operationId: listPlatformBots
+      operationId: listteamsBotServices
       tags:
         - Bots
       responses:
@@ -432,13 +432,13 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/PlatformBot"
+                      $ref: "#/components/schemas/teamsBotService"
                   pagination:
                     $ref: "#/components/schemas/Pagination"
     post:
       summary: Create platform bot
       description: Create a new platform bot
-      operationId: createPlatformBot
+      operationId: createteamsBotService
       tags:
         - Bots
       requestBody:
@@ -446,20 +446,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePlatformBotRequest"
+              $ref: "#/components/schemas/CreateteamsBotServiceRequest"
       responses:
         "201":
           description: Platform bot created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlatformBot"
+                $ref: "#/components/schemas/teamsBotService"
 
   /bots/platform/{id}:
     get:
       summary: Get platform bot
       description: Get a specific platform bot by ID
-      operationId: getPlatformBot
+      operationId: getteamsBotService
       tags:
         - Bots
       parameters:
@@ -475,11 +475,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlatformBot"
+                $ref: "#/components/schemas/teamsBotService"
     put:
       summary: Update platform bot
       description: Update a specific platform bot
-      operationId: updatePlatformBot
+      operationId: updateteamsBotService
       tags:
         - Bots
       parameters:
@@ -494,18 +494,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdatePlatformBotRequest"
+              $ref: "#/components/schemas/UpdateteamsBotServiceRequest"
       responses:
         "200":
           description: Platform bot updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlatformBot"
+                $ref: "#/components/schemas/teamsBotService"
     delete:
       summary: Delete platform bot
       description: Delete a specific platform bot
-      operationId: deletePlatformBot
+      operationId: deleteteamsBotService
       tags:
         - Bots
       parameters:
@@ -1395,7 +1395,7 @@ components:
           type: integer
           description: Project priority
 
-    PlatformBot:
+    teamsBotService:
       type: object
       properties:
         id:
@@ -1434,7 +1434,7 @@ components:
           format: uuid
           description: Creator user ID
 
-    CreatePlatformBotRequest:
+    CreateteamsBotServiceRequest:
       type: object
       required:
         - name
@@ -1468,7 +1468,7 @@ components:
           format: uuid
           description: Creator user ID
 
-    UpdatePlatformBotRequest:
+    UpdateteamsBotServiceRequest:
       type: object
       properties:
         name:

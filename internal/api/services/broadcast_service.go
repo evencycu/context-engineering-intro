@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -26,8 +25,7 @@ type BroadcastService interface {
 }
 
 type broadcastService struct {
-	platformRepo    repositories.PlatformBotRepository
-	thirdPartyRepo  repositories.ThirdPartyBotRepository
+	teamsBotRepo    repositories.TeamsBotRepository
 	installRepo     repositories.BotInstallationRepository
 	destinationRepo repositories.DestinationRepository
 }
@@ -55,14 +53,12 @@ type TargetResult struct {
 
 // NewBroadcastService creates a new broadcast service
 func NewBroadcastService(
-	platformRepo repositories.PlatformBotRepository,
-	thirdPartyRepo repositories.ThirdPartyBotRepository,
+	teamsBotRepo repositories.TeamsBotRepository,
 	installRepo repositories.BotInstallationRepository,
 	destinationRepo repositories.DestinationRepository,
 ) BroadcastService {
 	return &broadcastService{
-		platformRepo:    platformRepo,
-		thirdPartyRepo:  thirdPartyRepo,
+		teamsBotRepo:    teamsBotRepo,
 		installRepo:     installRepo,
 		destinationRepo: destinationRepo,
 	}
@@ -90,23 +86,14 @@ func (s *broadcastService) SendToAllActive(ctx context.Context, botID uuid.UUID,
 
 	// Get bot credentials
 	var appID, appPassword string
-	if botType == database.BotTypePlatform {
-		bot, err := s.platformRepo.GetByID(ctx, botID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get platform bot: %w", err)
-		}
-		appID = bot.AppID
-		// Note: In production, you'd need to decrypt the password hash
-		// For now, we'll assume it's stored in plain text (not recommended for production)
-		appPassword = bot.AppPasswordHash
-	} else {
-		bot, err := s.thirdPartyRepo.GetByID(ctx, botID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get third-party bot: %w", err)
-		}
-		appID = bot.AppID
-		appPassword = bot.AppPasswordHash
+	bot, err := s.teamsBotRepo.GetByID(ctx, botID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get platform bot: %w", err)
 	}
+	appID = bot.AppID
+	// Note: In production, you'd need to decrypt the password hash
+	// For now, we'll assume it's stored in plain text (not recommended for production)
+	appPassword = bot.AppPasswordHash
 
 	// Send to all installations
 	results := make([]TargetResult, 0, len(installations))
@@ -169,21 +156,12 @@ func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, bot
 
 	// Get bot credentials
 	var appID, appPassword string
-	if botType == database.BotTypePlatform {
-		bot, err := s.platformRepo.GetByID(ctx, botID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get platform bot: %w", err)
-		}
-		appID = bot.AppID
-		appPassword = bot.AppPasswordHash
-	} else {
-		bot, err := s.thirdPartyRepo.GetByID(ctx, botID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get third-party bot: %w", err)
-		}
-		appID = bot.AppID
-		appPassword = bot.AppPasswordHash
+	bot, err := s.teamsBotRepo.GetByID(ctx, botID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get platform bot: %w", err)
 	}
+	appID = bot.AppID
+	appPassword = bot.AppPasswordHash
 
 	// Send to filtered installations
 	results := make([]TargetResult, 0, len(filtered))
@@ -263,9 +241,60 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 		}, nil
 	}
 
+	// Basic validation and early failures
+	validated := make([]database.TeamsTarget, 0, len(targets))
+	earlyResults := make([]TargetResult, 0)
+	for _, t := range targets {
+		t.Type = strings.TrimSpace(t.Type)
+		switch t.Type {
+		case "personal":
+			if t.ConversationID == "" && t.Email == "" {
+				earlyResults = append(earlyResults, TargetResult{
+					TargetID:       "",
+					ConversationID: "",
+					Scope:          t.Type,
+					Success:        false,
+					Error:          "personal target requires conversation_id or email",
+				})
+				continue
+			}
+		case "channel", "groupChat":
+			if t.ConversationID == "" {
+				earlyResults = append(earlyResults, TargetResult{
+					TargetID:       "",
+					ConversationID: "",
+					Scope:          t.Type,
+					Success:        false,
+					Error:          "channel/groupChat target requires conversation_id",
+				})
+				continue
+			}
+		default:
+			earlyResults = append(earlyResults, TargetResult{
+				TargetID:       "",
+				ConversationID: "",
+				Scope:          t.Type,
+				Success:        false,
+				Error:          "unsupported target type",
+			})
+			continue
+		}
+		validated = append(validated, t)
+	}
+
+	if len(validated) == 0 {
+		return &BroadcastResult{
+			TotalTargets: len(targets),
+			Successful:   0,
+			Failed:       len(earlyResults),
+			Results:      earlyResults,
+			Duration:     time.Since(start),
+		}, nil
+	}
+
 	// Group targets by tenant (no per-bot grouping due to schema)
 	tenantGroups := make(map[string][]database.TeamsTarget)
-	for _, target := range targets {
+	for _, target := range validated {
 		if target.TenantID == "" {
 			continue
 		}
@@ -315,17 +344,13 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 			// 優先從資料庫獲取，如果沒有則使用環境變數
 			appID := ""
 			appPassword := ""
-
-			if bot, err := s.platformRepo.GetByID(ctx, matchedInstallation.BotID); err == nil {
-				appID = bot.AppID
-				appPassword = bot.AppPasswordHash
-				log.Printf("Using DB credentials: appID=%s, password length=%d", appID, len(appPassword))
-			} else {
-				// 如果資料庫獲取失敗，使用環境變數
-				appID = os.Getenv("TEAMS_BOT_APP_ID")
-				appPassword = os.Getenv("TEAMS_BOT_APP_PASSWORD")
-				log.Printf("Using env credentials: appID=%s, password length=%d", appID, len(appPassword))
+			bot, err := s.teamsBotRepo.GetByID(ctx, matchedInstallation.BotID)
+			if err != nil {
+				log.Printf("Failed to get teams bot: %v", err)
 			}
+			appID = bot.AppID
+			appPassword = bot.AppPasswordHash
+			log.Printf("Using DB credentials: appID=%s, password length=%d", appID, len(appPassword))
 
 			// Send message
 			result := s.sendToInstallation(ctx, matchedInstallation, appID, appPassword, message)
