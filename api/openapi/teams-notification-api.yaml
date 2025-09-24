@@ -519,111 +519,6 @@ paths:
         "204":
           description: Platform bot deleted successfully
 
-  /bots/third-party:
-    get:
-      summary: List third-party bots
-      description: Get a list of all third-party bots
-      operationId: listThirdPartyBots
-      tags:
-        - Bots
-      responses:
-        "200":
-          description: Third-party bots retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ThirdPartyBot"
-                  pagination:
-                    $ref: "#/components/schemas/Pagination"
-    post:
-      summary: Create third-party bot
-      description: Create a new third-party bot
-      operationId: createThirdPartyBot
-      tags:
-        - Bots
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateThirdPartyBotRequest"
-      responses:
-        "201":
-          description: Third-party bot created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ThirdPartyBot"
-
-  /bots/third-party/{id}:
-    get:
-      summary: Get third-party bot
-      description: Get a specific third-party bot by ID
-      operationId: getThirdPartyBot
-      tags:
-        - Bots
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Third-party bot retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ThirdPartyBot"
-    put:
-      summary: Update third-party bot
-      description: Update a specific third-party bot
-      operationId: updateThirdPartyBot
-      tags:
-        - Bots
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateThirdPartyBotRequest"
-      responses:
-        "200":
-          description: Third-party bot updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ThirdPartyBot"
-    delete:
-      summary: Delete third-party bot
-      description: Delete a specific third-party bot
-      operationId: deleteThirdPartyBot
-      tags:
-        - Bots
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "204":
-          description: Third-party bot deleted successfully
-
   /destinations:
     get:
       summary: List destinations
@@ -664,6 +559,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Destination"
+
+  /destinations/{id}/targets:
+    patch:
+      summary: Update destination targets
+      description: Replace the targets for a destination
+      operationId: updateDestinationTargets
+      tags:
+        - Destinations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targets:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TeamsTarget"
+                  minItems: 1
+      responses:
+        "200":
+          description: Targets updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Targets updated successfully
 
   /destinations/{id}:
     get:
@@ -729,6 +662,152 @@ paths:
         "204":
           description: Destination deleted successfully
 
+  /destinations/{id}/validate:
+    post:
+      summary: Validate destination targets
+      description: Validate targets without saving
+      operationId: validateDestinationTargets
+      tags:
+        - Destinations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targets:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TeamsTarget"
+                  minItems: 1
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: All targets are valid
+
+  /destinations/project/{projectId}:
+    get:
+      summary: Get destinations by project
+      description: List destinations for a project
+      operationId: getDestinationsByProject
+      tags:
+        - Destinations
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Destinations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Destination"
+
+  /destinations/bot/{botId}:
+    get:
+      summary: Get destinations by bot
+      description: List destinations for a bot
+      operationId: getDestinationsByBot
+      tags:
+        - Destinations
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Destinations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Destination"
+
+  /destinations/search:
+    get:
+      summary: Search destinations
+      description: Search destinations by target or IDs
+      operationId: searchDestinations
+      tags:
+        - Destinations
+      parameters:
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [personal, channel, groupChat]
+        - name: target_id
+          in: query
+          schema:
+            type: string
+        - name: team_id
+          in: query
+          schema:
+            type: string
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: group_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Destinations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Destination"
+                  count:
+                    type: integer
+
   /notifications:
     post:
       summary: Send notification
@@ -770,8 +849,8 @@ paths:
                   metadata:
                     source: "swagger_ui"
       responses:
-        "200":
-          description: Notification sent successfully
+        "202":
+          description: Notification queued successfully
           content:
             application/json:
               schema:
@@ -1017,6 +1096,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /messages:
+    post:
+      summary: Bot Framework webhook
+      description: Receive Bot Framework activities (installationUpdate, message)
+      operationId: handleMessages
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
 
   /billing/summary:
     get:
