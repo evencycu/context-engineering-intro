@@ -7,7 +7,7 @@ Teams Notify API 是一個基於 Go 和 Gin 框架的 RESTful API，提供 Teams
 ## 功能特點
 
 - **多目標支援**: 一個目的地可以包含多個 Teams 目標（channel、person、chatgroup）
-- **Bot 管理**: 支援平台 Bot 和第三方 Bot 管理
+- **Bot 管理**: 支援平台 Bot（第三方 Bot 已暫時停用）
 - **智能路由**: 根據條件自動選擇合適的 Bot
 - **認證授權**: JWT 和 API Key 雙重認證
 - **完整 CRUD**: 所有基礎模型的完整 CRUD 操作
@@ -159,25 +159,7 @@ Content-Type: application/json
 }
 ```
 
-#### 創建第三方 Bot
-```http
-POST /api/v1/bots/third-party
-Content-Type: application/json
-
-{
-  "company_id": "uuid",
-  "name": "客戶專用 Bot",
-  "description": "客戶專用的通知 Bot",
-  "app_id": "client-bot-app-id",
-  "app_password": "client-bot-password",
-  "tenant_id": "client-tenant-id",
-  "webhook_url": "https://client-webhook.example.com",
-  "api_endpoint": "https://client-api.example.com",
-  "api_key": "client-api-key",
-  "contact_email": "client@example.com",
-  "contact_phone": "+886-2-8765-4321"
-}
-```
+> 注意：第三方 Bot 相關端點目前已停用（已自伺服器路由移除）。如需恢復，請先完成相依的服務/儲存層並重新開啟路由。
 
 #### 測試 Bot 連接
 ```http

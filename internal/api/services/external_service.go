@@ -37,13 +37,13 @@ func NewExternalService(
 
 // ExternalNotificationRequest represents an external notification request
 type ExternalNotificationRequest struct {
-	NotifyKey    string         `json:"notify_key" validate:"required,min=3,max=50"`
-	Message      string         `json:"message" validate:"required,min=1,max=4000"`
-	MessageType  string         `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
-	Priority     string         `json:"priority" validate:"omitempty,oneof=low normal high urgent"`
-	Destinations []string       `json:"destinations" validate:"omitempty"` // If empty, send to all
-	Mentions     []string       `json:"mentions" validate:"omitempty"`
-	Metadata     map[string]any `json:"metadata" validate:"omitempty"`
+	NotifyKey   string         `json:"notify_key" validate:"required,min=3,max=50"`
+	Message     string         `json:"message" validate:"required,min=1,max=4000"`
+	MessageType string         `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
+	Priority    string         `json:"priority" validate:"omitempty,oneof=low normal high urgent"`
+	TargetIDs   []string       `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
+	Mentions    []string       `json:"mentions" validate:"omitempty"`
+	Metadata    map[string]any `json:"metadata" validate:"omitempty"`
 }
 
 // ExternalNotificationResponse represents the response for external notification
@@ -98,39 +98,10 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 		return nil, fmt.Errorf("no destinations found for project: %s", req.NotifyKey)
 	}
 
-	// Filter destinations if specific ones are requested
-	var targetDestinations []*database.Destination
-	if len(req.Destinations) == 0 || (len(req.Destinations) == 1 && req.Destinations[0] == "all") {
-		// Send to all destinations
-		targetDestinations = destinations
-	} else {
-		// Send to specific destinations
-		destinationMap := make(map[string]*database.Destination)
-		for _, dest := range destinations {
-			destinationMap[dest.ID.String()] = dest
-		}
-
-		for _, destID := range req.Destinations {
-			if dest, exists := destinationMap[destID]; exists {
-				targetDestinations = append(targetDestinations, dest)
-			} else {
-				log.Printf("Warning: Destination %s not found for project %s", destID, req.NotifyKey)
-			}
-		}
-	}
-
-	if len(targetDestinations) == 0 {
-		return nil, fmt.Errorf("no valid destinations found")
-	}
-
-	// Prepare destination IDs for broadcast service
-	destinationIDs := make([]uuid.UUID, len(targetDestinations))
-	for i, dest := range targetDestinations {
-		destinationIDs[i] = dest.ID
-	}
+	// Note: results may target a subset based on req.TargetIDs
 
 	// Send notification using broadcast service
-	results, err := s.broadcastService.SendToDestinations(ctx, destinationIDs, req.Message)
+	results, err := s.broadcastService.SendToDestinations(ctx, destinations, req.TargetIDs, req.Message)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send notification: %w", err)
 	}
@@ -139,15 +110,15 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 	externalResults := make([]ExternalDestinationResult, len(results.Results))
 	successCount := 0
 
+	// Build a quick lookup from destination ID to name for response decoration
+	idToName := make(map[string]string, len(destinations))
+	for _, d := range destinations {
+		idToName[d.ID.String()] = d.Name
+	}
+
 	for i, result := range results.Results {
-		// Find corresponding destination
-		var destName string
-		for _, dest := range targetDestinations {
-			if dest.ID.String() == result.TargetID {
-				destName = dest.Name
-				break
-			}
-		}
+		// Find corresponding destination name
+		destName := idToName[result.TargetID]
 
 		externalResults[i] = ExternalDestinationResult{
 			DestinationID:   result.TargetID,
@@ -179,14 +150,14 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 		Message:           "Notification processed successfully",
 		ProjectID:         project.ID.String(),
 		ProjectName:       project.NotifyKey,
-		DestinationsCount: len(targetDestinations),
+		DestinationsCount: len(results.Results),
 		Results:           externalResults,
 		EstimatedDelivery: "5-10 minutes",
 	}
 
 	// Log the external notification
 	log.Printf("External notification sent - Project: %s, Destinations: %d, Success: %d/%d",
-		req.NotifyKey, len(targetDestinations), successCount, len(results.Results))
+		req.NotifyKey, len(results.Results), successCount, len(results.Results))
 
 	return response, nil
 }

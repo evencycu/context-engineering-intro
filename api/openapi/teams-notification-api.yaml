@@ -241,7 +241,7 @@ paths:
           description: Password updated
   /api/v1/users/{id}/api-key:
     patch:
-      summary: Generate API key (persistence TODO)
+      summary: Generate API key
       tags: [Users]
       parameters:
         - $ref: "#/components/parameters/ID"
@@ -249,7 +249,7 @@ paths:
         "200":
           description: API key payload
     delete:
-      summary: Revoke API key (persistence TODO)
+      summary: Revoke API key
       tags: [Users]
       parameters:
         - $ref: "#/components/parameters/ID"
@@ -877,6 +877,175 @@ paths:
       responses:
         "200":
           description: Disabled
+  # External API endpoints
+  /api/v1/external/notify:
+    post:
+      summary: Send notification to external users
+      description: |
+        Send notification using notify_key to pre-configured destinations.
+
+        **Usage Examples:**
+        ```bash
+        # Basic notification
+        curl -X POST http://localhost:8080/api/v1/external/notify \
+          -H "Content-Type: application/json" \
+          -d '{"notify_key": "my-project", "message": "Hello World"}'
+
+        # Advanced notification with all options
+        curl -X POST http://localhost:8080/api/v1/external/notify \
+          -H "Content-Type: application/json" \
+          -d '{
+            "notify_key": "my-project",
+            "message": "Urgent: System maintenance in 1 hour",
+            "message_type": "text",
+            "priority": "urgent",
+            "destinations": ["all"],
+            "mentions": ["@everyone"],
+            "metadata": {"source": "monitoring", "alert_level": "critical"}
+          }'
+        ```
+      tags: [External API]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalNotificationRequest"
+            examples:
+              basic:
+                summary: Basic notification
+                value:
+                  notify_key: "my-project"
+                  message: "Hello World"
+              advanced:
+                summary: Advanced notification with all options
+                value:
+                  notify_key: "my-project"
+                  message: "Urgent: System maintenance in 1 hour"
+                  message_type: "text"
+                  priority: "urgent"
+                  destinations: ["all"]
+                  mentions: ["@everyone"]
+                  metadata:
+                    source: "monitoring"
+                    alert_level: "critical"
+      responses:
+        "200":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalNotificationResponse"
+              examples:
+                success:
+                  summary: Successful notification
+                  value:
+                    success: true
+                    data:
+                      notification_id: "123e4567-e89b-12d3-a456-426614174000"
+                      status: "sent"
+                      message: "Notification processed successfully"
+                      project_id: "123e4567-e89b-12d3-a456-426614174000"
+                      project_name: "my-project"
+                      destinations_count: 3
+                      results:
+                        - destination_id: "19:abc123@thread.v2"
+                          destination_name: "Marketing Team"
+                          success: true
+                        - destination_id: "a:def456"
+                          destination_name: "Personal Chat"
+                          success: true
+                      estimated_delivery: "5-10 minutes"
+        "400":
+          description: Bad request - Invalid input or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                validation_error:
+                  summary: Validation error
+                  value:
+                    success: false
+                    error: "notify_key is required"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "notify_key"
+                      message: "is required"
+                invalid_notify_key:
+                  summary: Invalid notify key
+                  value:
+                    success: false
+                    error: "Project not found or inactive"
+                    code: "PROJECT_NOT_FOUND"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                project_not_found:
+                  summary: Project not found
+                  value:
+                    success: false
+                    error: "Project with notify_key 'invalid-key' not found"
+                    code: "PROJECT_NOT_FOUND"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server_error:
+                  summary: Server error
+                  value:
+                    success: false
+                    error: "Internal server error"
+                    code: "INTERNAL_ERROR"
+
+  /api/v1/external/validate/{notifyKey}:
+    get:
+      summary: Validate notify key
+      description: Check if a notify key exists and is active
+      tags: [External API]
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "my-project-key"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalValidateResponse"
+
+  /api/v1/external/destinations/{notifyKey}:
+    get:
+      summary: Get project destinations
+      description: Get available destinations for a project
+      tags: [External API]
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "my-project-key"
+      responses:
+        "200":
+          description: Project destinations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalDestinationsResponse"
+
+  /api/v1/external/health:
 components:
   parameters:
     ID:
@@ -1637,175 +1806,6 @@ components:
           type: string
           example: "fetch('http://localhost:8080/api/v1/external/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notify_key: 'my-project', message: 'Hello World'}) })"
 
-  # External API endpoints
-  /api/v1/external/notify:
-    post:
-      summary: Send notification to external users
-      description: |
-        Send notification using notify_key to pre-configured destinations.
-
-        **Usage Examples:**
-        ```bash
-        # Basic notification
-        curl -X POST http://localhost:8080/api/v1/external/notify \
-          -H "Content-Type: application/json" \
-          -d '{"notify_key": "my-project", "message": "Hello World"}'
-
-        # Advanced notification with all options
-        curl -X POST http://localhost:8080/api/v1/external/notify \
-          -H "Content-Type: application/json" \
-          -d '{
-            "notify_key": "my-project",
-            "message": "Urgent: System maintenance in 1 hour",
-            "message_type": "text",
-            "priority": "urgent",
-            "destinations": ["all"],
-            "mentions": ["@everyone"],
-            "metadata": {"source": "monitoring", "alert_level": "critical"}
-          }'
-        ```
-      tags: [External API]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExternalNotificationRequest"
-            examples:
-              basic:
-                summary: Basic notification
-                value:
-                  notify_key: "my-project"
-                  message: "Hello World"
-              advanced:
-                summary: Advanced notification with all options
-                value:
-                  notify_key: "my-project"
-                  message: "Urgent: System maintenance in 1 hour"
-                  message_type: "text"
-                  priority: "urgent"
-                  destinations: ["all"]
-                  mentions: ["@everyone"]
-                  metadata:
-                    source: "monitoring"
-                    alert_level: "critical"
-      responses:
-        "200":
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalNotificationResponse"
-              examples:
-                success:
-                  summary: Successful notification
-                  value:
-                    success: true
-                    data:
-                      notification_id: "123e4567-e89b-12d3-a456-426614174000"
-                      status: "sent"
-                      message: "Notification processed successfully"
-                      project_id: "123e4567-e89b-12d3-a456-426614174000"
-                      project_name: "my-project"
-                      destinations_count: 3
-                      results:
-                        - destination_id: "19:abc123@thread.v2"
-                          destination_name: "Marketing Team"
-                          success: true
-                        - destination_id: "a:def456"
-                          destination_name: "Personal Chat"
-                          success: true
-                      estimated_delivery: "5-10 minutes"
-        "400":
-          description: Bad request - Invalid input or missing required fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                validation_error:
-                  summary: Validation error
-                  value:
-                    success: false
-                    error: "notify_key is required"
-                    code: "VALIDATION_ERROR"
-                    details:
-                      field: "notify_key"
-                      message: "is required"
-                invalid_notify_key:
-                  summary: Invalid notify key
-                  value:
-                    success: false
-                    error: "Project not found or inactive"
-                    code: "PROJECT_NOT_FOUND"
-        "404":
-          description: Project not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                project_not_found:
-                  summary: Project not found
-                  value:
-                    success: false
-                    error: "Project with notify_key 'invalid-key' not found"
-                    code: "PROJECT_NOT_FOUND"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                server_error:
-                  summary: Server error
-                  value:
-                    success: false
-                    error: "Internal server error"
-                    code: "INTERNAL_ERROR"
-
-  /api/v1/external/validate/{notifyKey}:
-    get:
-      summary: Validate notify key
-      description: Check if a notify key exists and is active
-      tags: [External API]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "my-project-key"
-      responses:
-        "200":
-          description: Validation result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalValidateResponse"
-
-  /api/v1/external/destinations/{notifyKey}:
-    get:
-      summary: Get project destinations
-      description: Get available destinations for a project
-      tags: [External API]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "my-project-key"
-      responses:
-        "200":
-          description: Project destinations
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalDestinationsResponse"
-
-  /api/v1/external/health:
     get:
       summary: External API health check
       description: Health check for external API

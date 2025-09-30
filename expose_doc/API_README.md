@@ -75,7 +75,7 @@ Content-Type: application/json
 Fields include `notify_key`, status, daily/monthly limits, priority, and `created_by` user.
 
 ## Teams Bots
-Only platform bot CRUD is currently wired; third-party routes referenced in older docs were removed in `internal/api/server.go`.
+Only platform bot CRUD is currently wired; third-party bot routes are disabled/removed for now.
 
 - `POST /bots/platform`
 - `GET /bots/platform`
@@ -86,6 +86,8 @@ Only platform bot CRUD is currently wired; third-party routes referenced in olde
 - `PATCH /bots/platform/{id}/capabilities`
 - `POST /bots/platform/{id}/test`
 - `GET /bots/status/{status}` – query by lifecycle state.
+
+> Note: Third-Party Bot endpoints (`/bots/third-party/...`) are currently disabled and not exposed by the server.
 
 ## Destinations
 Destinations map a project to one or more Teams targets; payloads use the JSONB helper types defined in `internal/database/models.go`.

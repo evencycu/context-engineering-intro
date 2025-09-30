@@ -40,13 +40,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // SendNotificationRequest represents the request to send notification
 type SendNotificationRequest struct {
-	NotifyKey    string         `json:"notify_key" binding:"required" example:"my-project-key"`
-	Message      string         `json:"message" binding:"required" example:"Hello from external API"`
-	MessageType  string         `json:"message_type" example:"text" enums:"text,file,adaptive_card"`
-	Priority     string         `json:"priority" example:"normal" enums:"low,normal,high,urgent"`
-	Destinations []string       `json:"destinations" example:"all" description:"List of destination IDs or 'all'"`
-	Mentions     []string       `json:"mentions" example:"@user1,@user2"`
-	Metadata     map[string]any `json:"metadata" example:"{\"source\":\"external\",\"version\":\"1.0\"}"`
+	NotifyKey   string         `json:"notify_key" binding:"required" example:"my-project-key"`
+	Message     string         `json:"message" binding:"required" example:"Hello from external API"`
+	MessageType string         `json:"message_type" example:"text" enums:"text,file,adaptive_card"`
+	Priority    string         `json:"priority" example:"normal" enums:"low,normal,high,urgent"`
+	Targets     []string       `json:"targets" example:"all" description:"List of target Emails or Conversation IDs or 'all'"`
+	Mentions    []string       `json:"mentions" example:"@user1,@user2"`
+	Metadata    map[string]any `json:"metadata" example:"{\"source\":\"external\",\"version\":\"1.0\"}"`
 }
 
 // SendNotificationResponse represents the response for send notification
@@ -94,13 +94,13 @@ func (h *Handler) SendNotification(c *gin.Context) {
 
 	// Convert to service request
 	serviceReq := &services.ExternalNotificationRequest{
-		NotifyKey:    req.NotifyKey,
-		Message:      req.Message,
-		MessageType:  req.MessageType,
-		Priority:     req.Priority,
-		Destinations: req.Destinations,
-		Mentions:     req.Mentions,
-		Metadata:     req.Metadata,
+		NotifyKey:   req.NotifyKey,
+		Message:     req.Message,
+		MessageType: req.MessageType,
+		Priority:    req.Priority,
+		TargetIDs:   req.Targets,
+		Mentions:    req.Mentions,
+		Metadata:    req.Metadata,
 	}
 
 	// Send notification

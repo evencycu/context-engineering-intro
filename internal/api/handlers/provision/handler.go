@@ -17,10 +17,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	g := rg.Group("/provision")
 	{
 		g.POST("", h.Create)
-		g.GET(":notify_key", h.Read)
-		g.PUT(":notify_key", h.Update)
-		g.POST(":notify_key/enable", h.Enable)
-		g.POST(":notify_key/disable", h.Disable)
+		g.GET("/:notify_key", h.Read)
+		g.PUT("/:notify_key", h.Update)
+		g.POST("/:notify_key/enable", h.Enable)
+		g.POST("/:notify_key/disable", h.Disable)
 	}
 }
 

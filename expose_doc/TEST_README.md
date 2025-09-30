@@ -16,6 +16,9 @@ The project does not include Go unit tests yet (`rg --files -g '*_test.go'` retu
 ```
 The script first checks `/health`, then optionally exercises CRUD/create flows if you supply real UUIDs via environment variables (see comments inside the script). Tests that depend on missing configuration are skipped rather than failing outright.
 
+### Note on Third-Party Bot tests
+Third-Party Bot endpoints are currently disabled (routes removed). Any tests referencing `/api/v1/bots/third-party/...` are intentionally skipped. Platform Bot tests remain enabled and pass.
+
 ### Failure Quick Reference
 | Step | 常見錯誤 | 原因 | 修復 |
 | --- | --- | --- | --- |
