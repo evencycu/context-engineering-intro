@@ -17,9 +17,11 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
 )
 
@@ -153,6 +155,8 @@ func (s *Server) RegisterRoutes(
 	destinationHandler *destinations.Handler,
 	notificationHandler *notifications.Handler,
 	messagesHandler *messages.Handler,
+	provisionHandler *provision.Handler,
+	externalHandler *external.Handler,
 ) {
 	// API v1 routes
 	v1 := s.router.Group("/api/v1")
@@ -228,5 +232,11 @@ func (s *Server) RegisterRoutes(
 		// Bot Framework messages webhook
 		v1.POST("/messages", messagesHandler.Handle)
 		v1.POST("/messages/proactive/test", messagesHandler.ProactiveTest)
+
+		// Provision routes
+		provisionHandler.RegisterRoutes(v1)
+
+		// External API routes
+		externalHandler.RegisterRoutes(v1)
 	}
 }

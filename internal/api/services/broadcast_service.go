@@ -316,6 +316,14 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 		log.Printf("Found %d installations for tenant %s", len(installations), tenantID)
 		// Match targets to installations
 		for _, target := range botTargets {
+			// For personal email-only target, try resolve to existing personal installation by email
+			if target.Type == "personal" && target.ConversationID == "" && target.Email != "" {
+				if emailInstalls, err := s.installRepo.GetActivePersonalByEmail(ctx, tenantID, target.Email); err == nil {
+					installations = append(installations, emailInstalls...)
+				} else {
+					log.Printf("Lookup personal by email failed: %v", err)
+				}
+			}
 			log.Printf("Matching target: type=%s, conversation_id=%s", target.Type, target.ConversationID)
 			var matchedInstallation *database.BotInstallation
 			for _, inst := range installations {
@@ -567,6 +575,13 @@ func (s *broadcastService) matchesTarget(inst *database.BotInstallation, target 
 		return false
 	}
 
-	// Only rely on conversation_type + conversation_id
-	return inst.ConversationType == desiredType && inst.ConversationID == target.ConversationID
+	// Primary: conversation_type + conversation_id match
+	if inst.ConversationType == desiredType && target.ConversationID != "" && inst.ConversationID == target.ConversationID {
+		return true
+	}
+	// Fallback for personal email-only targets: match by email
+	if desiredType == "personal" && target.Email != "" && !strings.EqualFold(target.Email, "") {
+		return inst.Email != "" && strings.EqualFold(inst.Email, target.Email)
+	}
+	return false
 }

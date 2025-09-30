@@ -116,7 +116,7 @@ Content-Type: application/json
 
 {
   "company_id": "uuid",
-  "key_name": "project_alpha",
+  "notify_key": "project_alpha",
   "description": "Alpha 專案通知",
   "daily_limit": 1000,
   "monthly_limit": 30000,

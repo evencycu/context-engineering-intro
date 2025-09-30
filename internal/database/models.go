@@ -66,7 +66,7 @@ type User struct {
 type Project struct {
 	BaseModel
 	CompanyID    uuid.UUID `json:"company_id" db:"company_id"`
-	KeyName      string    `json:"key_name" db:"key_name"`
+	NotifyKey    string    `json:"notify_key" db:"notify_key"`
 	Description  string    `json:"description" db:"description"`
 	Status       string    `json:"status" db:"status"`
 	DailyLimit   int       `json:"daily_limit" db:"daily_limit"`
@@ -425,7 +425,7 @@ type BotHealthStatus struct {
 type ThirdPartyBotAPIKey struct {
 	BaseModel
 	BotID              uuid.UUID      `json:"bot_id" db:"bot_id"`
-	KeyName            string         `json:"key_name" db:"key_name"`
+	NotifyKey          string         `json:"notify_key" db:"notify_key"`
 	APIKeyHash         string         `json:"-" db:"api_key_hash"`
 	Permissions        map[string]any `json:"permissions" db:"permissions"`
 	RateLimitPerMinute int            `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
@@ -555,7 +555,7 @@ type FeatureFlag struct {
 type NotificationSummary struct {
 	ID               uuid.UUID  `json:"id" db:"id"`
 	ProjectID        uuid.UUID  `json:"project_id" db:"project_id"`
-	KeyName          string     `json:"key_name" db:"key_name"`
+	NotifyKey        string     `json:"notify_key" db:"notify_key"`
 	CompanyID        uuid.UUID  `json:"company_id" db:"company_id"`
 	CompanyName      string     `json:"company_name" db:"company_name"`
 	SenderEmail      string     `json:"sender_email" db:"sender_email"`
@@ -595,67 +595,4 @@ type UsageSummary struct {
 	TotalCost     float64   `json:"total_cost" db:"total_cost"`
 	ProjectsUsed  int       `json:"projects_used" db:"projects_used"`
 	BotsUsed      int       `json:"bots_used" db:"bots_used"`
-}
-
-// =============================================
-// Request/Response Models
-// =============================================
-
-// CreateNotificationRequest represents a request to create a notification
-type CreateNotificationRequest struct {
-	ProjectID    uuid.UUID      `json:"project_id" validate:"required"`
-	MessageType  string         `json:"message_type" validate:"required,oneof=text file adaptive_card"`
-	Content      string         `json:"content" validate:"required,max=4000"`
-	Mentions     []string       `json:"mentions"`
-	Attachment   *Attachment    `json:"attachment"`
-	AdaptiveCard *AdaptiveCard  `json:"adaptive_card"`
-	Priority     string         `json:"priority" validate:"oneof=low normal high urgent"`
-	Metadata     map[string]any `json:"metadata"`
-}
-
-// CreateThirdPartyBotRequest represents a request to create a third-party bot
-type CreateThirdPartyBotRequest struct {
-	Name                  string         `json:"name" validate:"required"`
-	Description           string         `json:"description"`
-	AppID                 string         `json:"app_id" validate:"required"`
-	AppPassword           string         `json:"app_password" validate:"required"`
-	TenantID              string         `json:"tenant_id"`
-	WebhookURL            string         `json:"webhook_url"`
-	APIEndpoint           string         `json:"api_endpoint"`
-	Capabilities          map[string]any `json:"capabilities"`
-	RateLimitPerMinute    int            `json:"rate_limit_per_minute"`
-	MaxConcurrentRequests int            `json:"max_concurrent_requests"`
-	ContactEmail          string         `json:"contact_email" validate:"required,email"`
-	ContactPhone          string         `json:"contact_phone"`
-}
-
-// BotResponse represents a bot response
-type BotResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Status    string    `json:"status"`
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
-}
-
-// NotificationResponse represents a notification response
-type NotificationResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Status    string    `json:"status"`
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
-}
-
-// BillingSummaryResponse represents a billing summary response
-type BillingSummaryResponse struct {
-	Period             string             `json:"period"`
-	TotalNotifications int                `json:"total_notifications"`
-	TotalCost          float64            `json:"total_cost"`
-	Breakdown          []BillingBreakdown `json:"breakdown"`
-}
-
-// BillingBreakdown represents billing breakdown by project
-type BillingBreakdown struct {
-	ProjectKey string  `json:"project_key"`
-	Count      int     `json:"count"`
-	Cost       float64 `json:"cost"`
 }

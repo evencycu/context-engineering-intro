@@ -289,6 +289,7 @@ type ProjectRepository interface {
 	Repository[database.Project]
 	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.Project, error)
 	GetByKeyName(ctx context.Context, keyName string) (*database.Project, error)
+	GetByNotifyKey(ctx context.Context, notifyKey string) (*database.Project, error)
 	GetByStatus(ctx context.Context, status string) ([]*database.Project, error)
 }
 
@@ -304,10 +305,10 @@ func NewProjectRepository(db *sqlx.DB) ProjectRepository {
 
 // Create creates a new project
 func (r *projectRepository) Create(ctx context.Context, entity *database.Project) error {
-	query := `INSERT INTO projects (id, company_id, key_name, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) 
+	query := `INSERT INTO projects (id, company_id, notify_key, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.KeyName, entity.Description,
+		entity.ID, entity.CompanyID, entity.NotifyKey, entity.Description,
 		entity.Status, entity.DailyLimit, entity.MonthlyLimit, entity.Priority,
 		entity.CreatedBy, entity.CreatedAt, entity.UpdatedAt)
 	return err
@@ -326,11 +327,11 @@ func (r *projectRepository) GetByID(ctx context.Context, id uuid.UUID) (*databas
 
 // Update updates an existing project
 func (r *projectRepository) Update(ctx context.Context, entity *database.Project) error {
-	query := `UPDATE projects SET company_id = $2, key_name = $3, description = $4, 
+	query := `UPDATE projects SET company_id = $2, notify_key = $3, description = $4, 
 			  status = $5, daily_limit = $6, monthly_limit = $7, priority = $8, updated_at = $9 
 			  WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.KeyName, entity.Description,
+		entity.ID, entity.CompanyID, entity.NotifyKey, entity.Description,
 		entity.Status, entity.DailyLimit, entity.MonthlyLimit, entity.Priority, entity.UpdatedAt)
 	return err
 }
@@ -369,8 +370,19 @@ func (r *projectRepository) GetByCompanyID(ctx context.Context, companyID uuid.U
 // GetByKeyName retrieves a project by key name
 func (r *projectRepository) GetByKeyName(ctx context.Context, keyName string) (*database.Project, error) {
 	var project database.Project
-	query := `SELECT * FROM projects WHERE key_name = $1`
+	query := `SELECT * FROM projects WHERE notify_key = $1`
 	err := r.db.GetContext(ctx, &project, query, keyName)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
+// GetByNotifyKey retrieves a project by notify_key
+func (r *projectRepository) GetByNotifyKey(ctx context.Context, notifyKey string) (*database.Project, error) {
+	var project database.Project
+	query := `SELECT * FROM projects WHERE notify_key = $1`
+	err := r.db.GetContext(ctx, &project, query, notifyKey)
 	if err != nil {
 		return nil, err
 	}
@@ -567,6 +579,7 @@ type BotInstallationRepository interface {
 	GetByConversationID(ctx context.Context, conversationID string) (*database.BotInstallation, error)
 	GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error)
 	GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error)
+	GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*database.BotInstallation, error)
 	UpdateActivity(ctx context.Context, id uuid.UUID) error
 	MarkAsStale(ctx context.Context, id uuid.UUID) error
 	MarkAsUninstalled(ctx context.Context, id uuid.UUID) error
@@ -720,6 +733,25 @@ func (r *botInstallationRepository) GetActiveInstallationsByTenant(ctx context.C
 
 	var installations []*database.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, tenantID)
+	return installations, err
+}
+
+// GetActivePersonalByEmail retrieves active personal installations for a tenant by email
+func (r *botInstallationRepository) GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*database.BotInstallation, error) {
+	query := `
+        SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
+               recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
+               installation_status, installed_at, uninstalled_at, metadata, created_at, updated_at, email, description_name
+        FROM bot_installations
+        WHERE teams_tenant_id = $1
+          AND conversation_type = 'personal'
+          AND installation_status = 'active'
+          AND LOWER(email) = LOWER($2)
+        ORDER BY installed_at DESC
+    `
+
+	var installations []*database.BotInstallation
+	err := r.db.SelectContext(ctx, &installations, query, tenantID, email)
 	return installations, err
 }
 

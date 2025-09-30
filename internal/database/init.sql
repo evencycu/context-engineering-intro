@@ -14,7 +14,7 @@ INSERT INTO users (id, company_id, email, name, role, status, password_hash, cre
 ('650e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', 'admin@cathaybank.com.tw', 'Jane Smith', 'user', 'active', '$2a$10$example.hash', NOW(), NOW());
 
 -- Insert sample projects
-INSERT INTO projects (id, company_id, key_name, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) VALUES
+INSERT INTO projects (id, company_id, notify_key, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) VALUES
 ('750e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'cfh-alert-gogo', 'Holdings notification alerts', 'active', 1000, 30000, 'normal', '650e8400-e29b-41d4-a716-446655440001', NOW(), NOW()),
 ('750e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'techstart-monitoring', 'TechStart monitoring notifications', 'active', 500, 15000, 'high', '650e8400-e29b-41d4-a716-446655440003', NOW(), NOW());
 

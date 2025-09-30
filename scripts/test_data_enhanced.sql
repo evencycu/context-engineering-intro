@@ -20,7 +20,7 @@ INSERT INTO users (id, company_id, email, name, role, status, password_hash, api
 -- =============================================
 -- Projects
 -- =============================================
-INSERT INTO projects (id, company_id, key_name, description, status, daily_limit, monthly_limit, priority, created_by) VALUES
+INSERT INTO projects (id, company_id, notify_key, description, status, daily_limit, monthly_limit, priority, created_by) VALUES
 ('198f1130-20a9-4c7c-a504-6a055d27e8db', '9589aad2-f5ec-4d25-8ef7-b818b1933c32', 'main-notifications', '主要通知系統', 'active', 10000, 300000, 'high', '643c4d7a-a18f-4caa-aff2-5a0d4439b367'),
 ('2a9g2241-31ba-5d8d-b615-7b166e38f9ec', '9589aad2-f5ec-4d25-8ef7-b818b1933c32', 'test-project', '測試專案', 'active', 5000, 150000, 'normal', '754d5e8b-b29g-5dbb-bgg3-6b1e5540c478'),
 ('3bah3352-42cb-6e9e-c726-8c277f49g0fd', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'enterprise-alerts', '企業警報系統', 'active', 20000, 600000, 'urgent', '865e6f9c-c3ah-6ecc-chh4-7c2f6651d589');

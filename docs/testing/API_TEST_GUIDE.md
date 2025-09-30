@@ -40,6 +40,164 @@ docker-compose up -d
 curl -sS http://localhost:8080/health | jq .
 ```
 
+## 本地開發環境 - Docker PostgreSQL
+
+### 啟動 PostgreSQL 容器
+
+```bash
+# 啟動 PostgreSQL 容器
+docker run --name teamsnotify-postgres \
+  -e POSTGRES_DB=teamsnotify \
+  -e POSTGRES_USER=teamsnotify \
+  -e POSTGRES_PASSWORD=teamsnotify123 \
+  -p 5432:5432 \
+  -d postgres:15
+
+# 檢查容器狀態
+docker ps | grep teamsnotify-postgres
+```
+
+### 資料庫連接測試
+
+```bash
+# 使用 psql 連接到資料庫
+docker exec -it teamsnotify-postgres psql -U teamsnotify -d teamsnotify
+
+# 或使用外部 psql 客戶端
+psql -h localhost -p 5432 -U teamsnotify -d teamsnotify
+```
+
+### 資料庫管理指令
+
+#### 查看資料庫狀態
+```bash
+# 檢查資料庫連接
+docker exec teamsnotify-postgres pg_isready -U teamsnotify
+
+# 查看資料庫大小
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT pg_size_pretty(pg_database_size('teamsnotify'));"
+```
+
+#### 查看表結構
+```bash
+# 列出所有表
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\dt"
+
+# 查看特定表結構
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\d companies"
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\d users"
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\d projects"
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\d destinations"
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "\d notifications"
+```
+
+#### 查看資料統計
+```bash
+# 查看各表的記錄數
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+SELECT 
+  schemaname,
+  tablename,
+  n_tup_ins as inserts,
+  n_tup_upd as updates,
+  n_tup_del as deletes,
+  n_live_tup as live_tuples
+FROM pg_stat_user_tables 
+ORDER BY tablename;"
+
+# 查看資料庫活動
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+SELECT 
+  datname,
+  numbackends,
+  xact_commit,
+  xact_rollback,
+  blks_read,
+  blks_hit
+FROM pg_stat_database 
+WHERE datname = 'teamsnotify';"
+```
+
+#### 查看特定資料
+```bash
+# 查看公司資料
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, name, status, created_at FROM companies ORDER BY created_at DESC LIMIT 5;"
+
+# 查看用戶資料
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, email, name, role, status FROM users ORDER BY created_at DESC LIMIT 5;"
+
+# 查看專案資料
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, notify_key, description, status, daily_limit FROM projects ORDER BY created_at DESC LIMIT 5;"
+
+# 查看目的地資料
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, name, teams_tenant_id, status, targets FROM destinations ORDER BY created_at DESC LIMIT 3;"
+
+# 查看通知記錄
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, message_type, content, status, created_at FROM notifications ORDER BY created_at DESC LIMIT 5;"
+```
+
+#### 查看 Bot 相關資料
+```bash
+# 查看平台 Bot
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, name, app_id, tenant_id, status FROM platform_bots ORDER BY created_at DESC;"
+
+# 查看第三方 Bot
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, name, app_id, tenant_id, status FROM third_party_bots ORDER BY created_at DESC;"
+
+# 查看 Bot 安裝記錄
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT id, conversation_type, conversation_id, email, tenant_id, status FROM bot_installations ORDER BY created_at DESC LIMIT 5;"
+```
+
+#### 資料庫維護
+```bash
+# 備份資料庫
+docker exec teamsnotify-postgres pg_dump -U teamsnotify teamsnotify > teamsnotify_backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 還原資料庫
+docker exec -i teamsnotify-postgres psql -U teamsnotify -d teamsnotify < teamsnotify_backup_20250924_143000.sql
+
+# 清理測試資料
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+DELETE FROM notifications WHERE created_at < NOW() - INTERVAL '1 day';
+DELETE FROM destinations WHERE created_at < NOW() - INTERVAL '1 day';
+VACUUM ANALYZE;"
+```
+
+#### 監控資料庫效能
+```bash
+# 查看活躍連接
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+SELECT pid, usename, application_name, client_addr, state, query_start, query 
+FROM pg_stat_activity 
+WHERE datname = 'teamsnotify' AND state = 'active';"
+
+# 查看慢查詢
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+SELECT query, calls, total_time, mean_time, rows 
+FROM pg_stat_statements 
+ORDER BY total_time DESC 
+LIMIT 10;"
+
+# 查看索引使用情況
+docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "
+SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch 
+FROM pg_stat_user_indexes 
+ORDER BY idx_scan DESC;"
+```
+
+### 停止和清理
+
+```bash
+# 停止容器
+docker stop teamsnotify-postgres
+
+# 刪除容器
+docker rm teamsnotify-postgres
+
+# 清理所有相關資源
+docker system prune -f
+```
+
 ## API 測試方法
 
 ### 1. Company API 測試
@@ -245,7 +403,7 @@ curl -sS -X POST http://localhost:8080/api/v1/projects \
   -H "Content-Type: application/json" \
   -d '{
     "company_id": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
-    "key_name": "test-project-2",
+    "notify_key": "test-project-2",
     "description": "第二個測試項目",
     "status": "active",
     "daily_limit": 2000,
@@ -293,7 +451,7 @@ curl -sS http://localhost:8080/api/v1/projects/company/{company_id} | jq .
 #### 3.7 按 Key Name 獲取項目
 
 ```bash
-curl -sS http://localhost:8080/api/v1/projects/key/{key_name} | jq .
+curl -sS http://localhost:8080/api/v1/projects/key/{notify_key} | jq .
 ```
 
 ### 4. Bot API 測試

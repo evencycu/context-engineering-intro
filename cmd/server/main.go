@@ -8,9 +8,11 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
@@ -68,9 +70,15 @@ func main() {
 	destinationRepo := repositories.NewDestinationRepository(db)
 	destinationService := services.NewDestinationService(destinationRepo)
 
+	// Provision service (company + project + destination)
+	provisionService := services.NewProvisionService(companyRepo, projectRepo, destinationRepo)
+
 	notificationRepo := repositories.NewNotificationRepository(db)
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
 	notificationService := services.NewNotificationService(notificationRepo, broadcaster)
+
+	// External service
+	externalService := services.NewExternalService(projectRepo, destinationRepo, broadcaster)
 
 	// Create handlers
 	companyHandler := companies.NewHandler(companyService)
@@ -80,6 +88,8 @@ func main() {
 	messagesHandler := messages.NewHandler(messagesService)
 	destinationHandler := destinations.NewHandler(destinationService)
 	notificationHandler := notifications.NewHandler(notificationService)
+	provisionHandler := provision.NewHandler(provisionService)
+	externalHandler := external.NewHandler(externalService)
 
 	// Create server
 	server := api.NewServer(api.Config{
@@ -120,7 +130,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler)
+	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)

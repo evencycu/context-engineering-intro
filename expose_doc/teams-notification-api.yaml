@@ -1,3 +1,4 @@
+
 openapi: 3.0.3
 info:
   title: Teams Notification API (Go implementation)
@@ -15,21 +16,21 @@ paths:
       summary: Service health check
       tags: [System]
       responses:
-        "200":
+        '200':
           description: Health status
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
+                $ref: '#/components/schemas/HealthResponse'
   /api/v1/companies:
     get:
       summary: List companies
       tags: [Companies]
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
         - name: search
           in: query
           schema:
@@ -39,12 +40,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Company collection
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedCompanies"
+                $ref: '#/components/schemas/PaginatedCompanies'
     post:
       summary: Create company
       tags: [Companies]
@@ -53,27 +54,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompanyCreateRequest"
+              $ref: '#/components/schemas/CompanyCreateRequest'
       responses:
-        "201":
+        '201':
           description: Created company
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyResponse"
+                $ref: '#/components/schemas/CompanyResponse'
   /api/v1/companies/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get company
       tags: [Companies]
       responses:
-        "200":
+        '200':
           description: Company
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyResponse"
+                $ref: '#/components/schemas/CompanyResponse'
     put:
       summary: Update company
       tags: [Companies]
@@ -82,26 +83,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompanyUpdateRequest"
+              $ref: '#/components/schemas/CompanyUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Updated company
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyResponse"
+                $ref: '#/components/schemas/CompanyResponse'
     delete:
       summary: Delete company
       tags: [Companies]
       responses:
-        "204":
+        '204':
           description: Deleted
   /api/v1/companies/{id}/status:
     patch:
       summary: Update company status
       tags: [Companies]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -114,18 +115,18 @@ paths:
                   type: string
                   enum: [active, inactive, suspended]
       responses:
-        "200":
+        '200':
           description: Updated company
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyResponse"
+                $ref: '#/components/schemas/CompanyResponse'
   /api/v1/companies/{id}/billing:
     patch:
       summary: Update company billing enabled flag
       tags: [Companies]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -137,21 +138,21 @@ paths:
                 enabled:
                   type: boolean
       responses:
-        "200":
+        '200':
           description: Updated company
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyResponse"
+                $ref: '#/components/schemas/CompanyResponse'
   /api/v1/users:
     get:
       summary: List users
       tags: [Users]
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
         - name: role
           in: query
           schema:
@@ -161,12 +162,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: User collection
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedUsers"
+                $ref: '#/components/schemas/PaginatedUsers'
     post:
       summary: Create user
       tags: [Users]
@@ -175,27 +176,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserCreateRequest"
+              $ref: '#/components/schemas/UserCreateRequest'
       responses:
-        "201":
+        '201':
           description: Created user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponse"
+                $ref: '#/components/schemas/UserResponse'
   /api/v1/users/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get user
       tags: [Users]
       responses:
-        "200":
+        '200':
           description: User
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponse"
+                $ref: '#/components/schemas/UserResponse'
     put:
       summary: Update user
       tags: [Users]
@@ -204,26 +205,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserUpdateRequest"
+              $ref: '#/components/schemas/UserUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Updated user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponse"
+                $ref: '#/components/schemas/UserResponse'
     delete:
       summary: Delete user
       tags: [Users]
       responses:
-        "204":
+        '204':
           description: Deleted
   /api/v1/users/{id}/password:
     patch:
       summary: Change user password
       tags: [Users]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -237,24 +238,24 @@ paths:
                 new_password:
                   type: string
       responses:
-        "200":
+        '200':
           description: Password updated
   /api/v1/users/{id}/api-key:
     patch:
       summary: Generate API key (persistence TODO)
       tags: [Users]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: API key payload
     delete:
       summary: Revoke API key (persistence TODO)
       tags: [Users]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       responses:
-        "204":
+        '204':
           description: Revoked
   /api/v1/users/company/{companyId}:
     get:
@@ -268,7 +269,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: User list
   /api/v1/users/role/{role}:
     get:
@@ -281,24 +282,24 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: User list
   /api/v1/projects:
     get:
       summary: List projects
       tags: [Projects]
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
       responses:
-        "200":
+        '200':
           description: Project collection
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedProjects"
+                $ref: '#/components/schemas/PaginatedProjects'
     post:
       summary: Create project
       tags: [Projects]
@@ -307,27 +308,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProjectCreateRequest"
+              $ref: '#/components/schemas/ProjectCreateRequest'
       responses:
-        "201":
+        '201':
           description: Created project
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProjectResponse"
+                $ref: '#/components/schemas/ProjectResponse'
   /api/v1/projects/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get project
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: Project
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProjectResponse"
+                $ref: '#/components/schemas/ProjectResponse'
     put:
       summary: Update project
       tags: [Projects]
@@ -336,26 +337,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProjectUpdateRequest"
+              $ref: '#/components/schemas/ProjectUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Updated project
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProjectResponse"
+                $ref: '#/components/schemas/ProjectResponse'
     delete:
       summary: Delete project
       tags: [Projects]
       responses:
-        "204":
+        '204':
           description: Deleted
   /api/v1/projects/{id}/limits:
     patch:
       summary: Update project limits
       tags: [Projects]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -368,7 +369,7 @@ paths:
                 monthly_limit:
                   type: integer
       responses:
-        "200":
+        '200':
           description: Updated project
   /api/v1/projects/company/{companyId}:
     get:
@@ -382,7 +383,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: Project list
   /api/v1/projects/key/{keyName}:
     get:
@@ -395,23 +396,23 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Project
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProjectResponse"
+                $ref: '#/components/schemas/ProjectResponse'
   /api/v1/bots/platform:
     get:
       summary: List platform bots
       tags: [Bots]
       responses:
-        "200":
+        '200':
           description: Bot list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotListResponse"
+                $ref: '#/components/schemas/BotListResponse'
     post:
       summary: Create platform bot
       tags: [Bots]
@@ -420,27 +421,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BotCreateRequest"
+              $ref: '#/components/schemas/BotCreateRequest'
       responses:
-        "201":
+        '201':
           description: Created bot
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotResponse"
+                $ref: '#/components/schemas/BotResponse'
   /api/v1/bots/platform/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get platform bot
       tags: [Bots]
       responses:
-        "200":
+        '200':
           description: Bot payload
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotResponse"
+                $ref: '#/components/schemas/BotResponse'
     put:
       summary: Update platform bot
       tags: [Bots]
@@ -449,26 +450,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BotUpdateRequest"
+              $ref: '#/components/schemas/BotUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Updated bot
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotResponse"
+                $ref: '#/components/schemas/BotResponse'
     delete:
       summary: Delete platform bot
       tags: [Bots]
       responses:
-        "204":
+        '204':
           description: Deleted
   /api/v1/bots/platform/{id}/status:
     patch:
       summary: Update bot status
       tags: [Bots]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -481,14 +482,14 @@ paths:
                   type: string
                   enum: [active, inactive, suspended, maintenance]
       responses:
-        "200":
+        '200':
           description: Updated bot
   /api/v1/bots/platform/{id}/capabilities:
     patch:
       summary: Update bot capabilities
       tags: [Bots]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
@@ -497,16 +498,16 @@ paths:
               type: object
               additionalProperties: true
       responses:
-        "200":
+        '200':
           description: Updated bot
   /api/v1/bots/platform/{id}/test:
     post:
       summary: Test bot connection
       tags: [Bots]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Test result
   /api/v1/bots/status/{status}:
     get:
@@ -520,17 +521,17 @@ paths:
             type: string
             enum: [active, inactive, suspended, maintenance]
       responses:
-        "200":
+        '200':
           description: Bot list
   /api/v1/destinations:
     get:
       summary: List destinations
       tags: [Destinations]
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
         - name: search
           in: query
           schema:
@@ -540,12 +541,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Destination collection
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedDestinations"
+                $ref: '#/components/schemas/PaginatedDestinations'
     post:
       summary: Create destination
       tags: [Destinations]
@@ -554,27 +555,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DestinationCreateRequest"
+              $ref: '#/components/schemas/DestinationCreateRequest'
       responses:
-        "201":
+        '201':
           description: Created destination
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DestinationResponse"
+                $ref: '#/components/schemas/DestinationResponse'
   /api/v1/destinations/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get destination
       tags: [Destinations]
       responses:
-        "200":
+        '200':
           description: Destination
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DestinationResponse"
+                $ref: '#/components/schemas/DestinationResponse'
     put:
       summary: Update destination
       tags: [Destinations]
@@ -583,43 +584,43 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DestinationUpdateRequest"
+              $ref: '#/components/schemas/DestinationUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Updated destination
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DestinationResponse"
+                $ref: '#/components/schemas/DestinationResponse'
     delete:
       summary: Delete destination
       tags: [Destinations]
       responses:
-        "204":
+        '204':
           description: Deleted
   /api/v1/destinations/{id}/targets:
     patch:
       summary: Update destination targets
       tags: [Destinations]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DestinationTargetsRequest"
+              $ref: '#/components/schemas/DestinationTargetsRequest'
       responses:
-        "200":
+        '200':
           description: Updated destination
   /api/v1/destinations/{id}/validate:
     post:
       summary: Validate destination targets
       tags: [Destinations]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Validation result
   /api/v1/destinations/project/{projectId}:
     get:
@@ -633,7 +634,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: Destination list
   /api/v1/destinations/bot/{botId}:
     get:
@@ -647,7 +648,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: Destination list
   /api/v1/destinations/search:
     get:
@@ -680,17 +681,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Destination list
   /api/v1/notifications:
     get:
       summary: List notifications
       tags: [Notifications]
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
         - name: status
           in: query
           schema:
@@ -700,12 +701,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Notification list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedNotifications"
+                $ref: '#/components/schemas/PaginatedNotifications'
     post:
       summary: Send notification
       tags: [Notifications]
@@ -714,41 +715,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationSendRequest"
+              $ref: '#/components/schemas/NotificationSendRequest'
       responses:
-        "202":
+        '202':
           description: Notification queued
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationEnqueueResponse"
+                $ref: '#/components/schemas/NotificationEnqueueResponse'
   /api/v1/notifications/{id}:
     parameters:
-      - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
     get:
       summary: Get notification
       tags: [Notifications]
       responses:
-        "200":
+        '200':
           description: Notification
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationResponse"
+                $ref: '#/components/schemas/NotificationResponse'
     delete:
       summary: Cancel notification
       tags: [Notifications]
       responses:
-        "204":
+        '204':
           description: Cancelled
   /api/v1/notifications/{id}/retry:
     post:
       summary: Retry notification
       tags: [Notifications]
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Retry accepted
   /api/v1/notifications/project/{projectId}:
     get:
@@ -762,7 +763,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: Notification list
   /api/v1/notifications/sender/{senderId}:
     get:
@@ -776,7 +777,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: Notification list
   /api/v1/notifications/status/{status}:
     get:
@@ -789,7 +790,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Notification list
   /api/v1/notifications/date-range:
     get:
@@ -809,28 +810,28 @@ paths:
             type: string
             format: date-time
       responses:
-        "200":
+        '200':
           description: Notification list
   /api/v1/messages:
     post:
       summary: Bot Framework inbound message webhook
       tags: [Messages]
       responses:
-        "200":
+        '200':
           description: Acknowledged
   /api/v1/messages/proactive/test:
     post:
       summary: Send proactive test message
       tags: [Messages]
       responses:
-        "200":
+        '200':
           description: Test result
   /api/v1/provision:
     post:
       summary: Provision company/project/destination bundle
       tags: [Provision]
       responses:
-        "201":
+        '201':
           description: Created bundle
   /api/v1/provision/{notify_key}:
     parameters:
@@ -843,13 +844,13 @@ paths:
       summary: Get provision bundle by notify key
       tags: [Provision]
       responses:
-        "200":
+        '200':
           description: Provision bundle
     put:
       summary: Update provision bundle
       tags: [Provision]
       responses:
-        "200":
+        '200':
           description: Updated bundle
   /api/v1/provision/{notify_key}/enable:
     post:
@@ -862,7 +863,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Enabled
   /api/v1/provision/{notify_key}/disable:
     post:
@@ -875,7 +876,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Disabled
 components:
   parameters:
@@ -976,7 +977,7 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/Company"
+          $ref: '#/components/schemas/Company'
         message:
           type: string
     PaginatedCompanies:
@@ -985,9 +986,9 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Company"
+            $ref: '#/components/schemas/Company'
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
+          $ref: '#/components/schemas/PaginationMeta'
     PaginationMeta:
       type: object
       properties:
@@ -1054,16 +1055,16 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/User"
+          $ref: '#/components/schemas/User'
     PaginatedUsers:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/User"
+            $ref: '#/components/schemas/User'
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
+          $ref: '#/components/schemas/PaginationMeta'
     Project:
       type: object
       properties:
@@ -1125,16 +1126,16 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/Project"
+          $ref: '#/components/schemas/Project'
     PaginatedProjects:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Project"
+            $ref: '#/components/schemas/Project'
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
+          $ref: '#/components/schemas/PaginationMeta'
     Bot:
       type: object
       properties:
@@ -1202,14 +1203,14 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/Bot"
+          $ref: '#/components/schemas/Bot'
     BotListResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Bot"
+            $ref: '#/components/schemas/Bot'
     Destination:
       type: object
       properties:
@@ -1228,7 +1229,7 @@ components:
         targets:
           type: array
           items:
-            $ref: "#/components/schemas/TeamsTarget"
+            $ref: '#/components/schemas/TeamsTarget'
         bot_id:
           type: string
           format: uuid
@@ -1258,8 +1259,7 @@ components:
           type: string
     DestinationCreateRequest:
       type: object
-      required:
-        [project_id, name, description, teams_tenant_id, targets, created_by]
+      required: [project_id, name, description, teams_tenant_id, targets, created_by]
       properties:
         project_id:
           type: string
@@ -1273,7 +1273,7 @@ components:
         targets:
           type: array
           items:
-            $ref: "#/components/schemas/TeamsTarget"
+            $ref: '#/components/schemas/TeamsTarget'
         bot_id:
           type: string
           format: uuid
@@ -1297,21 +1297,21 @@ components:
         targets:
           type: array
           items:
-            $ref: "#/components/schemas/TeamsTarget"
+            $ref: '#/components/schemas/TeamsTarget'
     DestinationResponse:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/Destination"
+          $ref: '#/components/schemas/Destination'
     PaginatedDestinations:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Destination"
+            $ref: '#/components/schemas/Destination'
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
+          $ref: '#/components/schemas/PaginationMeta'
     Notification:
       type: object
       properties:
@@ -1407,413 +1407,13 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/Notification"
+          $ref: '#/components/schemas/Notification'
     PaginatedNotifications:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Notification"
+            $ref: '#/components/schemas/Notification'
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-
-    # External API Schemas
-    ExternalNotificationRequest:
-      type: object
-      required:
-        - notify_key
-        - message
-      properties:
-        notify_key:
-          type: string
-          description: Project notification key
-          example: "my-project-key"
-          minLength: 3
-          maxLength: 50
-        message:
-          type: string
-          description: Message content to send
-          example: "Hello from external API"
-          minLength: 1
-          maxLength: 4000
-        message_type:
-          type: string
-          description: Type of message
-          enum: [text, file, adaptive_card]
-          default: text
-          example: "text"
-        priority:
-          type: string
-          description: Message priority
-          enum: [low, normal, high, urgent]
-          default: normal
-          example: "normal"
-        destinations:
-          type: array
-          description: List of destination IDs or 'all' for all destinations
-          items:
-            type: string
-          example: ["all"]
-        mentions:
-          type: array
-          description: List of users to mention
-          items:
-            type: string
-          example: ["@user1", "@user2"]
-        metadata:
-          type: object
-          description: Additional metadata
-          example: { "source": "external", "version": "1.0" }
-
-    ExternalNotificationResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          properties:
-            notification_id:
-              type: string
-              example: "123e4567-e89b-12d3-a456-426614174000"
-            status:
-              type: string
-              enum: [sent, partial, failed]
-              example: "sent"
-            message:
-              type: string
-              example: "Notification processed successfully"
-            project_id:
-              type: string
-              example: "123e4567-e89b-12d3-a456-426614174000"
-            project_name:
-              type: string
-              example: "my-project-key"
-            destinations_count:
-              type: integer
-              example: 3
-            results:
-              type: array
-              items:
-                $ref: "#/components/schemas/ExternalDestinationResult"
-            estimated_delivery:
-              type: string
-              example: "5-10 minutes"
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationResult:
-      type: object
-      properties:
-        destination_id:
-          type: string
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        destination_name:
-          type: string
-          example: "Marketing Team"
-        success:
-          type: boolean
-          example: true
-        error:
-          type: string
-          example: ""
-
-    ExternalValidateResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        valid:
-          type: boolean
-          example: true
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        destinations:
-          type: array
-          items:
-            $ref: "#/components/schemas/ExternalDestinationInfo"
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        name:
-          type: string
-          example: "Marketing Team"
-        description:
-          type: string
-          example: "Marketing team notification destination"
-        status:
-          type: string
-          example: "active"
-        targets:
-          type: array
-          items:
-            type: object
-          example: [{ "type": "channel", "conversation_id": "19:abc123" }]
-
-    ExternalHealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        service:
-          type: string
-          example: "external-api"
-        timestamp:
-          type: string
-          example: "2025-09-26T03:51:33Z"
-
-    # Error Response Schemas
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: string
-          example: "Invalid request format"
-        code:
-          type: string
-          example: "VALIDATION_ERROR"
-        details:
-          type: object
-          additionalProperties: true
-          example: { "field": "notify_key", "message": "is required" }
-
-    ValidationError:
-      type: object
-      properties:
-        field:
-          type: string
-          example: "notify_key"
-        message:
-          type: string
-          example: "is required"
-        value:
-          type: string
-          example: ""
-
-    # Common Response Wrappers
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-        message:
-          type: string
-          example: "Operation completed successfully"
-
-    # API Usage Examples
-    APIUsageExample:
-      type: object
-      properties:
-        curl_example:
-          type: string
-          example: 'curl -X POST http://localhost:8080/api/v1/external/notify -H ''Content-Type: application/json'' -d ''{"notify_key": "my-project", "message": "Hello World"}'''
-        javascript_example:
-          type: string
-          example: "fetch('http://localhost:8080/api/v1/external/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notify_key: 'my-project', message: 'Hello World'}) })"
-
-  # External API endpoints
-  /api/v1/external/notify:
-    post:
-      summary: Send notification to external users
-      description: |
-        Send notification using notify_key to pre-configured destinations.
-
-        **Usage Examples:**
-        ```bash
-        # Basic notification
-        curl -X POST http://localhost:8080/api/v1/external/notify \
-          -H "Content-Type: application/json" \
-          -d '{"notify_key": "my-project", "message": "Hello World"}'
-
-        # Advanced notification with all options
-        curl -X POST http://localhost:8080/api/v1/external/notify \
-          -H "Content-Type: application/json" \
-          -d '{
-            "notify_key": "my-project",
-            "message": "Urgent: System maintenance in 1 hour",
-            "message_type": "text",
-            "priority": "urgent",
-            "destinations": ["all"],
-            "mentions": ["@everyone"],
-            "metadata": {"source": "monitoring", "alert_level": "critical"}
-          }'
-        ```
-      tags: [External API]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExternalNotificationRequest"
-            examples:
-              basic:
-                summary: Basic notification
-                value:
-                  notify_key: "my-project"
-                  message: "Hello World"
-              advanced:
-                summary: Advanced notification with all options
-                value:
-                  notify_key: "my-project"
-                  message: "Urgent: System maintenance in 1 hour"
-                  message_type: "text"
-                  priority: "urgent"
-                  destinations: ["all"]
-                  mentions: ["@everyone"]
-                  metadata:
-                    source: "monitoring"
-                    alert_level: "critical"
-      responses:
-        "200":
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalNotificationResponse"
-              examples:
-                success:
-                  summary: Successful notification
-                  value:
-                    success: true
-                    data:
-                      notification_id: "123e4567-e89b-12d3-a456-426614174000"
-                      status: "sent"
-                      message: "Notification processed successfully"
-                      project_id: "123e4567-e89b-12d3-a456-426614174000"
-                      project_name: "my-project"
-                      destinations_count: 3
-                      results:
-                        - destination_id: "19:abc123@thread.v2"
-                          destination_name: "Marketing Team"
-                          success: true
-                        - destination_id: "a:def456"
-                          destination_name: "Personal Chat"
-                          success: true
-                      estimated_delivery: "5-10 minutes"
-        "400":
-          description: Bad request - Invalid input or missing required fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                validation_error:
-                  summary: Validation error
-                  value:
-                    success: false
-                    error: "notify_key is required"
-                    code: "VALIDATION_ERROR"
-                    details:
-                      field: "notify_key"
-                      message: "is required"
-                invalid_notify_key:
-                  summary: Invalid notify key
-                  value:
-                    success: false
-                    error: "Project not found or inactive"
-                    code: "PROJECT_NOT_FOUND"
-        "404":
-          description: Project not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                project_not_found:
-                  summary: Project not found
-                  value:
-                    success: false
-                    error: "Project with notify_key 'invalid-key' not found"
-                    code: "PROJECT_NOT_FOUND"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                server_error:
-                  summary: Server error
-                  value:
-                    success: false
-                    error: "Internal server error"
-                    code: "INTERNAL_ERROR"
-
-  /api/v1/external/validate/{notifyKey}:
-    get:
-      summary: Validate notify key
-      description: Check if a notify key exists and is active
-      tags: [External API]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "my-project-key"
-      responses:
-        "200":
-          description: Validation result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalValidateResponse"
-
-  /api/v1/external/destinations/{notifyKey}:
-    get:
-      summary: Get project destinations
-      description: Get available destinations for a project
-      tags: [External API]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "my-project-key"
-      responses:
-        "200":
-          description: Project destinations
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalDestinationsResponse"
-
-  /api/v1/external/health:
-    get:
-      summary: External API health check
-      description: Health check for external API
-      tags: [External API]
-      responses:
-        "200":
-          description: Health status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalHealthResponse"
+          $ref: '#/components/schemas/PaginationMeta'

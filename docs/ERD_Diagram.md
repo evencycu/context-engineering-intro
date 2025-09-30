@@ -42,7 +42,7 @@
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ id (UUID, PK)                                                                   │
 │ company_id (UUID, FK → companies.id)                                           │
-│ key_name (VARCHAR(100), NOT NULL)                                              │
+│ notify_key (VARCHAR(100), NOT NULL)                                            │
 │ description (TEXT)                                                              │
 │ status (VARCHAR(20), CHECK: active|inactive|suspended)                         │
 │ daily_limit (INTEGER, DEFAULT 10000)                                           │
@@ -50,7 +50,7 @@
 │ priority (VARCHAR(20), CHECK: low|normal|high|urgent)                          │
 │ created_by (UUID, FK → users.id)                                               │
 │ created_at, updated_at (TIMESTAMP)                                             │
-│ UNIQUE(company_id, key_name)                                                   │
+│ UNIQUE(company_id, notify_key)                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -239,7 +239,7 @@
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │ id (UUID, PK)                                                                   │
 │ bot_id (UUID, FK → third_party_bots.id)                                        │
-│ key_name (VARCHAR(255), NOT NULL)                                              │
+│ notify_key (VARCHAR(255), NOT NULL)                                            │
 │ api_key_hash (VARCHAR(255), NOT NULL)                                          │
 │ permissions (JSONB, DEFAULT '{}')                                              │
 │ rate_limit_per_minute (INTEGER, DEFAULT 100)                                   │

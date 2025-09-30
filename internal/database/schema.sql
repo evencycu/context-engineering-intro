@@ -46,7 +46,7 @@ CREATE TABLE users (
 CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    key_name VARCHAR(100) NOT NULL,
+    notify_key VARCHAR(100) NOT NULL,
     description TEXT,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
     daily_limit INTEGER DEFAULT 10000,
@@ -55,7 +55,7 @@ CREATE TABLE projects (
     created_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(company_id, key_name)
+    UNIQUE(company_id, notify_key)
 );
 
 -- =============================================
@@ -226,7 +226,7 @@ CREATE TABLE bot_health_status (
 CREATE TABLE third_party_bot_api_keys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     bot_id UUID NOT NULL REFERENCES third_party_bots(id) ON DELETE CASCADE,
-    key_name VARCHAR(255) NOT NULL,
+    notify_key VARCHAR(255) NOT NULL,
     api_key_hash VARCHAR(255) NOT NULL,
     permissions JSONB DEFAULT '{}'::jsonb,
     rate_limit_per_minute INTEGER DEFAULT 100,
@@ -496,7 +496,7 @@ CREATE VIEW notification_summary AS
 SELECT 
     n.id,
     n.project_id,
-    p.key_name,
+    p.notify_key,
     p.company_id,
     c.name as company_name,
     u.email as sender_email,
@@ -514,7 +514,7 @@ JOIN projects p ON n.project_id = p.id
 JOIN companies c ON p.company_id = c.id
 LEFT JOIN users u ON n.sender_id = u.id
 LEFT JOIN notification_destinations nd ON n.id = nd.notification_id
-GROUP BY n.id, p.key_name, p.company_id, c.name, u.email, n.message_type, n.content, n.priority, n.status, n.created_at, n.sent_at;
+GROUP BY n.id, p.notify_key, p.company_id, c.name, u.email, n.message_type, n.content, n.priority, n.status, n.created_at, n.sent_at;
 
 -- Bot Status Summary View
 CREATE OR REPLACE VIEW bot_status_summary AS

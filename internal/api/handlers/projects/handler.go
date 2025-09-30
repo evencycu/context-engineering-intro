@@ -40,7 +40,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // CreateProjectRequest represents a create project request
 type CreateProjectRequest struct {
 	CompanyID    uuid.UUID `json:"company_id" validate:"required"`
-	KeyName      string    `json:"key_name" validate:"required,min=3,max=50,alphanum"`
+	NotifyKey    string    `json:"notify_key" validate:"required,min=3,max=50,alphanum"`
 	Description  string    `json:"description" validate:"required,min=10,max=500"`
 	DailyLimit   int       `json:"daily_limit" validate:"min=1,max=10000"`
 	MonthlyLimit int       `json:"monthly_limit" validate:"min=1,max=300000"`
@@ -50,7 +50,7 @@ type CreateProjectRequest struct {
 
 // UpdateProjectRequest represents an update project request
 type UpdateProjectRequest struct {
-	KeyName     string `json:"key_name" validate:"omitempty,min=3,max=50,alphanum"`
+	NotifyKey   string `json:"notify_key" validate:"omitempty,min=3,max=50,alphanum"`
 	Description string `json:"description" validate:"omitempty,min=10,max=500"`
 	Priority    string `json:"priority" validate:"omitempty,oneof=low normal high urgent"`
 }
@@ -75,7 +75,7 @@ func (h *Handler) CreateProject(c *gin.Context) {
 	// Convert request to project model
 	project := &database.Project{
 		CompanyID:    req.CompanyID,
-		KeyName:      req.KeyName,
+		NotifyKey:    req.NotifyKey,
 		Description:  req.Description,
 		DailyLimit:   req.DailyLimit,
 		MonthlyLimit: req.MonthlyLimit,
@@ -236,8 +236,8 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 	}
 
 	// Update fields
-	if req.KeyName != "" {
-		existingProject.KeyName = req.KeyName
+	if req.NotifyKey != "" {
+		existingProject.NotifyKey = req.NotifyKey
 	}
 	if req.Description != "" {
 		existingProject.Description = req.Description
