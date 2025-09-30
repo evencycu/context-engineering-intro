@@ -899,7 +899,7 @@ paths:
             "message": "Urgent: System maintenance in 1 hour",
             "message_type": "text",
             "priority": "urgent",
-            "destinations": ["all"],
+            "targets": ["all"],
             "mentions": ["@everyone"],
             "metadata": {"source": "monitoring", "alert_level": "critical"}
           }'
@@ -924,7 +924,7 @@ paths:
                   message: "Urgent: System maintenance in 1 hour"
                   message_type: "text"
                   priority: "urgent"
-                  destinations: ["all"]
+                  targets: ["all"]
                   mentions: ["@everyone"]
                   metadata:
                     source: "monitoring"
@@ -1618,9 +1618,9 @@ components:
           enum: [low, normal, high, urgent]
           default: normal
           example: "normal"
-        destinations:
+        targets:
           type: array
-          description: List of destination IDs or 'all' for all destinations
+          description: List of target Emails or Conversation IDs or 'all' for all targets
           items:
             type: string
           example: ["all"]

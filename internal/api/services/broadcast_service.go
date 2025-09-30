@@ -20,7 +20,7 @@ import (
 type BroadcastService interface {
 	SendToAllActive(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, message string) (*BroadcastResult, error)
 	SendToScope(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, scope string, message string) (*BroadcastResult, error)
-	SendToDestinations(ctx context.Context, destinationIDs []uuid.UUID, message string) (*BroadcastResult, error)
+	SendToDestinations(ctx context.Context, destinationIDs []*database.Destination, targets []string, message string) (*BroadcastResult, error)
 	SendToTargets(ctx context.Context, targets []database.TeamsTarget, message string) (*BroadcastResult, error)
 }
 
@@ -193,19 +193,8 @@ func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, bot
 }
 
 // SendToDestinations sends a message to specific destinations
-func (s *broadcastService) SendToDestinations(ctx context.Context, destinationIDs []uuid.UUID, message string) (*BroadcastResult, error) {
+func (s *broadcastService) SendToDestinations(ctx context.Context, destinations []*database.Destination, targets []string, message string) (*BroadcastResult, error) {
 	start := time.Now()
-
-	// Get destinations
-	destinations := make([]*database.Destination, 0, len(destinationIDs))
-	for _, id := range destinationIDs {
-		dest, err := s.destinationRepo.GetByID(ctx, id)
-		if err != nil {
-			log.Printf("Failed to get destination %s: %v", id, err)
-			continue
-		}
-		destinations = append(destinations, dest)
-	}
 
 	if len(destinations) == 0 {
 		return &BroadcastResult{
@@ -217,11 +206,32 @@ func (s *broadcastService) SendToDestinations(ctx context.Context, destinationID
 		}, nil
 	}
 
+	// white list filter targets
+	targetsMap := make(map[string]struct{})
+	for _, target := range targets {
+		targetsMap[target] = struct{}{}
+	}
+
 	// Convert destinations to targets and send
 	allTargets := make([]database.TeamsTarget, 0)
+	log.Printf("Targets map: %v", targetsMap)
 	for _, dest := range destinations {
-		// dest.Targets is already a JSONB-backed slice of TeamsTarget
-		allTargets = append(allTargets, dest.Targets...)
+		for _, target := range dest.Targets {
+			if len(targetsMap) > 0 {
+				if _, ok := targetsMap[target.Email]; ok {
+					allTargets = append(allTargets, target)
+					log.Printf("Added email target: %s", target.Email)
+					continue
+				}
+				if _, ok := targetsMap[target.ConversationID]; ok {
+					log.Printf("Added conversation target: %s", target.ConversationID)
+					allTargets = append(allTargets, target)
+				}
+			} else {
+				log.Printf("Original target: %s", target.ConversationID)
+				allTargets = append(allTargets, target)
+			}
+		}
 	}
 
 	return s.SendToTargets(ctx, allTargets, message)
@@ -292,86 +302,89 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 		}, nil
 	}
 
-	// Group targets by tenant (no per-bot grouping due to schema)
-	tenantGroups := make(map[string][]database.TeamsTarget)
-	for _, target := range validated {
-		if target.TenantID == "" {
-			continue
-		}
-		tenantGroups[target.TenantID] = append(tenantGroups[target.TenantID], target)
+	// Since we only have a single tenant, no need to group by tenant
+	// Get tenant ID from first target (all targets should have same tenant)
+	tenantID := ""
+	if len(validated) > 0 {
+		tenantID = validated[0].TenantID
 	}
 
-	// Send to each tenant group
-	allResults := make([]TargetResult, 0)
-	totalSuccessful := 0
-	totalFailed := 0
+	// Get all active installations for this tenant
+	installations, err := s.installRepo.GetActiveInstallationsByTenant(ctx, tenantID)
+	if err != nil {
+		log.Printf("Failed to get installations for tenant %s: %v", tenantID, err)
+		return &BroadcastResult{
+			TotalTargets: len(targets),
+			Successful:   0,
+			Failed:       len(targets),
+			Results:      earlyResults,
+			Duration:     time.Since(start),
+		}, fmt.Errorf("failed to get installations: %w", err)
+	}
+	log.Printf("Found %d installations for tenant %s", len(installations), tenantID)
 
-	for tenantID, botTargets := range tenantGroups {
-		// Get all active installations for this tenant
-		installations, err := s.installRepo.GetActiveInstallationsByTenant(ctx, tenantID)
-		if err != nil {
-			log.Printf("Failed to get installations for tenant %s: %v", tenantID, err)
+	allResults := make([]TargetResult, 0)
+	allResults = append(allResults, earlyResults...)
+	totalSuccessful := 0
+	totalFailed := len(earlyResults)
+
+	// Match targets to installations and send
+	for _, target := range validated {
+		// For personal email-only target, try resolve to existing personal installation by email
+		if target.Type == "personal" && target.ConversationID == "" && target.Email != "" {
+			if emailInstalls, err := s.installRepo.GetActivePersonalByEmail(ctx, tenantID, target.Email); err == nil {
+				installations = append(installations, emailInstalls...)
+			} else {
+				log.Printf("Lookup personal by email failed: %v", err)
+			}
+		}
+		log.Printf("Matching target: type=%s, conversation_id=%s", target.Type, target.ConversationID)
+		var matchedInstallation *database.BotInstallation
+		for _, inst := range installations {
+			log.Printf("Checking installation: type=%s, conversation_id=%s", inst.ConversationType, inst.ConversationID)
+			if s.matchesTarget(inst, target) {
+				matchedInstallation = inst
+				log.Printf("Found matching installation: %s", inst.ID)
+				break
+			}
+		}
+
+		if matchedInstallation == nil {
+			log.Printf("No matching installation found for target: %s", target.ConversationID)
+			allResults = append(allResults, TargetResult{
+				TargetID:       target.ConversationID,
+				ConversationID: target.ConversationID,
+				Scope:          target.Type,
+				Success:        false,
+				Error:          "No matching installation found",
+			})
+			totalFailed++
 			continue
 		}
-		log.Printf("Found %d installations for tenant %s", len(installations), tenantID)
-		// Match targets to installations
-		for _, target := range botTargets {
-			// For personal email-only target, try resolve to existing personal installation by email
-			if target.Type == "personal" && target.ConversationID == "" && target.Email != "" {
-				if emailInstalls, err := s.installRepo.GetActivePersonalByEmail(ctx, tenantID, target.Email); err == nil {
-					installations = append(installations, emailInstalls...)
-				} else {
-					log.Printf("Lookup personal by email failed: %v", err)
-				}
-			}
-			log.Printf("Matching target: type=%s, conversation_id=%s", target.Type, target.ConversationID)
-			var matchedInstallation *database.BotInstallation
-			for _, inst := range installations {
-				log.Printf("Checking installation: type=%s, conversation_id=%s", inst.ConversationType, inst.ConversationID)
-				if s.matchesTarget(inst, target) {
-					matchedInstallation = inst
-					log.Printf("Found matching installation: %s", inst.ID)
-					break
-				}
-			}
 
-			if matchedInstallation == nil {
-				log.Printf("No matching installation found for target: %s", target.ConversationID)
-				allResults = append(allResults, TargetResult{
-					TargetID:       target.ConversationID,
-					ConversationID: target.ConversationID,
-					Scope:          target.Type,
-					Success:        false,
-					Error:          "No matching installation found",
-				})
-				totalFailed++
-				continue
-			}
+		// Get bot credentials
+		// 優先從資料庫獲取，如果沒有則使用環境變數
+		appID := ""
+		appPassword := ""
+		bot, err := s.teamsBotRepo.GetByID(ctx, matchedInstallation.BotID)
+		if err != nil {
+			log.Printf("Failed to get teams bot: %v", err)
+		}
+		appID = bot.AppID
+		appPassword = bot.AppPasswordHash
+		log.Printf("Using DB credentials: appID=%s, password length=%d", appID, len(appPassword))
 
-			// Get bot credentials
-			// 優先從資料庫獲取，如果沒有則使用環境變數
-			appID := ""
-			appPassword := ""
-			bot, err := s.teamsBotRepo.GetByID(ctx, matchedInstallation.BotID)
-			if err != nil {
-				log.Printf("Failed to get teams bot: %v", err)
-			}
-			appID = bot.AppID
-			appPassword = bot.AppPasswordHash
-			log.Printf("Using DB credentials: appID=%s, password length=%d", appID, len(appPassword))
+		// Send message
+		result := s.sendToInstallation(ctx, matchedInstallation, appID, appPassword, message)
+		allResults = append(allResults, result)
 
-			// Send message
-			result := s.sendToInstallation(ctx, matchedInstallation, appID, appPassword, message)
-			allResults = append(allResults, result)
-
-			if result.Success {
-				totalSuccessful++
-				s.installRepo.UpdateActivity(ctx, matchedInstallation.ID)
-			} else {
-				totalFailed++
-				if strings.Contains(result.Error, "unauthorized") || strings.Contains(result.Error, "forbidden") {
-					s.installRepo.MarkAsStale(ctx, matchedInstallation.ID)
-				}
+		if result.Success {
+			totalSuccessful++
+			s.installRepo.UpdateActivity(ctx, matchedInstallation.ID)
+		} else {
+			totalFailed++
+			if strings.Contains(result.Error, "unauthorized") || strings.Contains(result.Error, "forbidden") {
+				s.installRepo.MarkAsStale(ctx, matchedInstallation.ID)
 			}
 		}
 	}
