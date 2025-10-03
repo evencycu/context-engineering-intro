@@ -1441,6 +1441,7 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 					BaseModel:      database.BaseModel{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
 					NotificationID: notification.ID,
 					DestinationID:  d.ID,
+					Priority:       req.Priority,
 					ConversationID: &conversationID,
 					BotID:          d.BotID,
 					BotType:        nil, // Will be set by actor when it gets bot info

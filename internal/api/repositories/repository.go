@@ -1095,19 +1095,19 @@ type notificationDestinationRepository struct {
 // Create inserts a notification_destination record
 func (r *notificationDestinationRepository) Create(ctx context.Context, entity *database.NotificationDestination) error {
 	query := `INSERT INTO notification_destinations (
-        id, notification_id, destination_id, conversation_id, bot_id, bot_type, status,
+        id, notification_id, destination_id, priority, conversation_id, bot_id, bot_type, status,
         error_message, teams_message_id, sent_at, retry_count, max_retries,
         next_retry_at, first_attempt_at, last_attempt_at, failure_reason, retry_after, actor_id,
         created_at, updated_at
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12,
-        $13, $14, $15, $16, $17, $18,
-        $19, $20
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18, $19,
+        $20, $21
     )`
 
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.NotificationID, entity.DestinationID, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
+		entity.ID, entity.NotificationID, entity.DestinationID, entity.Priority, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
 		entity.ErrorMessage, entity.TeamsMessageID, entity.SentAt, entity.RetryCount, entity.MaxRetries,
 		entity.NextRetryAt, entity.FirstAttemptAt, entity.LastAttemptAt, entity.FailureReason, entity.RetryAfter, entity.ActorID,
 		entity.CreatedAt, entity.UpdatedAt,
@@ -1130,20 +1130,20 @@ func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, ent
 	}()
 
 	query := `INSERT INTO notification_destinations (
-        id, notification_id, destination_id, conversation_id, bot_id, bot_type, status,
+        id, notification_id, destination_id, priority, conversation_id, bot_id, bot_type, status,
         error_message, teams_message_id, sent_at, retry_count, max_retries,
         next_retry_at, first_attempt_at, last_attempt_at, failure_reason, retry_after, actor_id,
         created_at, updated_at
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12,
-        $13, $14, $15, $16, $17, $18,
-        $19, $20
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18, $19,
+        $20, $21
     )`
 
 	for _, e := range entities {
 		if _, err = tx.ExecContext(ctx, query,
-			e.ID, e.NotificationID, e.DestinationID, e.ConversationID, e.BotID, e.BotType, e.Status,
+			e.ID, e.NotificationID, e.DestinationID, e.Priority, e.ConversationID, e.BotID, e.BotType, e.Status,
 			e.ErrorMessage, e.TeamsMessageID, e.SentAt, e.RetryCount, e.MaxRetries,
 			e.NextRetryAt, e.FirstAttemptAt, e.LastAttemptAt, e.FailureReason, e.RetryAfter, e.ActorID,
 			e.CreatedAt, e.UpdatedAt,
@@ -1157,14 +1157,14 @@ func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, ent
 // Update updates a notification_destination record
 func (r *notificationDestinationRepository) Update(ctx context.Context, entity *database.NotificationDestination) error {
 	query := `UPDATE notification_destinations SET 
-        destination_id = $2, conversation_id = $3, bot_id = $4, bot_type = $5, status = $6,
-        error_message = $7, teams_message_id = $8, sent_at = $9, retry_count = $10, max_retries = $11,
-        next_retry_at = $12, first_attempt_at = $13, last_attempt_at = $14, failure_reason = $15, retry_after = $16, actor_id = $17,
-        updated_at = $18
+        destination_id = $2, priority = $3, conversation_id = $4, bot_id = $5, bot_type = $6, status = $7,
+        error_message = $8, teams_message_id = $9, sent_at = $10, retry_count = $11, max_retries = $12,
+        next_retry_at = $13, first_attempt_at = $14, last_attempt_at = $15, failure_reason = $16, retry_after = $17, actor_id = $18,
+        updated_at = $19
         WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.DestinationID, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
+		entity.ID, entity.DestinationID, entity.Priority, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
 		entity.ErrorMessage, entity.TeamsMessageID, entity.SentAt, entity.RetryCount, entity.MaxRetries,
 		entity.NextRetryAt, entity.FirstAttemptAt, entity.LastAttemptAt, entity.FailureReason, entity.RetryAfter, entity.ActorID,
 		time.Now(),

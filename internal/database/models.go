@@ -378,6 +378,7 @@ type NotificationDestination struct {
 	BaseModel
 	NotificationID uuid.UUID  `json:"notification_id" db:"notification_id"`
 	DestinationID  uuid.UUID  `json:"destination_id" db:"destination_id"`
+	Priority       string     `json:"priority" db:"priority"`
 	ConversationID *string    `json:"conversation_id" db:"conversation_id"` // Teams conversation ID
 	BotID          *uuid.UUID `json:"bot_id" db:"bot_id"`
 	BotType        *BotType   `json:"bot_type" db:"bot_type"`
