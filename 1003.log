@@ -1,0 +1,11 @@
+eb89f91 2025-10-03 feat(db): notification_destinations 新增 priority 欄位 (low|normal|high)
+e776ea5 2025-10-03 docs(architecture): 記錄 Redis List + SETNX 三層優先序 Producer/Consumer 設計
+3def308 2025-10-03 feat(queue): Redis List + SETNX 三層優先序佇列
+4944f5e 2025-10-03 docs+api: 移除 urgent 優先級，統一為 low|normal|high
+4ab37d3 2025-10-03 chore(deps): tidy go.mod/go.sum 並移除未使用的 gRPC 相關套件
+d972505 2025-10-03 refactor(actor): 將 ActorPoolV2 更名為 ActorPool 並同步文件
+ff74419 2025-10-03 refactor: 移除舊的 queue 系統並同步文件
+21fa0fb 2025-10-03 feat: 移除 external API 中的 validate 端點
+14ec08e 2025-10-03 fix: 修正架構設計並移除 failed_notifications 引用
+52477c1 2025-10-03 docs: 重新命名和重構 API 文檔
+b04ef02 2025-10-03 docs: 重組文檔結構並優化內容
