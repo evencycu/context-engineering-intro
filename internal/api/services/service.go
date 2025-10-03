@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
 	"github.com/google/uuid"
@@ -1454,6 +1455,25 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 		if len(nds) > 0 {
 			if err := s.notificationDestRepo.CreateBatch(ctx, nds); err != nil {
 				return nil, fmt.Errorf("failed to create notification_destinations: %w", err)
+			}
+			// Enqueue to Redis by priority (default normal)
+			// Note: Producer role - no blocking, best-effort
+			prio := actor.PriorityNormal
+			switch req.Priority {
+			case "high":
+				prio = actor.PriorityHigh
+			case "low":
+				prio = actor.PriorityLow
+			}
+			if s.broadcaster != nil {
+				// best-effort enqueue via Redis if available on a component that exposes this method
+				if rq, ok := s.broadcaster.(interface {
+					Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
+				}); ok {
+					for _, nd := range nds {
+						_ = rq.Enqueue(ctx, nd.ID, prio)
+					}
+				}
 			}
 		}
 	}

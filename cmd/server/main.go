@@ -104,6 +104,13 @@ func main() {
 	defer actorPool.Stop()
 	logger.Info("Actor Pool started successfully")
 
+	// Start Redis Queue consumer (high -> normal -> low)
+	rq := actor.NewRedisQueue(redisClient)
+	consumer := actor.NewQueueConsumer(rq, actorPool)
+	consumer.Start(ctx)
+	defer consumer.Stop()
+	logger.Info("Queue Consumer started successfully")
+
 	// External service
 	externalService := services.NewExternalService(projectRepo, destinationRepo, broadcaster)
 

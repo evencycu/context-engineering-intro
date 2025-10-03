@@ -126,8 +126,8 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	}
 
 	// Add estimated delivery time based on priority
-    switch req.Priority {
-    case "high":
+	switch req.Priority {
+	case "high":
 		response.EstimatedTime = "2-5 minutes"
 	case "normal":
 		response.EstimatedTime = "5-10 minutes"

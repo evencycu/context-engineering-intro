@@ -40,7 +40,7 @@ type ExternalNotificationRequest struct {
 	NotifyKey   string         `json:"notify_key" validate:"required,min=3,max=50"`
 	Message     string         `json:"message" validate:"required,min=1,max=4000"`
 	MessageType string         `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
-    Priority    string         `json:"priority" validate:"omitempty,oneof=low normal high"`
+	Priority    string         `json:"priority" validate:"omitempty,oneof=low normal high"`
 	TargetIDs   []string       `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
 	Mentions    []string       `json:"mentions" validate:"omitempty"`
 	Metadata    map[string]any `json:"metadata" validate:"omitempty"`
