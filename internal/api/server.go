@@ -157,6 +157,7 @@ func (s *Server) RegisterRoutes(
 	messagesHandler *messages.Handler,
 	provisionHandler *provision.Handler,
 	externalHandler *external.Handler,
+	queueHandler Handler,
 ) {
 	// API v1 routes
 	v1 := s.router.Group("/api/v1")
@@ -238,5 +239,10 @@ func (s *Server) RegisterRoutes(
 
 		// External API routes
 		externalHandler.RegisterRoutes(v1)
+
+		// Queue management routes (replaced by Actor Pool V2)
+		if queueHandler != nil {
+			queueHandler.RegisterRoutes(v1)
+		}
 	}
 }

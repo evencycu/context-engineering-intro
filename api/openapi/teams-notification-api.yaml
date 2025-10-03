@@ -828,10 +828,72 @@ paths:
   /api/v1/provision:
     post:
       summary: Provision company/project/destination bundle
+      description: |
+        Create a complete notification setup including company, project, and destinations in one API call.
+        This is the recommended way to set up new notification projects.
       tags: [Provision]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionCreateRequest"
+            examples:
+              basic:
+                summary: Basic provision setup
+                value:
+                  company_id: "e4f160f4-4917-443d-86e9-29071967b768"
+                  created_by: "11111111-1111-1111-1111-111111111111"
+                  project_name: "My Notification Project"
+                  project_description: "A project for sending notifications"
+                  teams_tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                  targets:
+                    - type: "channel"
+                      tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                      conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+                    - type: "personal"
+                      tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                      conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
       responses:
         "201":
           description: Created bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionCreateResponse"
+              example:
+                data:
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                  project:
+                    id: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
+                    company_id: "e4f160f4-4917-443d-86e9-29071967b768"
+                    notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                    description: "A project for sending notifications"
+                    status: "active"
+                    daily_limit: 10000
+                    monthly_limit: 300000
+                    priority: "normal"
+                  destination:
+                    id: "cf867660-26ae-4437-828c-6fb2c2e3eb19"
+                    project_id: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
+                    name: "My Notification Project-default"
+                    description: "Auto-provisioned default destination"
+                    teams_tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                    targets:
+                      - type: "channel"
+                        conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+                        tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                      - type: "personal"
+                        conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+                        tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                    status: "active"
+                    validation_status: "pending"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/provision/{notify_key}:
     parameters:
       - name: notify_key
@@ -839,21 +901,51 @@ paths:
         required: true
         schema:
           type: string
+        description: The notify key of the provisioned project
     get:
       summary: Get provision bundle by notify key
+      description: Retrieve the complete provision bundle including project and destinations
       tags: [Provision]
       responses:
         "200":
           description: Provision bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionReadResponse"
+        "404":
+          description: Provision bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update provision bundle
+      description: Update the provision bundle configuration
       tags: [Provision]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionUpdateRequest"
       responses:
         "200":
           description: Updated bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionReadResponse"
+        "404":
+          description: Provision bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/provision/{notify_key}/enable:
     post:
       summary: Enable provisioned project
+      description: Enable the provisioned project to start accepting notifications
       tags: [Provision]
       parameters:
         - name: notify_key
@@ -861,12 +953,31 @@ paths:
           required: true
           schema:
             type: string
+          description: The notify key of the provisioned project
       responses:
         "200":
-          description: Enabled
+          description: Project enabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Project enabled successfully"
+        "404":
+          description: Provision bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/provision/{notify_key}/disable:
     post:
       summary: Disable provisioned project
+      description: Disable the provisioned project to stop accepting notifications
       tags: [Provision]
       parameters:
         - name: notify_key
@@ -874,9 +985,27 @@ paths:
           required: true
           schema:
             type: string
+          description: The notify key of the provisioned project
       responses:
         "200":
-          description: Disabled
+          description: Project disabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Project disabled successfully"
+        "404":
+          description: Provision bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   # External API endpoints
   /api/v1/external/notify:
     post:
@@ -889,19 +1018,28 @@ paths:
         # Basic notification
         curl -X POST http://localhost:8080/api/v1/external/notify \
           -H "Content-Type: application/json" \
-          -d '{"notify_key": "my-project", "message": "Hello World"}'
+          -d '{"notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38", "message": "Hello World"}'
 
         # Advanced notification with all options
         curl -X POST http://localhost:8080/api/v1/external/notify \
           -H "Content-Type: application/json" \
           -d '{
-            "notify_key": "my-project",
+            "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
             "message": "Urgent: System maintenance in 1 hour",
             "message_type": "text",
             "priority": "urgent",
             "targets": ["all"],
             "mentions": ["@everyone"],
             "metadata": {"source": "monitoring", "alert_level": "critical"}
+          }'
+
+        # Send to specific targets only
+        curl -X POST http://localhost:8080/api/v1/external/notify \
+          -H "Content-Type: application/json" \
+          -d '{
+            "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+            "message": "Channel-specific message",
+            "targets": ["19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"]
           }'
         ```
       tags: [External API]
@@ -915,12 +1053,12 @@ paths:
               basic:
                 summary: Basic notification
                 value:
-                  notify_key: "my-project"
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   message: "Hello World"
               advanced:
                 summary: Advanced notification with all options
                 value:
-                  notify_key: "my-project"
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   message: "Urgent: System maintenance in 1 hour"
                   message_type: "text"
                   priority: "urgent"
@@ -1046,6 +1184,61 @@ paths:
                 $ref: "#/components/schemas/ExternalDestinationsResponse"
 
   /api/v1/external/health:
+    get:
+      summary: External API health check
+      description: Health check for external API
+      tags: [External API]
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalHealthResponse"
+
+  /api/v1/queue/status:
+    get:
+      summary: Get queue status
+      description: Get the current status of the notification retry queue
+      tags: [Queue Management]
+      responses:
+        "200":
+          description: Queue status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+
+  /api/v1/queue/circuit-breaker/metrics:
+    get:
+      summary: Get circuit breaker metrics
+      description: Get metrics and statistics for the circuit breaker
+      tags: [Queue Management]
+      responses:
+        "200":
+          description: Circuit breaker metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircuitBreakerMetrics"
+
+  /api/v1/queue/circuit-breaker/reset:
+    post:
+      summary: Reset circuit breaker
+      description: Manually reset the circuit breaker to closed state
+      tags: [Queue Management]
+      responses:
+        "200":
+          description: Reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Circuit breaker reset successfully"
+
 components:
   parameters:
     ID:
@@ -1751,6 +1944,104 @@ components:
           type: string
           example: "2025-09-26T03:51:33Z"
 
+    # Provision API Schemas
+    ProvisionCreateRequest:
+      type: object
+      required:
+        - company_id
+        - created_by
+        - project_name
+        - project_description
+        - teams_tenant_id
+        - targets
+      properties:
+        company_id:
+          type: string
+          format: uuid
+          description: ID of the company
+          example: "e4f160f4-4917-443d-86e9-29071967b768"
+        created_by:
+          type: string
+          format: uuid
+          description: ID of the user creating the project
+          example: "11111111-1111-1111-1111-111111111111"
+        project_name:
+          type: string
+          description: Name of the project
+          example: "My Notification Project"
+        project_description:
+          type: string
+          description: Description of the project
+          example: "A project for sending notifications"
+        teams_tenant_id:
+          type: string
+          description: Microsoft Teams tenant ID
+          example: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        targets:
+          type: array
+          description: List of Teams conversation targets
+          items:
+            $ref: "#/components/schemas/TeamsTarget"
+          example:
+            - type: "channel"
+              tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+              conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+            - type: "personal"
+              tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+              conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+
+    ProvisionCreateResponse:
+      type: object
+      properties:
+        notify_key:
+          type: string
+          description: Generated notify key for external API usage
+          example: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+        project:
+          $ref: "#/components/schemas/Project"
+        destination:
+          $ref: "#/components/schemas/Destination"
+
+    ProvisionReadResponse:
+      type: object
+      properties:
+        project:
+          $ref: "#/components/schemas/Project"
+        destinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Destination"
+
+    ProvisionUpdateRequest:
+      type: object
+      properties:
+        project_description:
+          type: string
+          description: Updated project description
+        targets:
+          type: array
+          description: Updated list of Teams conversation targets
+          items:
+            $ref: "#/components/schemas/TeamsTarget"
+
+    TeamsTarget:
+      type: object
+      required:
+        - type
+        - tenant_id
+        - conversation_id
+      properties:
+        type:
+          type: string
+          enum: [personal, channel, groupChat]
+          description: Type of Teams conversation
+        tenant_id:
+          type: string
+          description: Microsoft Teams tenant ID
+        conversation_id:
+          type: string
+          description: Teams conversation ID
+
     # Error Response Schemas
     ErrorResponse:
       type: object
@@ -1806,14 +2097,71 @@ components:
           type: string
           example: "fetch('http://localhost:8080/api/v1/external/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notify_key: 'my-project', message: 'Hello World'}) })"
 
-    get:
-      summary: External API health check
-      description: Health check for external API
-      tags: [External API]
-      responses:
-        "200":
-          description: Health status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalHealthResponse"
+    # Queue Management Schemas
+    QueueStatus:
+      type: object
+      properties:
+        total_pending:
+          type: integer
+          description: Number of notifications waiting to be retried
+          example: 0
+        total_retrying:
+          type: integer
+          description: Number of notifications currently being retried
+          example: 0
+        total_failed:
+          type: integer
+          description: Number of notifications that have exhausted retries
+          example: 0
+        next_retry_due:
+          type: string
+          format: date-time
+          description: Timestamp of next scheduled retry
+          example: "2025-10-01T10:30:00Z"
+          nullable: true
+        oldest_pending:
+          type: string
+          format: date-time
+          description: Timestamp of oldest pending notification
+          example: "2025-10-01T10:00:00Z"
+          nullable: true
+        circuit_state:
+          type: string
+          description: Current circuit breaker state
+          enum: [closed, open, half-open]
+          example: "closed"
+        last_updated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-10-01T13:58:02Z"
+
+    CircuitBreakerMetrics:
+      type: object
+      properties:
+        state:
+          type: string
+          description: Current circuit breaker state
+          enum: [closed, open, half-open]
+          example: "closed"
+        total_requests:
+          type: integer
+          description: Total number of requests processed
+          example: 1523
+        success_requests:
+          type: integer
+          description: Number of successful requests
+          example: 1498
+        failed_requests:
+          type: integer
+          description: Number of failed requests
+          example: 25
+        failures:
+          type: integer
+          description: Consecutive failures count
+          example: 0
+        last_state_change:
+          type: string
+          format: date-time
+          description: Timestamp of last state change
+          example: "2025-10-01T13:50:08Z"

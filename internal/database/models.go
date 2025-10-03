@@ -82,23 +82,23 @@ type Project struct {
 // TeamsBot represents a platform bot or third-party bot
 type TeamsBot struct {
 	BaseModel
-	Type                  string      `json:"type" db:"type"`             // 'platform' or 'third_party'
-	CompanyID             *uuid.UUID  `json:"company_id" db:"company_id"` // Only for third_party bots
-	Name                  string      `json:"name" db:"name"`
-	Description           string      `json:"description" db:"description"`
-	AppID                 string      `json:"app_id" db:"app_id"`
-	AppPasswordHash       string      `json:"-" db:"app_password_hash"`
-	TenantID              string      `json:"tenant_id" db:"tenant_id"`
-	Status                BotStatus   `json:"status" db:"status"`
-	WebhookURL            string      `json:"webhook_url" db:"webhook_url"`
-	Capabilities          JSONBObject `json:"capabilities" db:"capabilities"`
-	RateLimitPerMinute    int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
-	MaxConcurrentRequests int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
-	APIEndpoint           *string     `json:"api_endpoint" db:"api_endpoint"`   // Only for third_party bots
-	APIKeyHash            *string     `json:"-" db:"api_key_hash"`              // Only for third_party bots
-	ContactEmail          *string     `json:"contact_email" db:"contact_email"` // Only for third_party bots
-	ContactPhone          *string     `json:"contact_phone" db:"contact_phone"` // Only for third_party bots
-	CreatedBy             *uuid.UUID  `json:"created_by" db:"created_by"`       // Only for third_party bots
+	Type                  string       `json:"type" db:"type"`             // 'platform' or 'third_party'
+	CompanyID             *uuid.UUID   `json:"company_id" db:"company_id"` // Only for third_party bots
+	Name                  string       `json:"name" db:"name"`
+	Description           *string      `json:"description" db:"description"`
+	AppID                 string       `json:"app_id" db:"app_id"`
+	AppPasswordHash       string       `json:"-" db:"app_password_hash"`
+	TenantID              *string      `json:"tenant_id" db:"tenant_id"`
+	Status                *BotStatus   `json:"status" db:"status"`
+	WebhookURL            *string      `json:"webhook_url" db:"webhook_url"`
+	Capabilities          *JSONBObject `json:"capabilities" db:"capabilities"`
+	RateLimitPerMinute    *int         `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
+	MaxConcurrentRequests *int         `json:"max_concurrent_requests" db:"max_concurrent_requests"`
+	APIEndpoint           *string      `json:"api_endpoint" db:"api_endpoint"`   // Only for third_party bots
+	APIKeyHash            *string      `json:"-" db:"api_key_hash"`              // Only for third_party bots
+	ContactEmail          *string      `json:"contact_email" db:"contact_email"` // Only for third_party bots
+	ContactPhone          *string      `json:"contact_phone" db:"contact_phone"` // Only for third_party bots
+	CreatedBy             *uuid.UUID   `json:"created_by" db:"created_by"`       // Only for third_party bots
 }
 
 // BotInstallation represents a bot installation
@@ -373,18 +373,26 @@ type CardAction struct {
 }
 
 // NotificationDestination represents the relationship between notifications and destinations
+// Used for actor-based async notification sending with queue management
 type NotificationDestination struct {
 	BaseModel
 	NotificationID uuid.UUID  `json:"notification_id" db:"notification_id"`
 	DestinationID  uuid.UUID  `json:"destination_id" db:"destination_id"`
+	ConversationID *string    `json:"conversation_id" db:"conversation_id"` // Teams conversation ID
 	BotID          *uuid.UUID `json:"bot_id" db:"bot_id"`
 	BotType        *BotType   `json:"bot_type" db:"bot_type"`
-	Status         string     `json:"status" db:"status"`
-	ErrorMessage   string     `json:"error_message" db:"error_message"`
-	TeamsMessageID string     `json:"teams_message_id" db:"teams_message_id"`
+	Status         string     `json:"status" db:"status"` // pending, processing, sent, failed, cancelled
+	ErrorMessage   *string    `json:"error_message" db:"error_message"`
+	TeamsMessageID *string    `json:"teams_message_id" db:"teams_message_id"`
 	SentAt         *time.Time `json:"sent_at" db:"sent_at"`
 	RetryCount     int        `json:"retry_count" db:"retry_count"`
 	MaxRetries     int        `json:"max_retries" db:"max_retries"`
+	NextRetryAt    *time.Time `json:"next_retry_at" db:"next_retry_at"` // When to retry (NULL = immediate)
+	FirstAttemptAt *time.Time `json:"first_attempt_at" db:"first_attempt_at"`
+	LastAttemptAt  *time.Time `json:"last_attempt_at" db:"last_attempt_at"`
+	FailureReason  *string    `json:"failure_reason" db:"failure_reason"` // rate_limit, timeout, server_error, etc
+	RetryAfter     *int       `json:"retry_after" db:"retry_after"`       // Retry-After from 429 (seconds)
+	ActorID        *string    `json:"actor_id" db:"actor_id"`             // ID of actor handling this
 }
 
 // =============================================

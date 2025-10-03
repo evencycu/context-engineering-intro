@@ -1,0 +1,93 @@
+package actor
+
+import (
+	"context"
+	"time"
+
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/google/uuid"
+)
+
+// actorDB implements ActorDB interface for actors
+type actorDB struct {
+	notificationDestRepo repositories.NotificationDestinationRepository
+	botInstallationRepo  repositories.BotInstallationRepository
+}
+
+// NewActorDB creates a new actor DB implementation
+func NewActorDB(notificationDestRepo repositories.NotificationDestinationRepository, botInstallationRepo repositories.BotInstallationRepository) ActorDB {
+	return &actorDB{
+		notificationDestRepo: notificationDestRepo,
+		botInstallationRepo:  botInstallationRepo,
+	}
+}
+
+// UpdateNotificationDestination updates a notification destination
+func (db *actorDB) UpdateNotificationDestination(ctx context.Context, id uuid.UUID, update *NotificationDestinationUpdate) error {
+	// Get current record
+	entity, err := db.notificationDestRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if entity == nil {
+		return nil // Not found
+	}
+
+	if update.Status != nil {
+		entity.Status = *update.Status
+	}
+	if update.ErrorMessage != nil {
+		em := *update.ErrorMessage
+		entity.ErrorMessage = &em
+	}
+	if update.TeamsMessageID != nil {
+		tm := *update.TeamsMessageID
+		entity.TeamsMessageID = &tm
+	}
+	if update.SentAt != nil {
+		entity.SentAt = update.SentAt
+	}
+	if update.RetryCount != nil {
+		entity.RetryCount = *update.RetryCount
+	}
+	if update.NextRetryAt != nil {
+		entity.NextRetryAt = update.NextRetryAt
+	}
+	if update.FirstAttemptAt != nil {
+		entity.FirstAttemptAt = update.FirstAttemptAt
+	}
+	if update.LastAttemptAt != nil {
+		entity.LastAttemptAt = update.LastAttemptAt
+	}
+	if update.FailureReason != nil {
+		fr := *update.FailureReason
+		entity.FailureReason = &fr
+	}
+	if update.RetryAfter != nil {
+		entity.RetryAfter = update.RetryAfter
+	}
+	if update.ActorID != nil {
+		aid := *update.ActorID
+		entity.ActorID = &aid
+	}
+
+	entity.UpdatedAt = time.Now()
+
+	return db.notificationDestRepo.Update(ctx, entity)
+}
+
+// GetBotInstallation gets a bot installation by conversation ID
+func (db *actorDB) GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error) {
+	return db.botInstallationRepo.GetByConversationID(ctx, conversationID)
+}
+
+// GetNotificationDestinationByID gets a notification destination by ID
+func (db *actorDB) GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error) {
+	return db.notificationDestRepo.GetByID(ctx, id)
+}
+
+// GetRetryReadyNotificationDestinations gets retry-ready notification destinations
+func (db *actorDB) GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
+	return db.notificationDestRepo.GetRetryReady(ctx, limit)
+}

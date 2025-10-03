@@ -55,6 +55,18 @@ type NotificationRepository interface {
 	GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error)
 }
 
+// NotificationDestinationRepository defines operations for notification_destinations
+type NotificationDestinationRepository interface {
+	Create(ctx context.Context, entity *database.NotificationDestination) error
+	CreateBatch(ctx context.Context, entities []*database.NotificationDestination) error
+	Update(ctx context.Context, entity *database.NotificationDestination) error
+	UpdateStatusAndRetry(ctx context.Context, id uuid.UUID, status string, retryCount int, nextRetryAt *time.Time, failureReason string, errorMessage string, retryAfter *int) error
+	MarkSent(ctx context.Context, id uuid.UUID, teamsMessageID string, sentAt time.Time) error
+	GetByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
+	GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*database.NotificationDestination, error)
+	GetRetryReady(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+}
+
 // BaseRepository provides common repository functionality
 type BaseRepository struct {
 	// This will be implemented with actual database connection
@@ -422,9 +434,13 @@ func (r *teamsBotRepository) Create(ctx context.Context, entity *database.TeamsB
 			  VALUES ($1, 'platform', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
-	if err != nil {
-		return fmt.Errorf("failed to marshal capabilities: %w", err)
+	var capabilitiesJSON []byte
+	var err error
+	if entity.Capabilities != nil {
+		capabilitiesJSON, err = json.Marshal(map[string]any(*entity.Capabilities))
+		if err != nil {
+			return fmt.Errorf("failed to marshal capabilities: %w", err)
+		}
 	}
 
 	_, err = r.db.ExecContext(ctx, query,
@@ -456,7 +472,8 @@ func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*databa
 		if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
 		}
-		bot.Capabilities = database.JSONBObject(capabilities)
+		capabilitiesObj := database.JSONBObject(capabilities)
+		bot.Capabilities = &capabilitiesObj
 	}
 
 	return &bot, nil
@@ -470,9 +487,13 @@ func (r *teamsBotRepository) Update(ctx context.Context, entity *database.TeamsB
 			  WHERE id = $1 AND type = 'platform'`
 
 	// Convert capabilities to JSONB
-	capabilitiesJSON, err := json.Marshal(map[string]any(entity.Capabilities))
-	if err != nil {
-		return fmt.Errorf("failed to marshal capabilities: %w", err)
+	var capabilitiesJSON []byte
+	var err error
+	if entity.Capabilities != nil {
+		capabilitiesJSON, err = json.Marshal(map[string]any(*entity.Capabilities))
+		if err != nil {
+			return fmt.Errorf("failed to marshal capabilities: %w", err)
+		}
 	}
 
 	_, err = r.db.ExecContext(ctx, query,
@@ -519,7 +540,8 @@ func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*da
 			if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
 			}
-			bot.Capabilities = database.JSONBObject(capabilities)
+			capabilitiesObj := database.JSONBObject(capabilities)
+			bot.Capabilities = &capabilitiesObj
 		}
 
 		bots = append(bots, &bot)
@@ -1055,6 +1077,148 @@ func (r *notificationRepository) Count(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM notifications`
 	err := r.db.GetContext(ctx, &count, query)
 	return count, err
+}
+
+// =============================================
+// NotificationDestination Repository Implementation
+// =============================================
+
+// NewNotificationDestinationRepository creates a new repository
+func NewNotificationDestinationRepository(db *sqlx.DB) NotificationDestinationRepository {
+	return &notificationDestinationRepository{db: db}
+}
+
+type notificationDestinationRepository struct {
+	db *sqlx.DB
+}
+
+// Create inserts a notification_destination record
+func (r *notificationDestinationRepository) Create(ctx context.Context, entity *database.NotificationDestination) error {
+	query := `INSERT INTO notification_destinations (
+        id, notification_id, destination_id, conversation_id, bot_id, bot_type, status,
+        error_message, teams_message_id, sent_at, retry_count, max_retries,
+        next_retry_at, first_attempt_at, last_attempt_at, failure_reason, retry_after, actor_id,
+        created_at, updated_at
+    ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12,
+        $13, $14, $15, $16, $17, $18,
+        $19, $20
+    )`
+
+	_, err := r.db.ExecContext(ctx, query,
+		entity.ID, entity.NotificationID, entity.DestinationID, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
+		entity.ErrorMessage, entity.TeamsMessageID, entity.SentAt, entity.RetryCount, entity.MaxRetries,
+		entity.NextRetryAt, entity.FirstAttemptAt, entity.LastAttemptAt, entity.FailureReason, entity.RetryAfter, entity.ActorID,
+		entity.CreatedAt, entity.UpdatedAt,
+	)
+	return err
+}
+
+// CreateBatch inserts multiple notification_destination records
+func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, entities []*database.NotificationDestination) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	query := `INSERT INTO notification_destinations (
+        id, notification_id, destination_id, conversation_id, bot_id, bot_type, status,
+        error_message, teams_message_id, sent_at, retry_count, max_retries,
+        next_retry_at, first_attempt_at, last_attempt_at, failure_reason, retry_after, actor_id,
+        created_at, updated_at
+    ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12,
+        $13, $14, $15, $16, $17, $18,
+        $19, $20
+    )`
+
+	for _, e := range entities {
+		if _, err = tx.ExecContext(ctx, query,
+			e.ID, e.NotificationID, e.DestinationID, e.ConversationID, e.BotID, e.BotType, e.Status,
+			e.ErrorMessage, e.TeamsMessageID, e.SentAt, e.RetryCount, e.MaxRetries,
+			e.NextRetryAt, e.FirstAttemptAt, e.LastAttemptAt, e.FailureReason, e.RetryAfter, e.ActorID,
+			e.CreatedAt, e.UpdatedAt,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Update updates a notification_destination record
+func (r *notificationDestinationRepository) Update(ctx context.Context, entity *database.NotificationDestination) error {
+	query := `UPDATE notification_destinations SET 
+        destination_id = $2, conversation_id = $3, bot_id = $4, bot_type = $5, status = $6,
+        error_message = $7, teams_message_id = $8, sent_at = $9, retry_count = $10, max_retries = $11,
+        next_retry_at = $12, first_attempt_at = $13, last_attempt_at = $14, failure_reason = $15, retry_after = $16, actor_id = $17,
+        updated_at = $18
+        WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query,
+		entity.ID, entity.DestinationID, entity.ConversationID, entity.BotID, entity.BotType, entity.Status,
+		entity.ErrorMessage, entity.TeamsMessageID, entity.SentAt, entity.RetryCount, entity.MaxRetries,
+		entity.NextRetryAt, entity.FirstAttemptAt, entity.LastAttemptAt, entity.FailureReason, entity.RetryAfter, entity.ActorID,
+		time.Now(),
+	)
+	return err
+}
+
+// UpdateStatusAndRetry updates status and retry-related fields
+func (r *notificationDestinationRepository) UpdateStatusAndRetry(ctx context.Context, id uuid.UUID, status string, retryCount int, nextRetryAt *time.Time, failureReason string, errorMessage string, retryAfter *int) error {
+	query := `UPDATE notification_destinations SET 
+        status = $2, retry_count = $3, next_retry_at = $4, failure_reason = $5, error_message = $6, retry_after = $7, updated_at = NOW()
+        WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, id, status, retryCount, nextRetryAt, failureReason, errorMessage, retryAfter)
+	return err
+}
+
+// MarkSent marks a destination as sent
+func (r *notificationDestinationRepository) MarkSent(ctx context.Context, id uuid.UUID, teamsMessageID string, sentAt time.Time) error {
+	query := `UPDATE notification_destinations SET status = 'sent', teams_message_id = $2, sent_at = $3, updated_at = NOW() WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id, teamsMessageID, sentAt)
+	return err
+}
+
+// GetByNotificationID retrieves destinations for a notification
+func (r *notificationDestinationRepository) GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*database.NotificationDestination, error) {
+	var rows []*database.NotificationDestination
+	query := `SELECT * FROM notification_destinations WHERE notification_id = $1 ORDER BY created_at ASC`
+	err := r.db.SelectContext(ctx, &rows, query, notificationID)
+	return rows, err
+}
+
+// GetByID retrieves a notification destination by ID
+func (r *notificationDestinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error) {
+	var row database.NotificationDestination
+	query := `SELECT * FROM notification_destinations WHERE id = $1`
+	err := r.db.GetContext(ctx, &row, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+// GetRetryReady retrieves retry-ready destinations
+func (r *notificationDestinationRepository) GetRetryReady(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
+	var rows []*database.NotificationDestination
+	query := `SELECT * FROM notification_destinations 
+              WHERE status IN ('pending','failed') 
+                AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+                AND retry_count < max_retries
+              ORDER BY COALESCE(next_retry_at, NOW()) ASC
+              LIMIT $1`
+	err := r.db.SelectContext(ctx, &rows, query, limit)
+	return rows, err
 }
 
 // GetByProjectID retrieves notifications by project ID

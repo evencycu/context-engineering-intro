@@ -11,6 +11,8 @@ A comprehensive Microsoft Teams notification system that provides pre-registered
 - **Usage Tracking**: Comprehensive billing and cost tracking
 - **Monitoring**: Health checks, metrics, and observability
 - **Scheduled Messaging**: Queue-based message scheduling
+- **🆕 Retry Queue & Circuit Breaker**: Automatic retry with exponential backoff and circuit breaker protection
+- **🆕 Rate Limit Handling**: Smart handling of Teams API 429 errors with Retry-After support
 
 ## 📋 Prerequisites
 
@@ -375,6 +377,55 @@ docker run -d \
 4. Run validation: `make validate`
 5. Submit a pull request
 
+## 📚 Additional Documentation
+
+- **[Queue & Circuit Breaker Guide](./docs/QUEUE_CIRCUIT_BREAKER.md)** - 完整的失敗重試隊列和熔斷器機制說明
+- **[Queue Quick Start](./docs/QUICK_START_QUEUE.md)** - Queue 功能快速開始指南
+- **[API Documentation](./docs/API_README.md)** - 完整的 API 文檔
+- **[Architecture](./docs/ARCHITECTURE.md)** - 系統架構說明
+- **[Testing Guide](./docs/TEST_README.md)** - 測試指南
+
+## 🔄 Queue & Circuit Breaker (新功能)
+
+系統現在包含自動重試隊列和熔斷器保護機制，用於處理 Teams API 的速率限制和暫時性錯誤。
+
+### 快速測試
+
+```bash
+# 1. 執行 migration 建立隊列表
+docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/migrations/008_add_failed_notifications_queue.sql
+
+# 2. 啟動服務（會自動啟動 queue workers）
+./server
+
+# 3. 測試 Queue API
+./scripts/test_queue.sh
+```
+
+### Queue 監控 API
+
+```bash
+# 查看隊列狀態
+curl http://localhost:8080/api/v1/queue/status
+
+# 查看熔斷器指標
+curl http://localhost:8080/api/v1/queue/circuit-breaker/metrics
+
+# 重置熔斷器
+curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset
+```
+
+### 主要特性
+
+- ✅ **自動重試**: 失敗的通知自動進入重試隊列
+- ✅ **指數退避**: 使用指數退避 + 隨機抖動避免雪崩
+- ✅ **429 處理**: 智能處理 Teams API 的 Retry-After header
+- ✅ **熔斷器保護**: 防止持續向不可用服務發送請求
+- ✅ **持久化隊列**: 使用資料庫持久化，防止數據丟失
+- ✅ **可觀測性**: 提供監控 API 和指標
+
+詳細說明請參考: [Queue & Circuit Breaker Guide](./docs/QUEUE_CIRCUIT_BREAKER.md)
+
 ## 📄 License
 
 [Your License Here]
@@ -387,3 +438,4 @@ For issues and questions:
 2. Review logs for error details
 3. Ensure all environment variables are set correctly
 4. Verify Teams Bot Framework configuration
+5. 查看 Queue 文檔瞭解重試機制

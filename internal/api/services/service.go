@@ -815,7 +815,7 @@ type SendNotificationRequest struct {
 	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
 	Priority     string                 `json:"priority" validate:"oneof=low normal high urgent"`
 	Metadata     map[string]any         `json:"metadata"`
-	Destinations []uuid.UUID            `json:"destinations" validate:"required,min=1"`
+	Destinations []uuid.UUID            `json:"destinations" validate:"omitempty,min=1"`
 }
 
 // BaseService provides common service functionality
@@ -982,7 +982,8 @@ func (s *teamsBotService) Create(ctx context.Context, req *CreateRequest[databas
 	req.Data.ID = uuid.New()
 	req.Data.CreatedAt = time.Now()
 	req.Data.UpdatedAt = time.Now()
-	req.Data.Status = database.BotStatusActive
+	status := database.BotStatusActive
+	req.Data.Status = &status
 
 	err := s.repo.Create(ctx, &req.Data)
 	if err != nil {
@@ -1057,7 +1058,8 @@ func (s *teamsBotService) UpdateStatus(ctx context.Context, id uuid.UUID, status
 		return fmt.Errorf("failed to get platform bot: %w", err)
 	}
 
-	bot.Status = database.BotStatus(status)
+	botStatus := database.BotStatus(status)
+	bot.Status = &botStatus
 	bot.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, bot)
@@ -1070,7 +1072,8 @@ func (s *teamsBotService) UpdateCapabilities(ctx context.Context, id uuid.UUID, 
 		return fmt.Errorf("failed to get platform bot: %w", err)
 	}
 
-	bot.Capabilities = capabilities
+	capabilitiesObj := database.JSONBObject(capabilities)
+	bot.Capabilities = &capabilitiesObj
 	bot.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, bot)
@@ -1283,13 +1286,20 @@ func validateTeamsTargets(targets database.JSONBTargets) error {
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository, broadcaster BroadcastService) NotificationService {
-	return &notificationService{repo: repo, broadcaster: broadcaster}
+func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService) NotificationService {
+	return &notificationService{
+		repo:                 repo,
+		destinationRepo:      destinationRepo,
+		notificationDestRepo: notificationDestRepo,
+		broadcaster:          broadcaster,
+	}
 }
 
 type notificationService struct {
-	repo        repositories.NotificationRepository
-	broadcaster BroadcastService
+	repo                 repositories.NotificationRepository
+	destinationRepo      repositories.DestinationRepository
+	notificationDestRepo repositories.NotificationDestinationRepository
+	broadcaster          BroadcastService
 }
 
 // Create creates a new notification
@@ -1402,28 +1412,54 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 		Metadata:     database.JSONBObject(req.Metadata),
 	}
 
-	// Send to destinations first
-	if s.broadcaster != nil && len(req.Destinations) > 0 {
-		if _, err := s.broadcaster.SendToDestinations(ctx, req.Destinations, req.Content); err != nil {
-			return nil, fmt.Errorf("failed to send message to destinations: %w", err)
-		}
+	// Get destinations for the project
+	destinations, err := s.destinationRepo.GetByProjectID(ctx, req.ProjectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get destinations: %w", err)
 	}
 
-	// After successful send, persist the record
+	// ASYNC: Persist notification first, then create notification_destinations for async actors
 	notification.ID = uuid.New()
 	notification.CreatedAt = time.Now()
 	notification.UpdatedAt = time.Now()
+	notification.Status = "pending" // Start as pending, actors will update status
 
-	err := s.repo.Create(ctx, notification)
+	err = s.repo.Create(ctx, notification)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Queue notification for actual sending
-	// This would typically involve:
-	// 1. Finding destinations for the project
-	// 2. Creating notification_destinations records
-	// 3. Queuing the notification for processing
+	// Create notification_destinations entries for each target in destinations
+	// Each Teams target gets its own notification_destination record
+	if len(destinations) > 0 && s.notificationDestRepo != nil {
+		var nds []*database.NotificationDestination
+		for _, d := range destinations {
+			for _, t := range d.Targets {
+				conversationID := t.ConversationID
+				nd := &database.NotificationDestination{
+					BaseModel:      database.BaseModel{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
+					NotificationID: notification.ID,
+					DestinationID:  d.ID,
+					ConversationID: &conversationID,
+					BotID:          d.BotID,
+					BotType:        nil, // Will be set by actor when it gets bot info
+					Status:         "pending",
+					RetryCount:     0,
+					MaxRetries:     5,
+				}
+				nds = append(nds, nd)
+			}
+		}
+
+		if len(nds) > 0 {
+			if err := s.notificationDestRepo.CreateBatch(ctx, nds); err != nil {
+				return nil, fmt.Errorf("failed to create notification_destinations: %w", err)
+			}
+		}
+	}
+
+	// TODO: Spawn actors for each notification_destination
+	// This will be implemented when ActorPool is wired in
 
 	return notification, nil
 }

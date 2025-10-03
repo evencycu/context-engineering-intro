@@ -106,14 +106,14 @@ func (h *Handler) CreateTeamsBotService(c *gin.Context) {
 	// Convert request to platform bot model
 	bot := &database.TeamsBot{
 		Name:                  req.Name,
-		Description:           req.Description,
+		Description:           func(s string) *string { return &s }(req.Description),
 		AppID:                 req.AppID,
-		TenantID:              req.TenantID,
-		WebhookURL:            req.WebhookURL,
-		Capabilities:          req.Capabilities,
-		RateLimitPerMinute:    req.RateLimitPerMinute,
-		MaxConcurrentRequests: req.MaxConcurrentRequests,
-		Status:                database.BotStatusActive,
+		TenantID:              func(s string) *string { return &s }(req.TenantID),
+		WebhookURL:            func(s string) *string { return &s }(req.WebhookURL),
+		Capabilities:          func(c database.JSONBObject) *database.JSONBObject { return &c }(req.Capabilities),
+		RateLimitPerMinute:    func(i int) *int { return &i }(req.RateLimitPerMinute),
+		MaxConcurrentRequests: func(i int) *int { return &i }(req.MaxConcurrentRequests),
+		Status:                func(s database.BotStatus) *database.BotStatus { return &s }(database.BotStatusActive),
 	}
 
 	// Create platform bot
@@ -201,19 +201,24 @@ func (h *Handler) UpdateteamsBotService(c *gin.Context) {
 		existingBot.Name = req.Name
 	}
 	if req.Description != "" {
-		existingBot.Description = req.Description
+		d := req.Description
+		existingBot.Description = &d
 	}
 	if req.WebhookURL != "" {
-		existingBot.WebhookURL = req.WebhookURL
+		w := req.WebhookURL
+		existingBot.WebhookURL = &w
 	}
 	if req.Capabilities != nil {
-		existingBot.Capabilities = req.Capabilities
+		c := database.JSONBObject(req.Capabilities)
+		existingBot.Capabilities = &c
 	}
 	if req.RateLimitPerMinute > 0 {
-		existingBot.RateLimitPerMinute = req.RateLimitPerMinute
+		r := req.RateLimitPerMinute
+		existingBot.RateLimitPerMinute = &r
 	}
 	if req.MaxConcurrentRequests > 0 {
-		existingBot.MaxConcurrentRequests = req.MaxConcurrentRequests
+		m := req.MaxConcurrentRequests
+		existingBot.MaxConcurrentRequests = &m
 	}
 	updateReq := &services.UpdateRequest[database.TeamsBot]{Data: *existingBot}
 	updatedBot, err := h.teamsBotService.Update(c.Request.Context(), id, updateReq)

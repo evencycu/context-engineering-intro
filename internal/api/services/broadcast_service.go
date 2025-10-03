@@ -206,18 +206,30 @@ func (s *broadcastService) SendToDestinations(ctx context.Context, destinations 
 		}, nil
 	}
 
-	// white list filter targets
+	// Check if "all" is specified in targets
+	sendToAll := false
 	targetsMap := make(map[string]struct{})
 	for _, target := range targets {
+		if target == "all" {
+			sendToAll = true
+			break
+		}
 		targetsMap[target] = struct{}{}
 	}
 
 	// Convert destinations to targets and send
 	allTargets := make([]database.TeamsTarget, 0)
-	log.Printf("Targets map: %v", targetsMap)
+	log.Printf("Targets map: %v, sendToAll: %v", targetsMap, sendToAll)
 	for _, dest := range destinations {
+		if sendToAll {
+			// Send to all targets when "all" is specified
+			log.Printf("Added all target: %v", dest.Targets)
+			allTargets = append(allTargets, dest.Targets...)
+			continue
+		}
 		for _, target := range dest.Targets {
 			if len(targetsMap) > 0 {
+				// Filter by specific targets
 				if _, ok := targetsMap[target.Email]; ok {
 					allTargets = append(allTargets, target)
 					log.Printf("Added email target: %s", target.Email)
@@ -228,7 +240,8 @@ func (s *broadcastService) SendToDestinations(ctx context.Context, destinations 
 					allTargets = append(allTargets, target)
 				}
 			} else {
-				log.Printf("Original target: %s", target.ConversationID)
+				// No targets specified, send to all
+				log.Printf("No targets specified, adding all: %s", target.ConversationID)
 				allTargets = append(allTargets, target)
 			}
 		}

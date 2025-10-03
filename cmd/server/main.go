@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
+	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
@@ -20,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
@@ -39,7 +42,7 @@ func main() {
 	errorHandler := middleware.NewErrorHandler(logger)
 
 	// Initialize database connection
-	dbURL := getEnv("DATABASE_URL", "postgres://teamsnotify:teamsnotify123@localhost:5432/teamsnotify?sslmode=disable")
+	dbURL := getEnv("DATABASE_URL", "postgres://teamsnotify:teamsnotify123@localhost:5432/notification_center?sslmode=disable")
 	db, err := sqlx.Connect("postgres", dbURL)
 	if err != nil {
 		logger.Fatal("Failed to connect to database: ", err)
@@ -51,6 +54,22 @@ func main() {
 		logger.Fatal("Failed to ping database: ", err)
 	}
 	logger.Info("Successfully connected to database!")
+
+	// Initialize Redis connection
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379")
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		logger.Fatal("Failed to parse Redis URL: ", err)
+	}
+	redisClient := redis.NewClient(opt)
+	defer redisClient.Close()
+
+	// Test Redis connection
+	ctx := context.Background()
+	if err = redisClient.Ping(ctx).Err(); err != nil {
+		logger.Fatal("Failed to connect to Redis: ", err)
+	}
+	logger.Info("Successfully connected to Redis!")
 
 	// Initialize repositories and services
 	companyRepo := repositories.NewCompanyRepository(db)
@@ -74,11 +93,21 @@ func main() {
 	provisionService := services.NewProvisionService(companyRepo, projectRepo, destinationRepo)
 
 	notificationRepo := repositories.NewNotificationRepository(db)
+	notificationDestRepo := repositories.NewNotificationDestinationRepository(db)
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
-	notificationService := services.NewNotificationService(notificationRepo, broadcaster)
+	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster)
+
+	// Initialize Actor Pool for async notification sending
+	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo)
+	actorPool := actor.NewActorPoolV2(redisClient, actorDB, 10) // Max 10 concurrent actors
+	actorPool.Start(ctx)
+	defer actorPool.Stop()
+	logger.Info("Actor Pool V2 started successfully")
 
 	// External service
 	externalService := services.NewExternalService(projectRepo, destinationRepo, broadcaster)
+
+	// Queue system replaced by Actor Pool V2
 
 	// Create handlers
 	companyHandler := companies.NewHandler(companyService)
@@ -90,6 +119,7 @@ func main() {
 	notificationHandler := notifications.NewHandler(notificationService)
 	provisionHandler := provision.NewHandler(provisionService)
 	externalHandler := external.NewHandler(externalService)
+	// Queue API handler removed - replaced by Actor Pool V2
 
 	// Create server
 	server := api.NewServer(api.Config{
@@ -130,7 +160,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler)
+	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, nil)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)
