@@ -393,9 +393,9 @@ docker run -d \
 
 ```bash
 # 1. 執行 migration 建立隊列表
-docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/migrations/008_add_failed_notifications_queue.sql
+docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/migrations/009_enhance_notification_destinations_for_async_actor.sql
 
-# 2. 啟動服務（會自動啟動 queue workers）
+# 2. 啟動服務（會自動啟動 Actor Pool）
 ./server
 
 # 3. 測試 Queue API
