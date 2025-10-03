@@ -261,7 +261,7 @@ const (
 #### 配置參數
 
 ```go
-type ActorPoolV2 struct {
+type ActorPool struct {
     redis        *redis.Client
     db           ActorDB
     actors       map[uuid.UUID]*NotificationActor
@@ -277,7 +277,7 @@ type ActorPoolV2 struct {
 actorPool.Start(ctx)
 
 // 2. 定期輪詢重試佇列
-func (p *ActorPoolV2) pollAndSpawnActors(ctx context.Context) {
+func (p *ActorPool) pollAndSpawnActors(ctx context.Context) {
     // 檢查電路斷路器狀態
     if circuitBreaker.IsOpen() {
         return // 所有 Actor 暫停
@@ -398,7 +398,7 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 
 ```go
 // Actor Pool 定期檢查待處理通知 (每 10 秒)
-func (p *ActorPoolV2) pollAndSpawnActors(ctx context.Context) {
+func (p *ActorPool) pollAndSpawnActors(ctx context.Context) {
     // 檢查電路斷路器狀態
     if circuitBreaker.IsOpen() {
         log.Println("Circuit breaker open, all actors paused")
@@ -653,7 +653,7 @@ chmod +x scripts/test_queue.sh
 ```go
 // Actor Pool 配置
 actorDB := actor.NewActorDB(notificationDestRepo, installationRepo)
-actorPool := actor.NewActorPoolV2(redisClient, actorDB, 10) // 最大 10 個並發 Actor
+actorPool := actor.NewActorPool(redisClient, actorDB, 10) // 最大 10 個並發 Actor
 
 // 電路斷路器配置
 circuitBreaker := &redisCircuitBreaker{
@@ -672,7 +672,7 @@ circuitBreaker := &redisCircuitBreaker{
 #### 高流量場景
 ```go
 // 增加 Actor 數量
-actorPool := actor.NewActorPoolV2(redisClient, actorDB, 20)
+actorPool := actor.NewActorPool(redisClient, actorDB, 20)
 
 // 更頻繁輪詢
 actorPool.workerTicker = time.NewTicker(5 * time.Second)
@@ -688,7 +688,7 @@ config: CircuitBreakerConfig{
 #### 低流量場景
 ```go
 // 減少 Actor 數量
-actorPool := actor.NewActorPoolV2(redisClient, actorDB, 3)
+actorPool := actor.NewActorPool(redisClient, actorDB, 3)
 
 // 降低輪詢頻率
 actorPool.workerTicker = time.NewTicker(30 * time.Second)
@@ -825,7 +825,7 @@ curl http://localhost:8080/api/v1/queue/circuit-breaker/metrics
 curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset
 
 # 3. 增加 Actor 數量（需重啟服務）
-# 修改 actorPool := actor.NewActorPoolV2(redisClient, actorDB, 20)
+# 修改 actorPool := actor.NewActorPool(redisClient, actorDB, 20)
 ```
 
 ### 問題：通知重複發送

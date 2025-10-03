@@ -11,8 +11,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// ActorPoolV2 manages multiple notification actors for the new async architecture
-type ActorPoolV2 struct {
+// ActorPool manages multiple notification actors for the async architecture
+type ActorPool struct {
 	redis        *redis.Client
 	db           ActorDB
 	actors       map[uuid.UUID]*NotificationActor
@@ -23,9 +23,9 @@ type ActorPoolV2 struct {
 	wg           sync.WaitGroup
 }
 
-// NewActorPoolV2 creates a new actor pool for the async architecture
-func NewActorPoolV2(redis *redis.Client, db ActorDB, maxActors int) *ActorPoolV2 {
-	return &ActorPoolV2{
+// NewActorPool creates a new actor pool for the async architecture
+func NewActorPool(redis *redis.Client, db ActorDB, maxActors int) *ActorPool {
+	return &ActorPool{
 		redis:     redis,
 		db:        db,
 		actors:    make(map[uuid.UUID]*NotificationActor),
@@ -35,8 +35,8 @@ func NewActorPoolV2(redis *redis.Client, db ActorDB, maxActors int) *ActorPoolV2
 }
 
 // Start begins the actor pool's operation
-func (p *ActorPoolV2) Start(ctx context.Context) {
-	log.Printf("Starting Actor Pool V2 (max actors: %d)", p.maxActors)
+func (p *ActorPool) Start(ctx context.Context) {
+	log.Printf("Starting Actor Pool (max actors: %d)", p.maxActors)
 
 	// Start worker that polls for retry-ready notifications
 	p.workerTicker = time.NewTicker(10 * time.Second)
@@ -48,18 +48,18 @@ func (p *ActorPoolV2) Start(ctx context.Context) {
 			case <-p.workerTicker.C:
 				p.pollAndSpawnActors(ctx)
 			case <-p.stopChan:
-				log.Println("Actor Pool V2 worker stopped")
+				log.Println("Actor Pool worker stopped")
 				return
 			}
 		}
 	}()
 
-	log.Println("Actor Pool V2 started successfully")
+	log.Println("Actor Pool started successfully")
 }
 
 // Stop gracefully shuts down the actor pool
-func (p *ActorPoolV2) Stop() {
-	log.Println("Stopping Actor Pool V2...")
+func (p *ActorPool) Stop() {
+	log.Println("Stopping Actor Pool...")
 	close(p.stopChan)
 	p.workerTicker.Stop()
 	p.wg.Wait()
@@ -71,11 +71,11 @@ func (p *ActorPoolV2) Stop() {
 	}
 	p.mu.Unlock()
 
-	log.Println("Actor Pool V2 stopped")
+	log.Println("Actor Pool stopped")
 }
 
 // EnqueueNotificationDestination adds a new notification destination to be processed by an actor
-func (p *ActorPoolV2) EnqueueNotificationDestination(ctx context.Context, notificationDestID uuid.UUID) error {
+func (p *ActorPool) EnqueueNotificationDestination(ctx context.Context, notificationDestID uuid.UUID) error {
 	p.mu.RLock()
 	currentActors := len(p.actors)
 	p.mu.RUnlock()
@@ -90,7 +90,7 @@ func (p *ActorPoolV2) EnqueueNotificationDestination(ctx context.Context, notifi
 }
 
 // spawnActor creates and starts a new NotificationActor
-func (p *ActorPoolV2) spawnActor(ctx context.Context, notificationDestID uuid.UUID) {
+func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -111,7 +111,7 @@ func (p *ActorPoolV2) spawnActor(ctx context.Context, notificationDestID uuid.UU
 		log.Printf("Notification destination %s has no conversation ID", notificationDestID)
 		return
 	}
-	
+
 	installation, err := p.db.GetBotInstallation(ctx, *nd.ConversationID)
 	if err != nil {
 		log.Printf("Failed to get bot installation for conversation %s: %v", *nd.ConversationID, err)
@@ -139,7 +139,7 @@ func (p *ActorPoolV2) spawnActor(ctx context.Context, notificationDestID uuid.UU
 }
 
 // pollAndSpawnActors checks for retry-ready notifications and spawns actors
-func (p *ActorPoolV2) pollAndSpawnActors(ctx context.Context) {
+func (p *ActorPool) pollAndSpawnActors(ctx context.Context) {
 	p.mu.RLock()
 	currentActors := len(p.actors)
 	p.mu.RUnlock()
@@ -169,7 +169,7 @@ func (p *ActorPoolV2) pollAndSpawnActors(ctx context.Context) {
 }
 
 // GetPoolStatus returns current status of the actor pool
-func (p *ActorPoolV2) GetPoolStatus() map[string]interface{} {
+func (p *ActorPool) GetPoolStatus() map[string]interface{} {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 

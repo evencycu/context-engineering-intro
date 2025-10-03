@@ -130,7 +130,7 @@ repo-root/
 
 ### 4. Actor 系統 (`internal/actor`)
 - **NotificationActor**: 單一通知處理 Actor
-- **ActorPoolV2**: Actor 池管理
+ - **ActorPool**: Actor 池管理
 - **Redis 整合**: 使用 Redis 管理佇列和狀態
 
 ### 5. 資料庫層 (`internal/database`)

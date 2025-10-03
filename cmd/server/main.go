@@ -99,7 +99,7 @@ func main() {
 
 	// Initialize Actor Pool for async notification sending
 	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo)
-	actorPool := actor.NewActorPoolV2(redisClient, actorDB, 10) // Max 10 concurrent actors
+	actorPool := actor.NewActorPool(redisClient, actorDB, 10) // Max 10 concurrent actors
 	actorPool.Start(ctx)
 	defer actorPool.Stop()
 	logger.Info("Actor Pool V2 started successfully")
