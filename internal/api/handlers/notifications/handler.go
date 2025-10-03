@@ -48,7 +48,7 @@ type SendNotificationRequest struct {
 	Mentions     []string               `json:"mentions"`
 	Attachment   *database.Attachment   `json:"attachment"`
 	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
-	Priority     string                 `json:"priority" validate:"oneof=low normal high urgent"`
+	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
 	Metadata     map[string]interface{} `json:"metadata"`
 	Destinations []uuid.UUID            `json:"destinations" validate:"required,min=1"`
 }
@@ -126,10 +126,8 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	}
 
 	// Add estimated delivery time based on priority
-	switch req.Priority {
-	case "urgent":
-		response.EstimatedTime = "1-2 minutes"
-	case "high":
+    switch req.Priority {
+    case "high":
 		response.EstimatedTime = "2-5 minutes"
 	case "normal":
 		response.EstimatedTime = "5-10 minutes"

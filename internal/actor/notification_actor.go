@@ -18,6 +18,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const half_open_tests = 3
+
 // NotificationActor handles sending a single notification with retry logic
 // Each actor is responsible for one notification_destination
 type NotificationActor struct {
@@ -39,14 +41,6 @@ type NotificationActor struct {
 	LastError          error
 	StopChan           chan struct{}
 	DoneChan           chan *ActorResult
-}
-
-// ActorDB defines the database operations needed by actors
-type ActorDB interface {
-	UpdateNotificationDestination(ctx context.Context, id uuid.UUID, update *NotificationDestinationUpdate) error
-	GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error)
-	GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
-	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
 }
 
 // NotificationDestinationUpdate represents fields to update
@@ -160,7 +154,8 @@ func (a *NotificationActor) run(ctx context.Context) {
 				Error:              ctx.Err(),
 			}
 			return
-		default:
+		case <-time.After(10 * time.Millisecond):
+
 		}
 
 		// Check circuit breaker before sending
@@ -259,7 +254,6 @@ func (a *NotificationActor) run(ctx context.Context) {
 			Retrying:           true,
 			NextRetryAt:        a.getNextRetryTime(a.CurrentRetry, retryAfter),
 		}
-		return
 	}
 }
 
@@ -294,10 +288,7 @@ func (a *NotificationActor) checkCircuitBreaker(ctx context.Context) bool {
 	if state == "half-open" {
 		// Check if we can be a test request
 		tests, _ := a.Redis.Incr(ctx, "cb:half_open_tests").Result()
-		if tests <= 3 {
-			return true
-		}
-		return false
+		return tests <= half_open_tests
 	}
 
 	return true // closed state

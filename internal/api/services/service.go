@@ -813,7 +813,7 @@ type SendNotificationRequest struct {
 	Mentions     []string               `json:"mentions"`
 	Attachment   *database.Attachment   `json:"attachment"`
 	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
-	Priority     string                 `json:"priority" validate:"oneof=low normal high urgent"`
+	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
 	Metadata     map[string]any         `json:"metadata"`
 	Destinations []uuid.UUID            `json:"destinations" validate:"omitempty,min=1"`
 }

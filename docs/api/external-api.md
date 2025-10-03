@@ -31,7 +31,7 @@ External API 使用 `notify_key` 進行認證，無需額外的 API Key 或 JWT 
 | `notify_key` | string | ✅ | 專案的 notify_key |
 | `message` | string | ✅ | 通知內容 |
 | `message_type` | string | ❌ | 訊息類型 (text/file/adaptive_card) |
-| `priority` | string | ❌ | 優先級 (low/normal/high/urgent) |
+| `priority` | string | ❌ | 優先級 (low/normal/high) |
 | `targets` | array | ❌ | 目標篩選 (["all"] 或特定目標) |
 | `mentions` | array | ❌ | 提及對象 |
 | `metadata` | object | ❌ | 自定義元數據 |
@@ -128,7 +128,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
   -d '{
     "notify_key": "monitoring-alerts",
     "message": "🚨 CPU 使用率過高：95%",
-    "priority": "urgent",
+    "priority": "high",
     "metadata": {
       "alert_type": "cpu_usage",
       "threshold": 90,
@@ -209,7 +209,6 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 | `low` | 低優先級 | 最後處理 |
 | `normal` | 一般優先級（預設） | 正常處理 |
 | `high` | 高優先級 | 優先處理 |
-| `urgent` | 緊急優先級 | 最高優先處理 |
 
 ### targets
 

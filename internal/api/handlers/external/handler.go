@@ -40,7 +40,7 @@ type SendNotificationRequest struct {
 	NotifyKey   string         `json:"notify_key" binding:"required" example:"my-project-key"`
 	Message     string         `json:"message" binding:"required" example:"Hello from external API"`
 	MessageType string         `json:"message_type" example:"text" enums:"text,file,adaptive_card"`
-	Priority    string         `json:"priority" example:"normal" enums:"low,normal,high,urgent"`
+	Priority    string         `json:"priority" example:"normal" enums:"low,normal,high"`
 	Targets     []string       `json:"targets" example:"all" description:"List of target Emails or Conversation IDs or 'all'"`
 	Mentions    []string       `json:"mentions" example:"@user1,@user2"`
 	Metadata    map[string]any `json:"metadata" example:"{\"source\":\"external\",\"version\":\"1.0\"}"`

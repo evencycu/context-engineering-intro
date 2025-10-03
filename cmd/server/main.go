@@ -99,10 +99,10 @@ func main() {
 
 	// Initialize Actor Pool for async notification sending
 	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo)
-	actorPool := actor.NewActorPool(redisClient, actorDB, 10) // Max 10 concurrent actors
+	actorPool := actor.NewActorPool(redisClient, actorDB, 10, 10*time.Second) // Max 10 actors, 10s poll interval
 	actorPool.Start(ctx)
 	defer actorPool.Stop()
-	logger.Info("Actor Pool V2 started successfully")
+	logger.Info("Actor Pool started successfully")
 
 	// External service
 	externalService := services.NewExternalService(projectRepo, destinationRepo, broadcaster)

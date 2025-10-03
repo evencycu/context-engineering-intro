@@ -9,6 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// ActorDB defines the database operations needed by actors
+type ActorDB interface {
+	UpdateNotificationDestination(ctx context.Context, id uuid.UUID, update *NotificationDestinationUpdate) error
+	GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error)
+	GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
+	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+}
+
 // actorDB implements ActorDB interface for actors
 type actorDB struct {
 	notificationDestRepo repositories.NotificationDestinationRepository

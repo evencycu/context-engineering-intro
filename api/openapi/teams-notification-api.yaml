@@ -1027,7 +1027,7 @@ paths:
             "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
             "message": "Urgent: System maintenance in 1 hour",
             "message_type": "text",
-            "priority": "urgent",
+            "priority": "high",
             "targets": ["all"],
             "mentions": ["@everyone"],
             "metadata": {"source": "monitoring", "alert_level": "critical"}
@@ -1061,7 +1061,7 @@ paths:
                   notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   message: "Urgent: System maintenance in 1 hour"
                   message_type: "text"
-                  priority: "urgent"
+                  priority: "high"
                   targets: ["all"]
                   mentions: ["@everyone"]
                   metadata:
@@ -1720,7 +1720,7 @@ components:
           type: object
         priority:
           type: string
-          enum: [low, normal, high, urgent]
+          enum: [low, normal, high]
         metadata:
           type: object
         destinations:
@@ -1788,7 +1788,7 @@ components:
         priority:
           type: string
           description: Message priority
-          enum: [low, normal, high, urgent]
+          enum: [low, normal, high]
           default: normal
           example: "normal"
         targets:

@@ -98,7 +98,7 @@ psql -h localhost -U teamsnotify -d notification_center
 │ status (VARCHAR(20), CHECK: active|inactive|suspended)                         │
 │ daily_limit (INTEGER, DEFAULT 10000)                                           │
 │ monthly_limit (INTEGER, DEFAULT 300000)                                        │
-│ priority (VARCHAR(20), CHECK: low|normal|high|urgent)                          │
+│ priority (VARCHAR(20), CHECK: low|normal|high)                                 │
 │ created_at, updated_at (TIMESTAMP)                                             │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                         │
@@ -182,7 +182,7 @@ psql -h localhost -U teamsnotify -d notification_center
 │ message_type (VARCHAR(20), CHECK: text|file|adaptive_card)                     │
 │ content (TEXT, NOT NULL)                                                       │
 │ mentions (TEXT[])                                                               │
-│ priority (VARCHAR(20), CHECK: low|normal|high|urgent)                          │
+│ priority (VARCHAR(20), CHECK: low|normal|high)                                 │
 │ status (VARCHAR(20), CHECK: pending|processing|sent|failed|cancelled)          │
 │ metadata (JSONB)                                                                │
 │ sent_at (TIMESTAMP)                                                             │

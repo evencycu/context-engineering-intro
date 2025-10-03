@@ -153,7 +153,7 @@ POST /api/v1/notifications/batch
   },
   "sender": "admin@company.com",
   "notificationKey": "system-maintenance",
-  "priority": "urgent"
+  "priority": "high"
 }
 ```
 

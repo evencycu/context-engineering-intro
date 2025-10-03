@@ -2,7 +2,6 @@ package actor
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -18,19 +17,22 @@ type ActorPool struct {
 	actors       map[uuid.UUID]*NotificationActor
 	mu           sync.RWMutex
 	maxActors    int
+	pollInterval time.Duration
 	workerTicker *time.Ticker
 	stopChan     chan struct{}
 	wg           sync.WaitGroup
 }
 
 // NewActorPool creates a new actor pool for the async architecture
-func NewActorPool(redis *redis.Client, db ActorDB, maxActors int) *ActorPool {
+// pollInterval controls how often the pool polls for retry-ready notifications
+func NewActorPool(redis *redis.Client, db ActorDB, maxActors int, pollInterval time.Duration) *ActorPool {
 	return &ActorPool{
-		redis:     redis,
-		db:        db,
-		actors:    make(map[uuid.UUID]*NotificationActor),
-		maxActors: maxActors,
-		stopChan:  make(chan struct{}),
+		redis:        redis,
+		db:           db,
+		actors:       make(map[uuid.UUID]*NotificationActor),
+		maxActors:    maxActors,
+		pollInterval: pollInterval,
+		stopChan:     make(chan struct{}),
 	}
 }
 
@@ -39,7 +41,10 @@ func (p *ActorPool) Start(ctx context.Context) {
 	log.Printf("Starting Actor Pool (max actors: %d)", p.maxActors)
 
 	// Start worker that polls for retry-ready notifications
-	p.workerTicker = time.NewTicker(10 * time.Second)
+	if p.pollInterval <= 0 {
+		p.pollInterval = 100 * time.Millisecond
+	}
+	p.workerTicker = time.NewTicker(p.pollInterval)
 	p.wg.Add(1)
 	go func() {
 		defer p.wg.Done()
@@ -72,21 +77,6 @@ func (p *ActorPool) Stop() {
 	p.mu.Unlock()
 
 	log.Println("Actor Pool stopped")
-}
-
-// EnqueueNotificationDestination adds a new notification destination to be processed by an actor
-func (p *ActorPool) EnqueueNotificationDestination(ctx context.Context, notificationDestID uuid.UUID) error {
-	p.mu.RLock()
-	currentActors := len(p.actors)
-	p.mu.RUnlock()
-
-	if currentActors >= p.maxActors {
-		return fmt.Errorf("actor pool is full, cannot enqueue notification_dest %s", notificationDestID)
-	}
-
-	// Spawn an actor immediately for new notifications
-	p.spawnActor(ctx, notificationDestID)
-	return nil
 }
 
 // spawnActor creates and starts a new NotificationActor
