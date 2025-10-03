@@ -6,33 +6,23 @@ Teams Notify Center 是一個基於 Go 和 Gin 框架的 RESTful API Server，�
 
 - **多目標支援**: 一個目的地可以包含多個 Teams 目標（channel、person、chatgroup）
 - **Bot 管理**: 支援平台 Bot（第三方 Bot 已暫時停用）
-- **智能路由**: 根據條件自動選擇合適的 Bot
-- **認證授權**: JWT 和 API Key 雙重認證
-- **完整 CRUD**: 所有基礎模型的完整 CRUD 操作
+- **智能路由**: 根據 Tag 選擇符合的 Bot
+- **認證授權**: API key委外APIM服務，這個服務不處理
 - **日誌監控**: 完整的請求日誌和錯誤處理
 
 ## API 架構
 
 ### 基礎 URL
+
 ```
 http://localhost:8080/api/v1
 ```
 
-### 認證方式
-
-#### 1. JWT Token 認證
-```bash
-Authorization: Bearer <jwt_token>
-```
-
-#### 2. API Key 認證
-```bash
-X-API-Key: <api_key>
-```
 
 ## 主要 API 端點
 
 ### 核心管理 API
+
 - **公司管理** (`/companies`) - 公司資料管理
 - **用戶管理** (`/users`) - 用戶帳號和權限管理
 - **專案管理** (`/projects`) - 通知專案管理
@@ -41,14 +31,18 @@ X-API-Key: <api_key>
 - **通知管理** (`/notifications`) - 通知發送和管理
 
 ### 特殊功能 API
+
 - **Provision API** (`/provision`) - 一鍵建立專案和目的地
 - **External API** (`/external/notify`) - 外部系統通知發送
+- **Queue Management API** (`/queue`) - 內部佇列管理和監控
 - **訊息管理** (`/messages`) - 訊息歷史和狀態查詢
 
 ## 快速開始
 
 ### 1. 建立專案和目的地
+
 使用 [Provision API](provision-api.md) 快速建立：
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/provision \
   -H "Content-Type: application/json" \
@@ -69,7 +63,9 @@ curl -X POST http://localhost:8080/api/v1/provision \
 ```
 
 ### 2. 發送通知
+
 使用 [External API](external-api.md) 發送通知：
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/external/notify \
   -H "Content-Type: application/json" \
@@ -85,6 +81,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 ## 錯誤處理
 
 ### 標準錯誤格式
+
 ```json
 {
   "error": "錯誤描述",
@@ -93,6 +90,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 ```
 
 ### 常見錯誤碼
+
 - `400 Bad Request`: 請求參數錯誤
 - `401 Unauthorized`: 未認證
 - `403 Forbidden`: 權限不足
@@ -104,12 +102,14 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 ## 分頁
 
 ### 分頁參數
+
 - `limit`: 每頁數量（1-100，預設 10）
 - `offset`: 偏移量（預設 0）
 - `sort_by`: 排序欄位（預設 created_at）
 - `order`: 排序方向（asc/desc，預設 desc）
 
 ### 分頁響應格式
+
 ```json
 {
   "data": [...],
@@ -129,6 +129,7 @@ GET /health
 ```
 
 響應：
+
 ```json
 {
   "status": "healthy",
@@ -141,6 +142,7 @@ GET /health
 
 - [Provision API](provision-api.md) - 專案和目的地管理
 - [External API](external-api.md) - 外部系統通知發送
+- [Queue Management API](queue-management-api.md) - 內部佇列管理
 - [OpenAPI 規範](openapi/teams-notification-api.yaml) - 完整 API 規範
 
 ## 注意事項

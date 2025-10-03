@@ -1,436 +1,387 @@
-# Queue API 使用範例
+# External API 使用指南
 
-## 📌 基礎 API 測試
+External API 是供外部系統使用的通知發送介面，透過 `notify_key` 來識別專案並發送通知到預先配置的 Teams 目的地。
 
-### 1. 健康檢查
+## 概述
 
-```bash
-curl -X GET http://localhost:8080/health | jq '.'
+External API 提供簡潔的 RESTful 介面，讓外部系統能夠輕鬆發送通知到 Microsoft Teams，無需管理複雜的 Bot 配置和認證。
+
+## 基礎 URL
+
+```
+http://localhost:8080/api/v1/external
 ```
 
-**預期回應**:
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-10-01T10:30:00Z",
-  "version": "1.0.0"
-}
-```
+## 認證方式
 
----
+External API 使用 `notify_key` 進行認證，無需額外的 API Key 或 JWT Token。
 
-## 🔍 Queue 狀態查詢
+## API 端點
 
-### 2. 查詢隊列狀態
+### 發送通知
 
-```bash
-curl -X GET http://localhost:8080/api/v1/queue/status | jq '.'
-```
+**POST** `/api/v1/external/notify`
 
-**預期回應**:
-```json
-{
-  "total_pending": 0,
-  "total_retrying": 0,
-  "total_failed": 0,
-  "next_retry_due": null,
-  "oldest_pending": null,
-  "circuit_state": "closed",
-  "last_updated": "2025-10-01T10:30:00Z"
-}
-```
+發送通知到預先配置的 Teams 目的地。
 
-**欄位說明**:
-- `total_pending`: 等待重試的通知數量
-- `total_retrying`: 正在重試的通知數量
-- `total_failed`: 已耗盡重試次數的通知數量
-- `next_retry_due`: 下一個要重試的通知時間
-- `circuit_state`: 熔斷器狀態 (closed/open/half-open)
+#### 請求參數
 
----
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `notify_key` | string | ✅ | 專案的 notify_key |
+| `message` | string | ✅ | 通知內容 |
+| `message_type` | string | ❌ | 訊息類型 (text/file/adaptive_card) |
+| `priority` | string | ❌ | 優先級 (low/normal/high/urgent) |
+| `targets` | array | ❌ | 目標篩選 (["all"] 或特定目標) |
+| `mentions` | array | ❌ | 提及對象 |
+| `metadata` | object | ❌ | 自定義元數據 |
 
-## ⚡ Circuit Breaker 管理
+#### 請求範例
 
-### 3. 查詢熔斷器指標
-
-```bash
-curl -X GET http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '.'
-```
-
-**預期回應**:
-```json
-{
-  "state": "closed",
-  "total_requests": 1523,
-  "success_requests": 1498,
-  "failed_requests": 25,
-  "failures": 0,
-  "last_state_change": "2025-10-01T09:00:00Z"
-}
-```
-
-**欄位說明**:
-- `state`: 當前狀態
-  - `closed`: 正常運作
-  - `open`: 熔斷中（拒絕請求）
-  - `half-open`: 測試恢復中
-- `total_requests`: 總請求數
-- `success_requests`: 成功請求數
-- `failed_requests`: 失敗請求數
-- `failures`: 連續失敗次數
-- `last_state_change`: 最後狀態變更時間
-
-### 4. 重置熔斷器
-
-當確認服務已恢復，手動重置熔斷器：
-
-```bash
-curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset | jq '.'
-```
-
-**預期回應**:
-```json
-{
-  "message": "Circuit breaker reset successfully"
-}
-```
-
-**使用場景**:
-- Teams API 服務已恢復正常
-- 維護作業完成後
-- 測試熔斷器機制
-
----
-
-## 📨 發送通知測試
-
-### 5. 發送正常通知
-
+**基本通知**
 ```bash
 curl -X POST http://localhost:8080/api/v1/external/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
-    "message": "Test notification from Queue API - '$(date +%Y%m%d-%H%M%S)'",
-    "targets": ["all"]
-  }' | jq '.'
+    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "message": "Hello World!"
+  }'
 ```
 
-**預期回應**:
+**完整參數通知**
+```bash
+curl -X POST http://localhost:8080/api/v1/external/notify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "message": "系統維護通知：將於今晚 10:00-11:00 進行系統維護",
+    "message_type": "text",
+    "priority": "high",
+    "targets": ["all"],
+    "mentions": ["@everyone"],
+    "metadata": {
+      "maintenance_id": "maint-001",
+      "scheduled_time": "2025-10-02T22:00:00Z",
+      "source": "monitoring-system"
+    }
+  }'
+```
+
+**發送到特定目標**
+```bash
+curl -X POST http://localhost:8080/api/v1/external/notify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "message": "頻道專用訊息",
+    "targets": ["19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"]
+  }'
+```
+
+#### 回應格式
+
+**成功回應**
 ```json
 {
-  "notification_id": "550e8400-e29b-41d4-a716-446655440000",
-  "project_name": "Test Project",
-  "destinations_count": 4,
-  "success_count": 4,
-  "failed_count": 0,
-  "results": [...]
+  "success": true,
+  "data": {
+    "notification_id": "3f364043-eb50-49a6-988e-79a5be8f5ea0",
+    "status": "sent",
+    "message": "Notification processed successfully",
+    "project_id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
+    "project_name": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "destinations_count": 2,
+    "results": [
+      {
+        "destination_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
+        "destination_name": "",
+        "success": true
+      },
+      {
+        "destination_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
+        "destination_name": "",
+        "success": true
+      }
+    ],
+    "estimated_delivery": "5-10 minutes"
+  }
 }
 ```
 
-### 6. 檢查是否有失敗進入隊列
-
-```bash
-# 發送通知後等待 2 秒
-sleep 2
-
-# 檢查隊列狀態
-curl -X GET http://localhost:8080/api/v1/queue/status | jq '{
-  pending: .total_pending,
-  retrying: .total_retrying,
-  failed: .total_failed,
-  circuit: .circuit_state
-}'
-```
-
----
-
-## 🔄 監控與持續觀察
-
-### 7. 持續監控隊列（使用 watch）
-
-```bash
-# 每 2 秒更新一次隊列狀態
-watch -n 2 'curl -s http://localhost:8080/api/v1/queue/status | jq "{pending: .total_pending, retrying: .total_retrying, failed: .total_failed, circuit: .circuit_state}"'
-```
-
-**輸出範例**:
+**錯誤回應**
 ```json
 {
-  "pending": 5,
-  "retrying": 2,
-  "failed": 0,
-  "circuit": "closed"
+  "success": false,
+  "error": "Invalid notify_key",
+  "details": "The provided notify_key does not exist or is inactive"
 }
 ```
 
-按 `Ctrl+C` 停止監控。
+## 使用場景
 
-### 8. 同時監控隊列和熔斷器
-
-```bash
-# 建立監控腳本
-cat << 'EOF' > monitor_queue.sh
-#!/bin/bash
-while true; do
-  clear
-  echo "=== Queue Status ==="
-  curl -s http://localhost:8080/api/v1/queue/status | jq '{
-    pending: .total_pending,
-    retrying: .total_retrying,
-    failed: .total_failed,
-    next_retry: .next_retry_due,
-    circuit: .circuit_state
-  }'
-  
-  echo ""
-  echo "=== Circuit Breaker Metrics ==="
-  curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{
-    state: .state,
-    total: .total_requests,
-    success: .success_requests,
-    failed: .failed_requests,
-    consecutive_failures: .failures
-  }'
-  
-  sleep 3
-done
-EOF
-
-chmod +x monitor_queue.sh
-./monitor_queue.sh
-```
-
----
-
-## 🧪 完整測試流程
-
-### 測試 1: 正常流程
+### 1. 系統監控警報
 
 ```bash
-#!/bin/bash
-
-echo "=== Test 1: Normal Flow ==="
-
-# 1. 檢查初始狀態
-echo "1. Initial queue status:"
-curl -s http://localhost:8080/api/v1/queue/status | jq '.total_pending'
-
-# 2. 發送通知
-echo "2. Sending notification..."
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+# 發送 CPU 使用率警報
+curl -X POST http://localhost:8080/api/v1/external/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
-    "message": "Test notification",
-    "targets": ["all"]
-  }')
-
-echo "$RESPONSE" | jq '{notification_id, success_count, failed_count}'
-
-# 3. 檢查是否成功（隊列應該為空）
-sleep 2
-echo "3. Queue after success:"
-curl -s http://localhost:8080/api/v1/queue/status | jq '{pending: .total_pending, circuit: .circuit_state}'
+    "notify_key": "monitoring-alerts",
+    "message": "🚨 CPU 使用率過高：95%",
+    "priority": "urgent",
+    "metadata": {
+      "alert_type": "cpu_usage",
+      "threshold": 90,
+      "current_value": 95,
+      "server": "web-server-01"
+    }
+  }'
 ```
 
-### 測試 2: 失敗重試流程
+### 2. 部署通知
 
 ```bash
-#!/bin/bash
-
-echo "=== Test 2: Failure & Retry Flow ==="
-
-# 1. 發送會失敗的通知（使用無效 target）
-echo "1. Sending notification (expected to fail)..."
-curl -s -X POST http://localhost:8080/api/v1/external/notify \
+# 發送部署完成通知
+curl -X POST http://localhost:8080/api/v1/external/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
-    "message": "Test failed notification",
-    "targets": ["nonexistent@example.com"]
-  }' | jq '{notification_id, failed_count}'
-
-# 2. 等待失敗通知進入隊列
-sleep 3
-
-# 3. 檢查隊列（應該有待重試的通知）
-echo "2. Queue after failure:"
-curl -s http://localhost:8080/api/v1/queue/status | jq '.'
-
-# 4. 監控重試過程（持續 30 秒）
-echo "3. Monitoring retry process for 30 seconds..."
-for i in {1..10}; do
-  echo "[$i] $(date +%H:%M:%S)"
-  curl -s http://localhost:8080/api/v1/queue/status | jq '{pending: .total_pending, retrying: .total_retrying, circuit: .circuit_state}'
-  sleep 3
-done
+    "notify_key": "deployment-notifications",
+    "message": "✅ 部署完成：v2.1.0 已成功部署到生產環境",
+    "priority": "normal",
+    "metadata": {
+      "version": "v2.1.0",
+      "environment": "production",
+      "deployment_time": "2025-10-02T14:30:00Z",
+      "deployed_by": "ci-cd-pipeline"
+    }
+  }'
 ```
 
-### 測試 3: 熔斷器測試
+### 3. 業務通知
+
+```bash
+# 發送訂單通知
+curl -X POST http://localhost:8080/api/v1/external/notify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notify_key": "order-notifications",
+    "message": "🛒 新訂單：訂單 #12345 已建立，金額：$299.99",
+    "priority": "normal",
+    "mentions": ["@sales-team"],
+    "metadata": {
+      "order_id": "12345",
+      "amount": 299.99,
+      "customer": "John Doe",
+      "product": "Premium Package"
+    }
+  }'
+```
+
+## 參數詳解
+
+### notify_key
+
+專案的唯一識別碼，用於：
+- 識別要發送通知的專案
+- 取得預先配置的目的地
+- 套用專案相關的設定（限制、優先級等）
+
+### message
+
+通知的主要內容，支援：
+- 純文字訊息
+- 表情符號和特殊字符
+- 多行文字
+- 基本 Markdown 格式（由 Teams 處理）
+
+### message_type
+
+| 類型 | 說明 | 範例 |
+|------|------|------|
+| `text` | 純文字訊息（預設） | "Hello World" |
+| `file` | 檔案附件 | 需要額外的 `attachment` 參數 |
+| `adaptive_card` | 自適應卡片 | 需要額外的 `adaptive_card` 參數 |
+
+### priority
+
+| 優先級 | 說明 | 處理順序 |
+|--------|------|----------|
+| `low` | 低優先級 | 最後處理 |
+| `normal` | 一般優先級（預設） | 正常處理 |
+| `high` | 高優先級 | 優先處理 |
+| `urgent` | 緊急優先級 | 最高優先處理 |
+
+### targets
+
+目標篩選選項：
+- `["all"]` - 發送到所有配置的目的地（預設）
+- `["conversation_id1", "conversation_id2"]` - 發送到特定對話
+- `["email1@example.com", "email2@example.com"] - 發送到特定電子郵件
+
+### mentions
+
+提及對象，會在 Teams 中高亮顯示：
+- `["@everyone"]` - 提及所有人
+- `["@張三", "@李四"]` - 提及特定人員
+- `["@channel"]` - 提及整個頻道
+
+### metadata
+
+自定義元數據，用於：
+- 追蹤通知來源
+- 儲存業務相關資訊
+- 支援後續查詢和分析
+
+## 錯誤處理
+
+### 常見錯誤碼
+
+| 錯誤碼 | 說明 | 解決方案 |
+|--------|------|----------|
+| `400` | 請求參數錯誤 | 檢查必填參數和格式 |
+| `404` | notify_key 不存在 | 確認 notify_key 正確 |
+| `429` | 請求過於頻繁 | 降低發送頻率 |
+| `500` | 內部服務器錯誤 | 稍後重試或聯絡支援 |
+
+### 錯誤回應範例
+
+```json
+{
+  "success": false,
+  "error": "Invalid notify_key",
+  "details": "The notify_key 'invalid-key' does not exist",
+  "code": "INVALID_NOTIFY_KEY"
+}
+```
+
+## 最佳實踐
+
+### 1. 錯誤處理
 
 ```bash
 #!/bin/bash
+# 發送通知並處理錯誤
 
-echo "=== Test 3: Circuit Breaker Test ==="
-
-# 1. 檢查初始熔斷器狀態
-echo "1. Initial circuit breaker state:"
-curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{state, failures}'
-
-# 2. 模擬多次失敗（根據實際情況調整）
-echo "2. Simulating failures..."
-for i in {1..6}; do
-  curl -s -X POST http://localhost:8080/api/v1/external/notify \
+send_notification() {
+  local notify_key="$1"
+  local message="$2"
+  
+  response=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
     -H "Content-Type: application/json" \
     -d "{
-      \"notify_key\": \"your-notify-key\",
-      \"message\": \"Fail test $i\",
-      \"targets\": [\"invalid-target-$i@example.com\"]
-    }" > /dev/null
-  sleep 1
-done
+      \"notify_key\": \"$notify_key\",
+      \"message\": \"$message\"
+    }")
+  
+  success=$(echo "$response" | jq -r '.success')
+  
+  if [ "$success" = "true" ]; then
+    echo "✅ 通知發送成功"
+    echo "$response" | jq '.data.notification_id'
+  else
+    echo "❌ 通知發送失敗"
+    echo "$response" | jq -r '.error'
+    exit 1
+  fi
+}
 
-# 3. 檢查熔斷器是否開啟
-sleep 5
-echo "3. Circuit breaker after failures:"
-curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{state, failures, failed_requests}'
-
-# 4. 重置熔斷器
-echo "4. Resetting circuit breaker..."
-curl -s -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset | jq '.'
-
-# 5. 確認已重置
-echo "5. Circuit breaker after reset:"
-curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{state, failures}'
+# 使用範例
+send_notification "my-project" "測試訊息"
 ```
 
----
-
-## 📊 資料庫查詢
-
-### 查看失敗通知詳情
-
-```sql
--- 連接到資料庫
-docker exec -it teamsnotify-postgres psql -U teamsnotify -d notification_center
-
--- 查看所有待重試通知
-SELECT 
-    id,
-    target_id,
-    reason,
-    retry_count,
-    max_retries,
-    next_retry_at,
-    created_at
-FROM notification_destinations
-WHERE retry_count < max_retries
-ORDER BY next_retry_at;
-
--- 統計失敗原因
-SELECT 
-    reason,
-    COUNT(*) as count,
-    AVG(retry_count) as avg_retries
-FROM notification_destinations
-GROUP BY reason;
-
--- 查看隊列狀態視圖
--- 取代視圖的等價查詢：
-SELECT 
-  COUNT(*) FILTER (WHERE status IN ('pending','processing') AND retry_count < max_retries) AS pending,
-  COUNT(*) FILTER (WHERE status='failed' OR retry_count >= max_retries) AS exhausted,
-  MIN(next_retry_at) AS next_ready_at
-FROM notification_destinations;
-```
-
----
-
-## 🎯 常用組合命令
-
-### 快速診斷
+### 2. 批次發送
 
 ```bash
 #!/bin/bash
-# 一鍵查看系統狀態
+# 批次發送多個通知
 
-echo "=== Server Health ==="
-curl -s http://localhost:8080/health | jq '{status, timestamp}'
+messages=(
+  "系統狀態正常"
+  "資料庫連線穩定"
+  "API 回應時間正常"
+)
 
-echo ""
-echo "=== Queue Status ==="
-curl -s http://localhost:8080/api/v1/queue/status | jq '{pending: .total_pending, retrying: .total_retrying, failed: .total_failed, circuit: .circuit_state}'
-
-echo ""
-echo "=== Circuit Breaker ==="
-curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{state, success_rate: ((.success_requests / .total_requests * 100) | floor)}'
-
-echo ""
-echo "=== Database Queue Count ==="
-docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -t -c "SELECT COUNT(*) FROM notification_destinations WHERE status IN ('pending','processing') AND retry_count < max_retries;"
+for message in "${messages[@]}"; do
+  curl -X POST http://localhost:8080/api/v1/external/notify \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"notify_key\": \"system-status\",
+      \"message\": \"$message\",
+      \"priority\": \"normal\"
+    }" > /dev/null
+  
+  echo "已發送：$message"
+  sleep 1  # 避免請求過於頻繁
+done
 ```
 
-保存為 `quick_status.sh` 並執行：
+### 3. 監控和重試
 
 ```bash
-chmod +x quick_status.sh
-./quick_status.sh
+#!/bin/bash
+# 發送通知並監控狀態
+
+notify_key="monitoring-alerts"
+message="系統警報測試"
+
+# 發送通知
+response=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"notify_key\": \"$notify_key\",
+    \"message\": \"$message\",
+    \"priority\": \"high\"
+  }")
+
+notification_id=$(echo "$response" | jq -r '.data.notification_id')
+
+if [ "$notification_id" != "null" ]; then
+  echo "通知已發送，ID: $notification_id"
+  
+  # 等待處理完成
+  sleep 5
+  
+  # 檢查狀態（需要額外的 API 端點）
+  echo "檢查通知狀態..."
+else
+  echo "發送失敗：$(echo "$response" | jq -r '.error')"
+fi
 ```
 
----
+## 限制和配額
 
-## 🔧 故障排查命令
+### 專案限制
 
-### 問題：隊列積壓
+每個專案都有以下限制：
+- **每日限制**: 預設 10,000 則通知
+- **每月限制**: 預設 300,000 則通知
+- **速率限制**: 100 請求/秒
+
+### 訊息限制
+
+- **訊息長度**: 最大 8,000 字符
+- **提及數量**: 最多 50 個提及
+- **元數據大小**: 最大 1KB
+
+## 監控和日誌
+
+### 健康檢查
 
 ```bash
-# 1. 檢查積壓數量
-curl -s http://localhost:8080/api/v1/queue/status | jq '.total_pending'
-
-# 2. 檢查熔斷器是否開啟
-curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '.state'
-
-# 3. 如果熔斷器開啟，重置它
-curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset
-
-# 4. 查看資料庫中最舊的待重試通知
-docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "
-SELECT target_id, reason, retry_count, next_retry_at 
-FROM notification_destinations 
-WHERE retry_count < max_retries 
-ORDER BY created_at 
-LIMIT 5;"
+# 檢查服務狀態
+curl http://localhost:8080/health
 ```
 
-### 問題：重試不生效
+### 日誌查詢
 
 ```bash
-# 1. 檢查 server 日誌
-tail -f server.log | grep -i "worker\|retry\|queue"
-
-# 2. 手動觸發重試（更新 next_retry_at）
-docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "
-UPDATE notification_destinations 
-SET next_retry_at = NOW() 
-WHERE retry_count < max_retries;"
-
-# 3. 等待並檢查隊列變化
-watch -n 2 'curl -s http://localhost:8080/api/v1/queue/status | jq .total_pending'
+# 查看服務日誌
+tail -f server.log | grep "external/notify"
 ```
 
----
+## 相關文檔
 
-## 📝 注意事項
-
-1. **Replace Placeholders**: 將 `your-notify-key` 替換為實際的 notify_key
-2. **Test Environment**: 建議先在測試環境執行
-3. **Monitor Resources**: 大量測試前確認系統資源充足
-4. **Database Backup**: 重要操作前備份資料庫
-
----
-
-**相關文檔**:
-- [完整 Queue 文檔](./QUEUE_CIRCUIT_BREAKER.md)
-- [快速開始指南](./QUICK_START_QUEUE.md)
-
+- [API 概覽](overview.md) - 完整的 API 說明
+- [Provision API](provision-api.md) - 專案和目的地管理
+- [快速開始](../getting-started/quick-start.md) - 快速上手指南
+- [故障排除](../user-guide/troubleshooting.md) - 常見問題解決

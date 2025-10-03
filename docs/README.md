@@ -19,6 +19,7 @@
 - [API 概覽](api/overview.md) - 所有 API 端點說明
 - [Provision API](api/provision-api.md) - 專案和目的地管理
 - [External API](api/external-api.md) - 外部系統通知發送
+- [Queue Management API](api/queue-management-api.md) - 內部佇列管理
 - [OpenAPI 規範](api/openapi/teams-notification-api.yaml) - 完整 API 規範
 
 ### 🧪 測試指南
