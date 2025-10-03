@@ -99,7 +99,28 @@
 
 ## 核心組件
 
-### 1. Circuit Breaker (熔斷器)
+### 1. Redis 優先序佇列（Producer/Consumer）
+
+本系統以 Redis List + SETNX 實作三層優先序佇列，並採 Producer/Consumer 架構實作：
+
+- 佇列鍵名（每個優先序一個 List）：
+  - `queue:notifications:high`
+  - `queue:notifications:normal`
+  - `queue:notifications:low`
+- 去重鍵（避免重複入列，短期有效）：
+  - `queue:notifications:dedup:{notification_destination_id}`（SETNX，TTL 約 60s）
+- 處理中鍵（避免併發重複處理）：
+  - `queue:notifications:processing:{notification_destination_id}`（SETNX，TTL 約 30m）
+
+Producer（在 `NotificationService.SendNotification` 持久化 `notification_destinations` 後）會依 `priority=high|normal|low` 將每筆 `notification_destination.id` 推入對應的 List；
+Consumer（`QueueConsumer`）會以 `BLPOP` 順序檢查 `high -> normal -> low`，取出一筆後，以 SETNX 設置 processing key，成功後交由 `ActorPool.spawnActor` 建立 `NotificationActor` 進行發送流程。
+
+此設計具備：
+- 優先序保證（高優先佇列先被消化）
+- 去重與併發防重（dedup + processing）
+- 橫向擴展（多個 Consumer 節點可安全競爭 `BLPOP`）
+
+### 2. Circuit Breaker (熔斷器)
 
 **文件**: `internal/actor/redis_circuit_breaker.go`
 
@@ -151,7 +172,7 @@ if err == ErrCircuitOpen {
 
 ---
 
-### 2. Retry Policy (重試策略)
+### 3. Retry Policy (重試策略)
 
 **文件**: `internal/actor/notification_actor.go` (內建重試邏輯)
 
