@@ -160,7 +160,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, nil)
+	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)

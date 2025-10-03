@@ -162,7 +162,6 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 	return response, nil
 }
 
-
 // GetProjectDestinations returns available destinations for a project
 func (s *externalService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]ExternalDestinationInfo, error) {
 	project, err := s.projectRepo.GetByNotifyKey(ctx, notifyKey)

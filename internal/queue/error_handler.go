@@ -6,6 +6,18 @@ import (
 	"strings"
 )
 
+// FailureReason represents the reason for notification failure
+type FailureReason string
+
+const (
+	FailureReasonRateLimit    FailureReason = "rate_limit"
+	FailureReasonTimeout      FailureReason = "timeout"
+	FailureReasonUnauthorized FailureReason = "unauthorized"
+	FailureReasonServerError  FailureReason = "server_error"
+	FailureReasonNetworkError FailureReason = "network_error"
+	FailureReasonUnknown      FailureReason = "unknown"
+)
+
 // IsRateLimitError checks if an HTTP response is a rate limit error
 func IsRateLimitError(statusCode int) bool {
 	return statusCode == http.StatusTooManyRequests // 429
@@ -39,20 +51,19 @@ func ExtractRetryAfter(headers http.Header) *int {
 }
 
 // ClassifyFailureReason determines the failure reason from HTTP status code
-func ClassifyFailureReason(statusCode int) FailureReason {
+func ClassifyFailureReason(statusCode int) string {
 	switch {
 	case statusCode == http.StatusTooManyRequests:
-		return FailureReasonRateLimit
+		return string(FailureReasonRateLimit)
 	case statusCode == http.StatusRequestTimeout:
-		return FailureReasonTimeout
+		return string(FailureReasonTimeout)
 	case statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden:
-		return FailureReasonUnauthorized
+		return string(FailureReasonUnauthorized)
 	case statusCode >= 500 && statusCode < 600:
-		return FailureReasonServerError
+		return string(FailureReasonServerError)
 	case statusCode == 0:
-		return FailureReasonNetworkError
+		return string(FailureReasonNetworkError)
 	default:
-		return FailureReasonUnknown
+		return string(FailureReasonUnknown)
 	}
 }
-

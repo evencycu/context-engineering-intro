@@ -27,7 +27,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		// Send notification
 		external.POST("/notify", h.SendNotification)
 
-
 		// Get project destinations
 		external.GET("/destinations/:notifyKey", h.GetProjectDestinations)
 
@@ -116,7 +115,6 @@ func (h *Handler) SendNotification(c *gin.Context) {
 		Data:    response,
 	})
 }
-
 
 // GetProjectDestinationsRequest represents the request to get project destinations
 type GetProjectDestinationsRequest struct {

@@ -101,7 +101,7 @@
 
 ### 1. Circuit Breaker (熔斷器)
 
-**文件**: `internal/queue/circuit_breaker.go`
+**文件**: `internal/actor/redis_circuit_breaker.go`
 
 #### 三種狀態
 
@@ -153,7 +153,7 @@ if err == ErrCircuitOpen {
 
 ### 2. Retry Policy (重試策略)
 
-**文件**: `internal/queue/retry_policy.go`
+**文件**: `internal/actor/notification_actor.go` (內建重試邏輯)
 
 #### 指數退避 (Exponential Backoff) + 隨機抖動 (Jitter)
 

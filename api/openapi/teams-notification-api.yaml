@@ -1143,7 +1143,6 @@ paths:
                     error: "Internal server error"
                     code: "INTERNAL_ERROR"
 
-
   /api/v1/external/destinations/{notifyKey}:
     get:
       summary: Get project destinations
@@ -1864,7 +1863,6 @@ components:
           type: string
           example: ""
 
-
     ExternalDestinationsResponse:
       type: object
       properties:
@@ -1992,24 +1990,6 @@ components:
           description: Updated list of Teams conversation targets
           items:
             $ref: "#/components/schemas/TeamsTarget"
-
-    TeamsTarget:
-      type: object
-      required:
-        - type
-        - tenant_id
-        - conversation_id
-      properties:
-        type:
-          type: string
-          enum: [personal, channel, groupChat]
-          description: Type of Teams conversation
-        tenant_id:
-          type: string
-          description: Microsoft Teams tenant ID
-        conversation_id:
-          type: string
-          description: Teams conversation ID
 
     # Error Response Schemas
     ErrorResponse:

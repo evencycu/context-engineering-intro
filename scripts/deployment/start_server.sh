@@ -111,7 +111,7 @@ if ps -p $SERVER_PID > /dev/null; then
     echo "📚 Available Commands:"
     echo "   Stop server:    pkill -f './server' or kill \$(cat server.pid)"
     echo "   View logs:      tail -f server.log"
-    echo "   Test queue:     ./scripts/test_queue.sh"
+    echo "   Test queue:     ./scripts/testing/test_queue.sh"
     echo "   Queue status:   curl http://localhost:8080/api/v1/queue/status | jq '.'"
     echo ""
 else
