@@ -162,19 +162,6 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 	return response, nil
 }
 
-// ValidateNotifyKey validates if a notify key exists and is active
-func (s *externalService) ValidateNotifyKey(ctx context.Context, notifyKey string) error {
-	project, err := s.projectRepo.GetByNotifyKey(ctx, notifyKey)
-	if err != nil {
-		return fmt.Errorf("project not found for notify_key: %s", notifyKey)
-	}
-
-	if project.Status != "active" {
-		return fmt.Errorf("project is not active: %s", project.Status)
-	}
-
-	return nil
-}
 
 // GetProjectDestinations returns available destinations for a project
 func (s *externalService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]ExternalDestinationInfo, error) {

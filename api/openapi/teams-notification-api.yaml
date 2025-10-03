@@ -1143,25 +1143,6 @@ paths:
                     error: "Internal server error"
                     code: "INTERNAL_ERROR"
 
-  /api/v1/external/validate/{notifyKey}:
-    get:
-      summary: Validate notify key
-      description: Check if a notify key exists and is active
-      tags: [External API]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "my-project-key"
-      responses:
-        "200":
-          description: Validation result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalValidateResponse"
 
   /api/v1/external/destinations/{notifyKey}:
     get:
@@ -1883,18 +1864,6 @@ components:
           type: string
           example: ""
 
-    ExternalValidateResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        valid:
-          type: boolean
-          example: true
-        error:
-          type: string
-          example: ""
 
     ExternalDestinationsResponse:
       type: object

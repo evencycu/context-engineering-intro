@@ -27,8 +27,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		// Send notification
 		external.POST("/notify", h.SendNotification)
 
-		// Validate notify key
-		external.GET("/validate/:notifyKey", h.ValidateNotifyKey)
 
 		// Get project destinations
 		external.GET("/destinations/:notifyKey", h.GetProjectDestinations)
@@ -119,37 +117,6 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	})
 }
 
-// ValidateNotifyKeyRequest represents the request to validate notify key
-type ValidateNotifyKeyRequest struct {
-	NotifyKey string `uri:"notifyKey" binding:"required" example:"my-project-key"`
-}
-
-// ValidateNotifyKeyResponse represents the response for validate notify key
-type ValidateNotifyKeyResponse struct {
-	Success bool   `json:"success"`
-	Valid   bool   `json:"valid"`
-	Error   string `json:"error,omitempty"`
-}
-
-// ValidateNotifyKey validates a notify key
-func (h *Handler) ValidateNotifyKey(c *gin.Context) {
-	var req ValidateNotifyKeyRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		c.JSON(http.StatusBadRequest, ValidateNotifyKeyResponse{
-			Success: false,
-			Valid:   false,
-			Error:   "Invalid notify key format",
-		})
-		return
-	}
-
-	// For now, just return success - validation will be done in SendNotification
-	// TODO: Implement proper validation endpoint
-	c.JSON(http.StatusOK, ValidateNotifyKeyResponse{
-		Success: true,
-		Valid:   true,
-	})
-}
 
 // GetProjectDestinationsRequest represents the request to get project destinations
 type GetProjectDestinationsRequest struct {
