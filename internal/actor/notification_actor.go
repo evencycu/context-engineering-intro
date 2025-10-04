@@ -304,10 +304,21 @@ func (a *NotificationActor) attemptSend(ctx context.Context) (success bool, stat
 		return false, 401, nil, "", fmt.Errorf("failed to get token: %w", err)
 	}
 
+	// Get notification content from database if not already loaded
+	messageText := a.Message
+	if messageText == "" {
+		// Get notification from database
+		notification, err := a.DB.GetNotificationByID(ctx, a.NotificationID)
+		if err != nil {
+			return false, 500, nil, "", fmt.Errorf("failed to get notification: %w", err)
+		}
+		messageText = notification.Content
+	}
+
 	// Prepare payload
 	payload := map[string]any{
 		"type": "message",
-		"text": a.Message,
+		"text": messageText,
 		"from": map[string]any{
 			"id":   a.Installation.RecipientID,
 			"name": "Notification Bot",
@@ -375,6 +386,8 @@ func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, erro
 		tenantID = "botframework.com"
 	}
 
+	log.Printf("[%s] getConnectorToken: Requesting token from tenant %s, appID %s", a.ID, tenantID, a.BotAppID)
+
 	form := url.Values{}
 	form.Set("grant_type", "client_credentials")
 	form.Set("client_id", a.BotAppID)
@@ -392,12 +405,16 @@ func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, erro
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	resp, err := httpClient.Do(req)
 	if err != nil {
+		log.Printf("[%s] getConnectorToken: HTTP request failed: %v", a.ID, err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	log.Printf("[%s] getConnectorToken: Response status: %d %s", a.ID, resp.StatusCode, resp.Status)
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
+		log.Printf("[%s] getConnectorToken: Error response body: %s", a.ID, string(body))
 		return "", fmt.Errorf("token request failed: %s: %s", resp.Status, string(body))
 	}
 
@@ -409,9 +426,11 @@ func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, erro
 	}
 
 	if tr.AccessToken == "" {
+		log.Printf("[%s] getConnectorToken: Empty access token in response", a.ID)
 		return "", fmt.Errorf("empty access_token")
 	}
 
+	log.Printf("[%s] getConnectorToken: Successfully got token", a.ID)
 	return tr.AccessToken, nil
 }
 

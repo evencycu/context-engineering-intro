@@ -1287,12 +1287,15 @@ func validateTeamsTargets(targets database.JSONBTargets) error {
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService) NotificationService {
+func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, redisQueue interface {
+	Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
+}) NotificationService {
 	return &notificationService{
 		repo:                 repo,
 		destinationRepo:      destinationRepo,
 		notificationDestRepo: notificationDestRepo,
 		broadcaster:          broadcaster,
+		redisQueue:           redisQueue,
 	}
 }
 
@@ -1301,6 +1304,9 @@ type notificationService struct {
 	destinationRepo      repositories.DestinationRepository
 	notificationDestRepo repositories.NotificationDestinationRepository
 	broadcaster          BroadcastService
+	redisQueue           interface {
+		Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
+	}
 }
 
 // Create creates a new notification
@@ -1466,13 +1472,13 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 			case "low":
 				prio = actor.PriorityLow
 			}
-			if s.broadcaster != nil {
-				// best-effort enqueue via Redis if available on a component that exposes this method
-				if rq, ok := s.broadcaster.(interface {
-					Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
-				}); ok {
-					for _, nd := range nds {
-						_ = rq.Enqueue(ctx, nd.ID, prio)
+			if s.redisQueue != nil {
+				// Enqueue to Redis by priority
+				for _, nd := range nds {
+					if err := s.redisQueue.Enqueue(ctx, nd.ID, prio); err != nil {
+						log.Printf("Failed to enqueue notification_dest %s: %v", nd.ID, err)
+					} else {
+						log.Printf("Enqueued notification_dest %s with priority %s", nd.ID, prio)
 					}
 				}
 			}

@@ -15,19 +15,25 @@ type ActorDB interface {
 	GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error)
 	GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
 	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+	GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.TeamsBot, error)
+	GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error)
 }
 
 // actorDB implements ActorDB interface for actors
 type actorDB struct {
 	notificationDestRepo repositories.NotificationDestinationRepository
 	botInstallationRepo  repositories.BotInstallationRepository
+	teamsBotRepo         repositories.TeamsBotRepository
+	notificationRepo     repositories.NotificationRepository
 }
 
 // NewActorDB creates a new actor DB implementation
-func NewActorDB(notificationDestRepo repositories.NotificationDestinationRepository, botInstallationRepo repositories.BotInstallationRepository) ActorDB {
+func NewActorDB(notificationDestRepo repositories.NotificationDestinationRepository, botInstallationRepo repositories.BotInstallationRepository, teamsBotRepo repositories.TeamsBotRepository, notificationRepo repositories.NotificationRepository) ActorDB {
 	return &actorDB{
 		notificationDestRepo: notificationDestRepo,
 		botInstallationRepo:  botInstallationRepo,
+		teamsBotRepo:         teamsBotRepo,
+		notificationRepo:     notificationRepo,
 	}
 }
 
@@ -98,4 +104,14 @@ func (db *actorDB) GetNotificationDestinationByID(ctx context.Context, id uuid.U
 // GetRetryReadyNotificationDestinations gets retry-ready notification destinations
 func (db *actorDB) GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
 	return db.notificationDestRepo.GetRetryReady(ctx, limit)
+}
+
+// GetTeamsBot gets a teams bot by ID
+func (db *actorDB) GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.TeamsBot, error) {
+	return db.teamsBotRepo.GetByID(ctx, botID)
+}
+
+// GetNotificationByID gets a notification by ID
+func (db *actorDB) GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
+	return db.notificationRepo.GetByID(ctx, id)
 }

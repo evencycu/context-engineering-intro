@@ -17,21 +17,21 @@ type ExternalService interface {
 
 // externalService implements ExternalService
 type externalService struct {
-	projectRepo      repositories.ProjectRepository
-	destinationRepo  repositories.DestinationRepository
-	broadcastService BroadcastService
+	projectRepo         repositories.ProjectRepository
+	destinationRepo     repositories.DestinationRepository
+	notificationService NotificationService
 }
 
 // NewExternalService creates a new external service
 func NewExternalService(
 	projectRepo repositories.ProjectRepository,
 	destinationRepo repositories.DestinationRepository,
-	broadcastService BroadcastService,
+	notificationService NotificationService,
 ) ExternalService {
 	return &externalService{
-		projectRepo:      projectRepo,
-		destinationRepo:  destinationRepo,
-		broadcastService: broadcastService,
+		projectRepo:         projectRepo,
+		destinationRepo:     destinationRepo,
+		notificationService: notificationService,
 	}
 }
 
@@ -100,64 +100,59 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 
 	// Note: results may target a subset based on req.TargetIDs
 
-	// Send notification using broadcast service
-	results, err := s.broadcastService.SendToDestinations(ctx, destinations, req.TargetIDs, req.Message)
+	// Create notification request for NotificationService
+	notificationReq := &SendNotificationRequest{
+		ProjectID:    project.ID,
+		SenderID:     nil, // External notifications don't have a sender
+		MessageType:  req.MessageType,
+		Content:      req.Message,
+		Mentions:     req.Mentions,
+		Priority:     req.Priority,
+		Metadata:     req.Metadata,
+		Destinations: []uuid.UUID{}, // Empty means send to all destinations
+	}
+
+	// Send notification using NotificationService (async)
+	notification, err := s.notificationService.SendNotification(ctx, notificationReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send notification: %w", err)
 	}
 
-	// Map results to external format
-	externalResults := make([]ExternalDestinationResult, len(results.Results))
-	successCount := 0
-
-	// Build a quick lookup from destination ID to name for response decoration
-	idToName := make(map[string]string, len(destinations))
-	for _, d := range destinations {
-		idToName[d.ID.String()] = d.Name
+	// Calculate estimated delivery time based on priority
+	estimatedTime := "5-10 minutes"
+	switch req.Priority {
+	case "high":
+		estimatedTime = "2-5 minutes"
+	case "low":
+		estimatedTime = "10-30 minutes"
 	}
 
-	for i, result := range results.Results {
-		// Find corresponding destination name
-		destName := idToName[result.TargetID]
-
+	// Create external results based on destinations
+	externalResults := make([]ExternalDestinationResult, len(destinations))
+	for i, dest := range destinations {
 		externalResults[i] = ExternalDestinationResult{
-			DestinationID:   result.TargetID,
-			DestinationName: destName,
-			Success:         result.Success,
-			Error:           result.Error,
-			Message:         "",
-		}
-
-		if result.Success {
-			successCount++
+			DestinationID:   dest.ID.String(),
+			DestinationName: dest.Name,
+			Success:         true, // Will be updated by actors
+			Error:           "",
+			Message:         "Queued for processing",
 		}
 	}
-
-	// Determine overall status
-	status := "sent"
-	if successCount == 0 {
-		status = "failed"
-	} else if successCount < len(results.Results) {
-		status = "partial"
-	}
-
-	// Generate notification ID
-	notificationID := uuid.New().String()
 
 	response := &ExternalNotificationResponse{
-		NotificationID:    notificationID,
-		Status:            status,
-		Message:           "Notification processed successfully",
+		NotificationID:    notification.ID.String(),
+		Status:            "pending", // Always pending for async processing
+		Message:           "Notification queued for processing",
 		ProjectID:         project.ID.String(),
 		ProjectName:       project.NotifyKey,
-		DestinationsCount: len(results.Results),
+		DestinationsCount: len(destinations),
 		Results:           externalResults,
-		EstimatedDelivery: "5-10 minutes",
+		EstimatedDelivery: estimatedTime,
 	}
 
 	// Log the external notification
-	log.Printf("External notification sent - Project: %s, Destinations: %d, Success: %d/%d",
-		req.NotifyKey, len(results.Results), successCount, len(results.Results))
+	log.Printf("External notification queued - Project: %s, Destinations: %d, NotificationID: %s",
+		req.NotifyKey, len(destinations), notification.ID.String())
 
 	return response, nil
 }

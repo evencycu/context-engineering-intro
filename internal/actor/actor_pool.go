@@ -3,6 +3,7 @@ package actor
 import (
 	"context"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -108,6 +109,20 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 		return
 	}
 
+	// Get TeamsBot to get AppID
+	teamsBot, err := p.db.GetTeamsBot(ctx, installation.BotID)
+	if err != nil {
+		log.Printf("Failed to get teams bot %s: %v", installation.BotID, err)
+		return
+	}
+
+	// Get password from environment variables
+	appPassword := os.Getenv("TEAMS_BOT_APP_PASSWORD")
+	if appPassword == "" {
+		log.Printf("TEAMS_BOT_APP_PASSWORD environment variable not set")
+		return
+	}
+
 	// Create actor with required parameters
 	actor := NewNotificationActor(
 		notificationDestID,
@@ -115,11 +130,16 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 		*nd.ConversationID,
 		"", // Message will be fetched by actor
 		installation,
-		"", // BotAppID will be set by actor
-		"", // BotAppPassword will be set by actor
+		teamsBot.AppID, // Get from TeamsBot
+		appPassword,    // Get from environment
 		p.redis,
 		p.db,
 	)
+
+	// Override tenant ID from TeamsBot if available
+	if teamsBot.TenantID != nil && *teamsBot.TenantID != "" {
+		actor.TenantID = *teamsBot.TenantID
+	}
 
 	p.actors[notificationDestID] = actor
 	actor.Start(ctx)

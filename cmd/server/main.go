@@ -95,24 +95,26 @@ func main() {
 	notificationRepo := repositories.NewNotificationRepository(db)
 	notificationDestRepo := repositories.NewNotificationDestinationRepository(db)
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
-	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster)
+
+	// Initialize Redis Queue
+	redisQueue := actor.NewRedisQueue(redisClient)
+	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, redisQueue)
 
 	// Initialize Actor Pool for async notification sending
-	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo)
+	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo)
 	actorPool := actor.NewActorPool(redisClient, actorDB, 10, 10*time.Second) // Max 10 actors, 10s poll interval
 	actorPool.Start(ctx)
 	defer actorPool.Stop()
 	logger.Info("Actor Pool started successfully")
 
 	// Start Redis Queue consumer (high -> normal -> low)
-	rq := actor.NewRedisQueue(redisClient)
-	consumer := actor.NewQueueConsumer(rq, actorPool)
+	consumer := actor.NewQueueConsumer(redisQueue, actorPool)
 	consumer.Start(ctx)
 	defer consumer.Stop()
 	logger.Info("Queue Consumer started successfully")
 
 	// External service
-	externalService := services.NewExternalService(projectRepo, destinationRepo, broadcaster)
+	externalService := services.NewExternalService(projectRepo, destinationRepo, notificationService)
 
 	// Queue system replaced by Actor Pool V2
 
