@@ -18,6 +18,15 @@ func NewHandler(service services.MessagesService) *Handler {
 	return &Handler{service: service}
 }
 
+// RegisterRoutes registers message routes
+func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+	messages := rg.Group("/messages")
+	{
+		messages.POST("", h.Handle)
+		messages.POST("/test", h.ProactiveTest)
+	}
+}
+
 // Handle receives Bot Framework Activity and persists installation info
 func (h *Handler) Handle(c *gin.Context) {
 	var act services.Activity

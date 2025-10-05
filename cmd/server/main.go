@@ -7,10 +7,13 @@ import (
 
 	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/batch"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
@@ -19,6 +22,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -116,6 +120,22 @@ func main() {
 	// External service
 	externalService := services.NewExternalService(projectRepo, destinationRepo, notificationService)
 
+	// Billing service
+	billingPlanRepo := repositories.NewBillingPlanRepository(db)
+	usageRecordRepo := repositories.NewUsageRecordRepository(db)
+	companyBillingRepo := repositories.NewCompanyBillingRepository(db)
+	billingService := services.NewBillingService(usageRecordRepo, billingPlanRepo, companyRepo, projectRepo, userRepo)
+	_ = companyBillingRepo // Will be used when implementing company billing features
+
+	// File service
+	localStorage := storage.NewLocalStorage("uploads") // Assuming "uploads" directory
+	fileRepo := repositories.NewFileRepository(db)
+	fileService := services.NewFileService(fileRepo, localStorage)
+
+	// Batch service
+	batchRepo := repositories.NewBatchRepository(db)
+	batchService := services.NewBatchService(batchRepo, notificationService, projectRepo, destinationRepo)
+
 	// Queue system replaced by Actor Pool V2
 
 	// Create handlers
@@ -128,6 +148,9 @@ func main() {
 	notificationHandler := notifications.NewHandler(notificationService)
 	provisionHandler := provision.NewHandler(provisionService)
 	externalHandler := external.NewHandler(externalService)
+	billingHandler := billing.NewHandler(billingService)
+	fileHandler := files.NewHandler(fileService)
+	batchHandler := batch.NewHandler(batchService)
 	// Queue API handler removed - replaced by Actor Pool V2
 
 	// Create server
@@ -169,7 +192,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterRoutes(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler)
+	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, billingHandler, fileHandler, batchHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)
