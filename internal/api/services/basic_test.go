@@ -3,6 +3,7 @@ package services
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,23 +52,48 @@ func TestServiceInterfaces(t *testing.T) {
 	})
 }
 
-func TestFileService_ValidateFile(t *testing.T) {
-	// Test file validation without complex mocks
-	
-	// Test valid file
-	req := &ValidateFileRequest{
-		FileName:    "test.txt",
-		ContentType: "text/plain",
-		FileSize:    1024,
-	}
-	
-	// Since we can't easily test the service without mocks, 
-	// we'll test the request structure
-	assert.Equal(t, "test.txt", req.FileName)
-	assert.Equal(t, "text/plain", req.ContentType)
-	assert.Equal(t, int64(1024), req.FileSize)
-	
-	// Test invalid file size
-	req.FileSize = 20 * 1024 * 1024 // 20MB, should be invalid
-	assert.Greater(t, req.FileSize, int64(10*1024*1024)) // 10MB limit
+// TestServiceRequestStructures tests the request/response structures
+func TestServiceRequestStructures(t *testing.T) {
+	t.Run("Test ValidateFileRequest", func(t *testing.T) {
+		req := &ValidateFileRequest{
+			FileName:    "test.txt",
+			ContentType: "text/plain",
+			FileSize:    1024,
+		}
+		assert.Equal(t, "test.txt", req.FileName)
+		assert.Equal(t, "text/plain", req.ContentType)
+		assert.Equal(t, int64(1024), req.FileSize)
+	})
+
+	t.Run("Test GetUsageRecordsRequest", func(t *testing.T) {
+		req := &GetUsageRecordsRequest{
+			CompanyID: nil,
+			ProjectID: nil,
+			UserID:    nil,
+			Page:      1,
+			PageSize:  50,
+			SortBy:    "created_at",
+			SortOrder: "desc",
+		}
+		assert.Equal(t, 1, req.Page)
+		assert.Equal(t, 50, req.PageSize)
+		assert.Equal(t, "created_at", req.SortBy)
+		assert.Equal(t, "desc", req.SortOrder)
+	})
+
+	t.Run("Test SendBatchNotificationsRequest", func(t *testing.T) {
+		req := &SendBatchNotificationsRequest{
+			ProjectID:   uuid.New(),
+			MessageType: "text",
+			Content:     "Test batch message",
+			Priority:    "normal",
+			Targets: []BatchTarget{
+				{DestinationID: &uuid.UUID{}},
+			},
+		}
+		assert.Equal(t, "text", req.MessageType)
+		assert.Equal(t, "Test batch message", req.Content)
+		assert.Equal(t, "normal", req.Priority)
+		assert.Len(t, req.Targets, 1)
+	})
 }
