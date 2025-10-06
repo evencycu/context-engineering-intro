@@ -100,10 +100,10 @@ CREATE TABLE bot_installations (
     teams_tenant_id VARCHAR(255) NOT NULL,
     -- Conversation type and identification
     conversation_type VARCHAR(20) NOT NULL CHECK (conversation_type IN ('personal', 'channel', 'groupChat')),
-    conversation_id VARCHAR(500), -- Teams conversation ID for sending messages
+    conversation_id VARCHAR(500) NOT NULL, -- Teams conversation ID for sending messages
     service_url VARCHAR(500), -- Bot Framework service URL
     -- Bot and user identification
-    recipient_id VARCHAR(255), -- Bot member ID (usually 28:app_id)
+    recipient_id VARCHAR(255) NOT NULL, -- Bot member ID (usually 28:app_id)
     recipient_name VARCHAR(255), -- Bot display name
     from_id VARCHAR(255), -- Source member ID from Teams event
     from_name VARCHAR(255), -- User display name
@@ -180,7 +180,16 @@ CREATE TABLE notification_destinations (
     teams_message_id VARCHAR(255),
     sent_at TIMESTAMP WITH TIME ZONE,
     retry_count INTEGER DEFAULT 0,
-    max_retries INTEGER DEFAULT 3,
+    max_retries INTEGER DEFAULT 5,
+    -- Async actor fields
+    conversation_id VARCHAR(500),
+    next_retry_at TIMESTAMP WITH TIME ZONE,
+    first_attempt_at TIMESTAMP WITH TIME ZONE,
+    last_attempt_at TIMESTAMP WITH TIME ZONE,
+    failure_reason TEXT,
+    retry_after INT, -- Retry-After from 429 response (seconds)
+    actor_id VARCHAR(255), -- ID of the actor handling this notification
+    priority VARCHAR(20) NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -260,15 +269,15 @@ CREATE TABLE third_party_bot_api_usage (
 -- Billing Plans
 CREATE TABLE billing_plans (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
-    price_per_notification DECIMAL(10, 6) NOT NULL DEFAULT 0.001,
-    price_per_attachment DECIMAL(10, 6) NOT NULL DEFAULT 0.005,
-    price_per_mention DECIMAL(10, 6) NOT NULL DEFAULT 0.0005,
-    price_per_adaptive_card DECIMAL(10, 6) NOT NULL DEFAULT 0.002,
-    daily_limit INTEGER,
-    monthly_limit INTEGER,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    price_per_notification DECIMAL(10,4) NOT NULL DEFAULT 0.01,
+    price_per_month DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    max_notifications_per_month INTEGER,
+    max_projects INTEGER,
+    max_users INTEGER,
+    features JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -276,12 +285,13 @@ CREATE TABLE billing_plans (
 -- Company Billing
 CREATE TABLE company_billing (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    billing_plan_id UUID NOT NULL REFERENCES billing_plans(id),
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'cancelled')),
-    billing_email VARCHAR(255),
-    payment_method VARCHAR(50),
-    currency VARCHAR(3) DEFAULT 'USD',
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE UNIQUE,
+    billing_plan_id UUID REFERENCES billing_plans(id) ON DELETE SET NULL,
+    billing_status VARCHAR(50) DEFAULT 'active', -- 'active', 'suspended', 'cancelled'
+    payment_method VARCHAR(50), -- 'credit_card', 'bank_transfer', 'invoice'
+    billing_cycle VARCHAR(20) DEFAULT 'monthly', -- 'monthly', 'yearly'
+    next_billing_date DATE,
+    total_usage_cost DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -290,17 +300,95 @@ CREATE TABLE company_billing (
 CREATE TABLE usage_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    project_id UUID REFERENCES projects(id),
-    user_id UUID,
-    notification_id UUID REFERENCES notifications(id),
-    bot_id UUID,
-    bot_type bot_type,
-    record_type VARCHAR(20) NOT NULL CHECK (record_type IN ('notification', 'attachment', 'mention', 'adaptive_card')),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    record_type VARCHAR(50) NOT NULL, -- 'notification', 'api_call', 'storage'
     quantity INTEGER NOT NULL DEFAULT 1,
-    unit_price DECIMAL(10, 6) NOT NULL,
-    total_cost DECIMAL(10, 6) NOT NULL,
-    billing_period DATE NOT NULL,
+    unit_cost DECIMAL(10,4) NOT NULL DEFAULT 0.01,
+    total_cost DECIMAL(10,4) NOT NULL DEFAULT 0.01,
+    metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- File Management Tables
+-- =============================================
+
+-- Files table for file attachments
+CREATE TABLE files (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    file_key VARCHAR(255) NOT NULL UNIQUE,
+    file_url TEXT,
+    description TEXT,
+    tags TEXT[] DEFAULT '{}',
+    is_public BOOLEAN DEFAULT false,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- Batch Notification Tables
+-- =============================================
+
+-- Batch Notifications
+CREATE TABLE batch_notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    message_type VARCHAR(50) NOT NULL DEFAULT 'text',
+    content TEXT NOT NULL,
+    priority VARCHAR(20) DEFAULT 'normal', -- 'low', 'normal', 'high'
+    mentions TEXT[] DEFAULT '{}',
+    metadata JSONB DEFAULT '{}',
+    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed', 'cancelled'
+    total_targets INTEGER DEFAULT 0,
+    max_retries INTEGER DEFAULT 3,
+    scheduled_at TIMESTAMP WITH TIME ZONE,
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Batch Targets
+CREATE TABLE batch_targets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    batch_id UUID NOT NULL REFERENCES batch_notifications(id) ON DELETE CASCADE,
+    target_index INTEGER NOT NULL,
+    destination_id UUID REFERENCES destinations(id) ON DELETE SET NULL,
+    conversation_id VARCHAR(255),
+    user_id VARCHAR(255),
+    email VARCHAR(255),
+    custom_data JSONB DEFAULT '{}',
+    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'sent', 'failed', 'cancelled'
+    error_message TEXT,
+    sent_at TIMESTAMP WITH TIME ZONE,
+    retry_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Batch Templates
+CREATE TABLE batch_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    message_type VARCHAR(50) NOT NULL DEFAULT 'text',
+    content TEXT NOT NULL,
+    priority VARCHAR(20) DEFAULT 'normal',
+    mentions TEXT[] DEFAULT '{}',
+    metadata JSONB DEFAULT '{}',
+    targets JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =============================================
@@ -441,10 +529,36 @@ CREATE INDEX idx_third_party_bot_api_usage_endpoint ON third_party_bot_api_usage
 
 -- Usage Records indexes
 CREATE INDEX idx_usage_records_company_id ON usage_records(company_id);
-CREATE INDEX idx_usage_records_billing_period ON usage_records(billing_period);
 CREATE INDEX idx_usage_records_project_id ON usage_records(project_id);
+CREATE INDEX idx_usage_records_user_id ON usage_records(user_id);
+CREATE INDEX idx_usage_records_record_type ON usage_records(record_type);
 CREATE INDEX idx_usage_records_created_at ON usage_records(created_at);
-CREATE INDEX idx_usage_records_bot_id ON usage_records(bot_id);
+
+-- Company Billing indexes
+CREATE INDEX idx_company_billing_company_id ON company_billing(company_id);
+CREATE INDEX idx_company_billing_billing_plan_id ON company_billing(billing_plan_id);
+
+-- Files indexes
+CREATE INDEX idx_files_project_id ON files(project_id);
+CREATE INDEX idx_files_file_key ON files(file_key);
+CREATE INDEX idx_files_is_public ON files(is_public);
+CREATE INDEX idx_files_expires_at ON files(expires_at);
+CREATE INDEX idx_files_created_at ON files(created_at);
+
+-- Batch Notifications indexes
+CREATE INDEX idx_batch_notifications_project_id ON batch_notifications(project_id);
+CREATE INDEX idx_batch_notifications_sender_id ON batch_notifications(sender_id);
+CREATE INDEX idx_batch_notifications_status ON batch_notifications(status);
+CREATE INDEX idx_batch_notifications_scheduled_at ON batch_notifications(scheduled_at);
+
+-- Batch Targets indexes
+CREATE INDEX idx_batch_targets_batch_id ON batch_targets(batch_id);
+CREATE INDEX idx_batch_targets_destination_id ON batch_targets(destination_id);
+CREATE INDEX idx_batch_targets_status ON batch_targets(status);
+
+-- Batch Templates indexes
+CREATE INDEX idx_batch_templates_project_id ON batch_templates(project_id);
+CREATE INDEX idx_batch_templates_is_active ON batch_templates(is_active);
 
 -- Audit Logs indexes
 CREATE INDEX idx_audit_logs_company_id ON audit_logs(company_id);
@@ -486,6 +600,10 @@ CREATE TRIGGER update_third_party_bot_api_keys_updated_at BEFORE UPDATE ON third
 CREATE TRIGGER update_company_billing_updated_at BEFORE UPDATE ON company_billing FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_batch_notifications_updated_at BEFORE UPDATE ON batch_notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_batch_targets_updated_at BEFORE UPDATE ON batch_targets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_batch_templates_updated_at BEFORE UPDATE ON batch_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- Views for Common Queries
@@ -547,16 +665,47 @@ CREATE VIEW usage_summary AS
 SELECT 
     ur.company_id,
     c.name as company_name,
-    ur.billing_period,
     ur.record_type,
-    ur.bot_type,
     SUM(ur.quantity) as total_quantity,
     SUM(ur.total_cost) as total_cost,
     COUNT(DISTINCT ur.project_id) as projects_used,
-    COUNT(DISTINCT ur.bot_id) as bots_used
+    ur.created_at::date as usage_date
 FROM usage_records ur
 JOIN companies c ON ur.company_id = c.id
-GROUP BY ur.company_id, c.name, ur.billing_period, ur.record_type, ur.bot_type;
+GROUP BY ur.company_id, c.name, ur.record_type, ur.created_at::date;
+
+-- File Summary View
+CREATE VIEW file_summary AS
+SELECT 
+    f.project_id,
+    p.notify_key,
+    p.company_id,
+    c.name as company_name,
+    COUNT(*) as total_files,
+    SUM(f.file_size) as total_size,
+    COUNT(CASE WHEN f.is_public THEN 1 END) as public_files,
+    COUNT(CASE WHEN f.expires_at IS NOT NULL AND f.expires_at > NOW() THEN 1 END) as active_files
+FROM files f
+JOIN projects p ON f.project_id = p.id
+JOIN companies c ON p.company_id = c.id
+GROUP BY f.project_id, p.notify_key, p.company_id, c.name;
+
+-- Batch Summary View
+CREATE VIEW batch_summary AS
+SELECT 
+    bn.project_id,
+    p.notify_key,
+    p.company_id,
+    c.name as company_name,
+    bn.status,
+    COUNT(*) as batch_count,
+    SUM(bn.total_targets) as total_targets,
+    COUNT(CASE WHEN bn.status = 'completed' THEN 1 END) as completed_batches,
+    COUNT(CASE WHEN bn.status = 'failed' THEN 1 END) as failed_batches
+FROM batch_notifications bn
+JOIN projects p ON bn.project_id = p.id
+JOIN companies c ON p.company_id = c.id
+GROUP BY bn.project_id, p.notify_key, p.company_id, c.name, bn.status;
 
 -- =============================================
 -- Indexes for Performance
@@ -585,8 +734,9 @@ CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 -- =============================================
 
 -- Insert default billing plan
-INSERT INTO billing_plans (name, description, price_per_notification, price_per_attachment, price_per_mention, price_per_adaptive_card, daily_limit, monthly_limit) VALUES
-('Standard', 'Standard billing plan for Teams notifications', 0.001, 0.005, 0.0005, 0.002, 10000, 300000);
+INSERT INTO billing_plans (name, description, price_per_notification, price_per_month, max_notifications_per_month, max_projects, max_users, features) VALUES
+('Standard', 'Standard billing plan for Teams notifications', 0.01, 0.00, 10000, 5, 10, '{"notifications": true, "files": true, "batch": true}'),
+('Premium', 'Premium billing plan with higher limits', 0.005, 50.00, 50000, 20, 50, '{"notifications": true, "files": true, "batch": true, "analytics": true, "priority_support": true}');
 
 -- Insert default system settings
 INSERT INTO system_settings (key, value, description, is_public) VALUES
