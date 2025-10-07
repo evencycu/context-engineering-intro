@@ -45,11 +45,6 @@ func TestServiceInterfaces(t *testing.T) {
 		assert.Nil(t, service) // This will be nil, but the interface is defined
 	})
 
-	t.Run("Test BatchService interface", func(t *testing.T) {
-		// This test verifies that the BatchService interface is properly defined
-		var service BatchService
-		assert.Nil(t, service) // This will be nil, but the interface is defined
-	})
 }
 
 // TestServiceRequestStructures tests the request/response structures
@@ -81,19 +76,4 @@ func TestServiceRequestStructures(t *testing.T) {
 		assert.Equal(t, "desc", req.SortOrder)
 	})
 
-	t.Run("Test SendBatchNotificationsRequest", func(t *testing.T) {
-		req := &SendBatchNotificationsRequest{
-			ProjectID:   uuid.New(),
-			MessageType: "text",
-			Content:     "Test batch message",
-			Priority:    "normal",
-			Targets: []BatchTarget{
-				{DestinationID: &uuid.UUID{}},
-			},
-		}
-		assert.Equal(t, "text", req.MessageType)
-		assert.Equal(t, "Test batch message", req.Content)
-		assert.Equal(t, "normal", req.Priority)
-		assert.Len(t, req.Targets, 1)
-	})
 }

@@ -331,65 +331,6 @@ CREATE TABLE files (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================
--- Batch Notification Tables
--- =============================================
-
--- Batch Notifications
-CREATE TABLE batch_notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    message_type VARCHAR(50) NOT NULL DEFAULT 'text',
-    content TEXT NOT NULL,
-    priority VARCHAR(20) DEFAULT 'normal', -- 'low', 'normal', 'high'
-    mentions TEXT[] DEFAULT '{}',
-    metadata JSONB DEFAULT '{}',
-    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed', 'cancelled'
-    total_targets INTEGER DEFAULT 0,
-    max_retries INTEGER DEFAULT 3,
-    scheduled_at TIMESTAMP WITH TIME ZONE,
-    started_at TIMESTAMP WITH TIME ZONE,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Batch Targets
-CREATE TABLE batch_targets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    batch_id UUID NOT NULL REFERENCES batch_notifications(id) ON DELETE CASCADE,
-    target_index INTEGER NOT NULL,
-    destination_id UUID REFERENCES destinations(id) ON DELETE SET NULL,
-    conversation_id VARCHAR(255),
-    user_id VARCHAR(255),
-    email VARCHAR(255),
-    custom_data JSONB DEFAULT '{}',
-    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'sent', 'failed', 'cancelled'
-    error_message TEXT,
-    sent_at TIMESTAMP WITH TIME ZONE,
-    retry_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Batch Templates
-CREATE TABLE batch_templates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    message_type VARCHAR(50) NOT NULL DEFAULT 'text',
-    content TEXT NOT NULL,
-    priority VARCHAR(20) DEFAULT 'normal',
-    mentions TEXT[] DEFAULT '{}',
-    metadata JSONB DEFAULT '{}',
-    targets JSONB DEFAULT '{}',
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
 -- =============================================
 -- Audit and Logging Tables
@@ -545,20 +486,6 @@ CREATE INDEX idx_files_is_public ON files(is_public);
 CREATE INDEX idx_files_expires_at ON files(expires_at);
 CREATE INDEX idx_files_created_at ON files(created_at);
 
--- Batch Notifications indexes
-CREATE INDEX idx_batch_notifications_project_id ON batch_notifications(project_id);
-CREATE INDEX idx_batch_notifications_sender_id ON batch_notifications(sender_id);
-CREATE INDEX idx_batch_notifications_status ON batch_notifications(status);
-CREATE INDEX idx_batch_notifications_scheduled_at ON batch_notifications(scheduled_at);
-
--- Batch Targets indexes
-CREATE INDEX idx_batch_targets_batch_id ON batch_targets(batch_id);
-CREATE INDEX idx_batch_targets_destination_id ON batch_targets(destination_id);
-CREATE INDEX idx_batch_targets_status ON batch_targets(status);
-
--- Batch Templates indexes
-CREATE INDEX idx_batch_templates_project_id ON batch_templates(project_id);
-CREATE INDEX idx_batch_templates_is_active ON batch_templates(is_active);
 
 -- Audit Logs indexes
 CREATE INDEX idx_audit_logs_company_id ON audit_logs(company_id);
@@ -601,9 +528,6 @@ CREATE TRIGGER update_company_billing_updated_at BEFORE UPDATE ON company_billin
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_batch_notifications_updated_at BEFORE UPDATE ON batch_notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_batch_targets_updated_at BEFORE UPDATE ON batch_targets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_batch_templates_updated_at BEFORE UPDATE ON batch_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- Views for Common Queries
@@ -690,22 +614,6 @@ JOIN projects p ON f.project_id = p.id
 JOIN companies c ON p.company_id = c.id
 GROUP BY f.project_id, p.notify_key, p.company_id, c.name;
 
--- Batch Summary View
-CREATE VIEW batch_summary AS
-SELECT 
-    bn.project_id,
-    p.notify_key,
-    p.company_id,
-    c.name as company_name,
-    bn.status,
-    COUNT(*) as batch_count,
-    SUM(bn.total_targets) as total_targets,
-    COUNT(CASE WHEN bn.status = 'completed' THEN 1 END) as completed_batches,
-    COUNT(CASE WHEN bn.status = 'failed' THEN 1 END) as failed_batches
-FROM batch_notifications bn
-JOIN projects p ON bn.project_id = p.id
-JOIN companies c ON p.company_id = c.id
-GROUP BY bn.project_id, p.notify_key, p.company_id, c.name, bn.status;
 
 -- =============================================
 -- Indexes for Performance

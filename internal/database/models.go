@@ -502,55 +502,6 @@ type File struct {
 	ExpiresAt   *time.Time       `json:"expires_at" db:"expires_at"`
 }
 
-// BatchNotification represents a batch notification
-type BatchNotification struct {
-	BaseModel
-	ProjectID    uuid.UUID        `json:"project_id" db:"project_id"`
-	SenderID     *uuid.UUID       `json:"sender_id" db:"sender_id"`
-	MessageType  string           `json:"message_type" db:"message_type"`
-	Content      string           `json:"content" db:"content"`
-	Priority     string           `json:"priority" db:"priority"`
-	Mentions     JSONBStringArray `json:"mentions" db:"mentions"`
-	Metadata     JSONBObject      `json:"metadata" db:"metadata"`
-	Status       string           `json:"status" db:"status"`
-	TotalTargets int              `json:"total_targets" db:"total_targets"`
-	MaxRetries   int              `json:"max_retries" db:"max_retries"`
-	ScheduledAt  *time.Time       `json:"scheduled_at" db:"scheduled_at"`
-	StartedAt    *time.Time       `json:"started_at" db:"started_at"`
-	CompletedAt  *time.Time       `json:"completed_at" db:"completed_at"`
-	ExpiresAt    *time.Time       `json:"expires_at" db:"expires_at"`
-}
-
-// BatchTarget represents a target in a batch notification
-type BatchTarget struct {
-	BaseModel
-	BatchID        uuid.UUID   `json:"batch_id" db:"batch_id"`
-	TargetIndex    int         `json:"target_index" db:"target_index"`
-	DestinationID  *uuid.UUID  `json:"destination_id" db:"destination_id"`
-	ConversationID *string     `json:"conversation_id" db:"conversation_id"`
-	UserID         *string     `json:"user_id" db:"user_id"`
-	Email          *string     `json:"email" db:"email"`
-	CustomData     JSONBObject `json:"custom_data" db:"custom_data"`
-	Status         string      `json:"status" db:"status"`
-	ErrorMessage   *string     `json:"error_message" db:"error_message"`
-	SentAt         *time.Time  `json:"sent_at" db:"sent_at"`
-	RetryCount     int         `json:"retry_count" db:"retry_count"`
-}
-
-// BatchTemplate represents a batch notification template
-type BatchTemplate struct {
-	BaseModel
-	Name        string           `json:"name" db:"name"`
-	Description string           `json:"description" db:"description"`
-	ProjectID   uuid.UUID        `json:"project_id" db:"project_id"`
-	MessageType string           `json:"message_type" db:"message_type"`
-	Content     string           `json:"content" db:"content"`
-	Priority    string           `json:"priority" db:"priority"`
-	Mentions    JSONBStringArray `json:"mentions" db:"mentions"`
-	Metadata    JSONBObject      `json:"metadata" db:"metadata"`
-	Targets     JSONBObject      `json:"targets" db:"targets"`
-	IsActive    bool             `json:"is_active" db:"is_active"`
-}
 
 // UsageRecord represents a usage record for billing
 type UsageRecord struct {

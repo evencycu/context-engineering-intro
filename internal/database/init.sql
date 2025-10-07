@@ -35,8 +35,8 @@ INSERT INTO destinations (id, project_id, name, description, teams_tenant_id, ta
 -- Insert sample billing plans
 INSERT INTO billing_plans (id, name, description, price_per_notification, price_per_month, max_notifications_per_month, max_projects, max_users, features, is_active, created_at, updated_at) VALUES
 ('a50e8400-e29b-41d4-a716-446655440001', 'Basic Plan', 'Basic notification plan', 0.01, 0.00, 1000, 2, 5, '{"notifications": true}', true, NOW(), NOW()),
-('a50e8400-e29b-41d4-a716-446655440002', 'Pro Plan', 'Professional notification plan', 0.005, 25.00, 5000, 10, 25, '{"notifications": true, "files": true, "batch": true}', true, NOW(), NOW()),
-('a50e8400-e29b-41d4-a716-446655440003', 'Enterprise Plan', 'Enterprise notification plan', 0.001, 100.00, 50000, 50, 100, '{"notifications": true, "files": true, "batch": true, "analytics": true, "priority_support": true}', true, NOW(), NOW());
+('a50e8400-e29b-41d4-a716-446655440002', 'Pro Plan', 'Professional notification plan', 0.005, 25.00, 5000, 10, 25, '{"notifications": true, "files": true}', true, NOW(), NOW()),
+('a50e8400-e29b-41d4-a716-446655440003', 'Enterprise Plan', 'Enterprise notification plan', 0.001, 100.00, 50000, 50, 100, '{"notifications": true, "files": true, "analytics": true, "priority_support": true}', true, NOW(), NOW());
 
 -- Insert company billing
 INSERT INTO company_billing (id, company_id, billing_plan_id, billing_status, payment_method, billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at) VALUES
@@ -55,21 +55,6 @@ INSERT INTO files (id, project_id, file_name, file_size, content_type, file_key,
 ('d50e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440001', 'presentation.pptx', 2048000, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'files/2025/01/05/presentation_20250105.pptx', 'https://storage.example.com/files/2025/01/05/presentation_20250105.pptx', 'Q1 2025 presentation', '{"presentation", "q1", "2025"}', true, NULL, NOW(), NOW()),
 ('d50e8400-e29b-41d4-a716-446655440003', '750e8400-e29b-41d4-a716-446655440002', 'data.xlsx', 512000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'files/2025/01/05/data_20250105.xlsx', 'https://storage.example.com/files/2025/01/05/data_20250105.xlsx', 'Analytics data export', '{"data", "analytics", "export"}', false, '2025-01-12 23:59:59', NOW(), NOW());
 
--- Insert sample batch notifications
-INSERT INTO batch_notifications (id, project_id, sender_id, message_type, content, priority, mentions, metadata, status, total_targets, max_retries, scheduled_at, created_at, updated_at) VALUES
-('e50e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'text', 'Monthly team meeting reminder', 'normal', '{"@everyone"}', '{"meeting_type": "monthly", "reminder": true}', 'completed', 25, 3, '2025-01-05 09:00:00', NOW(), NOW()),
-('e50e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440003', 'text', 'System maintenance notification', 'high', '{"@admin"}', '{"maintenance": true, "urgency": "high"}', 'processing', 10, 5, '2025-01-05 14:00:00', NOW(), NOW());
-
--- Insert sample batch targets
-INSERT INTO batch_targets (id, batch_id, target_index, destination_id, conversation_id, user_id, email, custom_data, status, sent_at, retry_count, created_at, updated_at) VALUES
-('f50e8400-e29b-41d4-a716-446655440001', 'e50e8400-e29b-41d4-a716-446655440001', 1, '950e8400-e29b-41d4-a716-446655440001', 'a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR', NULL, NULL, '{"team": "development"}', 'sent', '2025-01-05 09:00:05', 0, NOW(), NOW()),
-('f50e8400-e29b-41d4-a716-446655440002', 'e50e8400-e29b-41d4-a716-446655440001', 2, '950e8400-e29b-41d4-a716-446655440002', 'a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR', NULL, NULL, '{"team": "management"}', 'sent', '2025-01-05 09:00:03', 0, NOW(), NOW()),
-('f50e8400-e29b-41d4-a716-446655440003', 'e50e8400-e29b-41d4-a716-446655440002', 1, '950e8400-e29b-41d4-a716-446655440001', 'a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR', NULL, NULL, '{"maintenance": true}', 'pending', NULL, 0, NOW(), NOW());
-
--- Insert sample batch templates
-INSERT INTO batch_templates (id, name, description, project_id, message_type, content, priority, mentions, metadata, targets, is_active, created_at, updated_at) VALUES
-('g50e8400-e29b-41d4-a716-446655440001', 'Monthly Meeting Reminder', 'Template for monthly team meeting reminders', '750e8400-e29b-41d4-a716-446655440001', 'text', 'Monthly team meeting is scheduled for {date} at {time}. Please join us in {location}.', 'normal', '{"@everyone"}', '{"template_type": "meeting", "frequency": "monthly"}', '{"targets": [{"type": "channel", "name": "general"}, {"type": "person", "email": "team@company.com"}]}', true, NOW(), NOW()),
-('g50e8400-e29b-41d4-a716-446655440002', 'System Alert', 'Template for system alerts and notifications', '750e8400-e29b-41d4-a716-446655440002', 'text', 'System Alert: {alert_type} - {message}. Please check the system status.', 'high', '{"@admin"}', '{"template_type": "alert", "urgency": "high"}', '{"targets": [{"type": "channel", "name": "alerts"}, {"type": "person", "email": "admin@company.com"}]}', true, NOW(), NOW());
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_notifications_project_id ON notifications(project_id);
@@ -89,12 +74,3 @@ CREATE INDEX IF NOT EXISTS idx_files_file_key ON files(file_key);
 CREATE INDEX IF NOT EXISTS idx_files_is_public ON files(is_public);
 CREATE INDEX IF NOT EXISTS idx_files_expires_at ON files(expires_at);
 CREATE INDEX IF NOT EXISTS idx_files_created_at ON files(created_at);
-CREATE INDEX IF NOT EXISTS idx_batch_notifications_project_id ON batch_notifications(project_id);
-CREATE INDEX IF NOT EXISTS idx_batch_notifications_sender_id ON batch_notifications(sender_id);
-CREATE INDEX IF NOT EXISTS idx_batch_notifications_status ON batch_notifications(status);
-CREATE INDEX IF NOT EXISTS idx_batch_notifications_scheduled_at ON batch_notifications(scheduled_at);
-CREATE INDEX IF NOT EXISTS idx_batch_targets_batch_id ON batch_targets(batch_id);
-CREATE INDEX IF NOT EXISTS idx_batch_targets_destination_id ON batch_targets(destination_id);
-CREATE INDEX IF NOT EXISTS idx_batch_targets_status ON batch_targets(status);
-CREATE INDEX IF NOT EXISTS idx_batch_templates_project_id ON batch_templates(project_id);
-CREATE INDEX IF NOT EXISTS idx_batch_templates_is_active ON batch_templates(is_active);
