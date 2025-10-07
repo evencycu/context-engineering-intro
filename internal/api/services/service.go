@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
 	"github.com/google/uuid"
@@ -1287,20 +1286,13 @@ func validateTeamsTargets(targets database.JSONBTargets) error {
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, redisQueue interface {
-	Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
-}) NotificationService {
+func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, _ interface{}) NotificationService {
 	return &notificationService{
 		repo:                 repo,
 		destinationRepo:      destinationRepo,
 		notificationDestRepo: notificationDestRepo,
 		broadcaster:          broadcaster,
-		redisQueue:           redisQueue,
 	}
-}
-
-type QueueEnqueuer interface {
-	Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
 }
 
 type notificationService struct {
@@ -1308,7 +1300,6 @@ type notificationService struct {
 	destinationRepo      repositories.DestinationRepository
 	notificationDestRepo repositories.NotificationDestinationRepository
 	broadcaster          BroadcastService
-	redisQueue           QueueEnqueuer
 }
 
 // Create creates a new notification
@@ -1481,25 +1472,6 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 			if err := s.notificationDestRepo.CreateBatch(ctx, nds); err != nil {
 				return nil, fmt.Errorf("failed to create notification_destinations: %w", err)
 			}
-			// Enqueue to Redis by priority (default normal)
-			// Note: Producer role - no blocking, best-effort
-			prio := actor.PriorityNormal
-			switch req.Priority {
-			case "high":
-				prio = actor.PriorityHigh
-			case "low":
-				prio = actor.PriorityLow
-			}
-			if s.redisQueue != nil {
-				// Enqueue to Redis by priority
-				for _, nd := range nds {
-					if err := s.redisQueue.Enqueue(ctx, nd.ID, prio); err != nil {
-						log.Printf("Failed to enqueue notification_dest %s: %v", nd.ID, err)
-					} else {
-						log.Printf("Enqueued notification_dest %s with priority %s", nd.ID, prio)
-					}
-				}
-			}
 		}
 	}
 
@@ -1547,8 +1519,6 @@ func (s *notificationService) RetryNotification(ctx context.Context, id uuid.UUI
 	if err != nil {
 		return err
 	}
-
-	// TODO: Queue notification for retry processing
 
 	return nil
 }

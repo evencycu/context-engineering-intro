@@ -18,12 +18,14 @@
 
 ## 環境變數
 
-### 必要環境變數
+### 必要環境變數（支援 TN_ 前綴）
 
 #### 資料庫配置
 ```bash
 # PostgreSQL 連線字串
 export DATABASE_URL="postgresql://teamsnotify:teamsnotify123@localhost:5432/notification_center?sslmode=disable"
+# 或使用 TN_ 前綴（優先於同名無前綴變數）
+export TN_DATABASE_URL="postgresql://teamsnotify:teamsnotify123@localhost:5432/notification_center?sslmode=disable"
 ```
 
 #### Teams Bot 配置
@@ -42,6 +44,8 @@ export TEAMS_BOT_APP_PASSWORD="HVW8Q~-HmVPi_W0EzIFPbZiL4G1czV8WBMUjQdfy"
 ```bash
 # Redis 連線字串
 export REDIS_URL="redis://localhost:6379"
+# 或
+export TN_REDIS_URL="redis://localhost:6379"
 ```
 
 ### 可選環境變數
@@ -97,7 +101,7 @@ export READ_TIMEOUT="30s"
 export WRITE_TIMEOUT="30s"
 ```
 
-## 配置驗證
+## 配置驗證（Viper）
 
 ### 自動驗證
 服務啟動時會自動驗證以下配置：
@@ -115,11 +119,11 @@ REDIS_URL                # Redis 連接字串
 使用 API 端點驗證配置：
 
 ```bash
-# 檢查配置狀態
-curl -H "Authorization: Bearer <token>" http://localhost:8080/config
+# 檢查配置狀態（非敏感值）
+curl http://localhost:8080/config
 
-# 驗證配置
-curl -X POST -H "Authorization: Bearer <token>" http://localhost:8080/config/validate
+# 驗證配置（回傳缺失項目）
+curl -X POST http://localhost:8080/config/validate
 ```
 
 ### 監控端點

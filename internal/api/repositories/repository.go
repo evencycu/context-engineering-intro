@@ -53,6 +53,7 @@ type NotificationRepository interface {
 	GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error)
 	GetByStatus(ctx context.Context, status string) ([]*database.Notification, error)
 	GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error)
+	UpdateStatus(ctx context.Context, notificationID uuid.UUID, status database.NotificationStatus, errorMessage string) error
 }
 
 // NotificationDestinationRepository defines operations for notification_destinations
@@ -65,6 +66,8 @@ type NotificationDestinationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
 	GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*database.NotificationDestination, error)
 	GetRetryReady(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+	GetPending(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 // BaseRepository provides common repository functionality
@@ -1221,6 +1224,24 @@ func (r *notificationDestinationRepository) GetRetryReady(ctx context.Context, l
 	return rows, err
 }
 
+// GetPending retrieves pending destinations without retry logic (for enqueue worker)
+func (r *notificationDestinationRepository) GetPending(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
+	var rows []*database.NotificationDestination
+	query := `SELECT * FROM notification_destinations
+              WHERE status = 'pending'
+              ORDER BY created_at ASC
+              LIMIT $1`
+	err := r.db.SelectContext(ctx, &rows, query, limit)
+	return rows, err
+}
+
+// UpdateStatus updates only the status field for a destination
+func (r *notificationDestinationRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+	query := `UPDATE notification_destinations SET status = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, status, id)
+	return err
+}
+
 // GetByProjectID retrieves notifications by project ID
 func (r *notificationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error) {
 	var notifications []*database.Notification
@@ -1252,3 +1273,12 @@ func (r *notificationRepository) GetByDateRange(ctx context.Context, start, end 
 	err := r.db.SelectContext(ctx, &notifications, query, start, end)
 	return notifications, err
 }
+
+// UpdateStatus updates the status of a notification
+func (r *notificationRepository) UpdateStatus(ctx context.Context, notificationID uuid.UUID, status database.NotificationStatus, errorMessage string) error {
+	query := `UPDATE notifications SET status = $1, error_message = $2, updated_at = NOW() WHERE id = $3`
+	_, err := r.db.ExecContext(ctx, query, string(status), errorMessage, notificationID)
+	return err
+}
+
+// (Removed) GetPendingNotifications was used by deprecated NotificationScanner

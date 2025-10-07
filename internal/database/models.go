@@ -35,6 +35,17 @@ const (
 	BotStatusMaintenance BotStatus = "maintenance"
 )
 
+// NotificationStatus represents the status of a notification
+type NotificationStatus string
+
+const (
+	NotificationStatusPending   NotificationStatus = "pending"
+	NotificationStatusEnqueued  NotificationStatus = "enqueued"
+	NotificationStatusSent      NotificationStatus = "sent"
+	NotificationStatusFailed    NotificationStatus = "failed"
+	NotificationStatusCancelled NotificationStatus = "cancelled"
+)
+
 // =============================================
 
 // Company represents a company/organization
@@ -324,7 +335,7 @@ type Notification struct {
 	Attachment   *JSONBNullableObject `json:"attachment" db:"attachment"`
 	AdaptiveCard *JSONBNullableObject `json:"adaptive_card" db:"adaptive_card"`
 	Priority     string               `json:"priority" db:"priority"`
-	Status       string               `json:"status" db:"status"`
+	Status       NotificationStatus   `json:"status" db:"status"`
 	ErrorMessage string               `json:"error_message" db:"error_message"`
 	Metadata     JSONBObject          `json:"metadata" db:"metadata"`
 	SentAt       *time.Time           `json:"sent_at" db:"sent_at"`
@@ -501,7 +512,6 @@ type File struct {
 	IsPublic    bool             `json:"is_public" db:"is_public"`
 	ExpiresAt   *time.Time       `json:"expires_at" db:"expires_at"`
 }
-
 
 // UsageRecord represents a usage record for billing
 type UsageRecord struct {

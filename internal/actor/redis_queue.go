@@ -23,6 +23,8 @@ const (
 type RedisQueue interface {
 	Enqueue(ctx context.Context, ndID uuid.UUID, priority Priority) error
 	DequeueBlocking(ctx context.Context) (uuid.UUID, error)
+	Requeue(ctx context.Context, ndID uuid.UUID) error
+	RequeueToFront(ctx context.Context, ndID uuid.UUID) error
 }
 
 type redisQueue struct {
@@ -83,4 +85,27 @@ func (q *redisQueue) DequeueBlocking(ctx context.Context) (uuid.UUID, error) {
 		return uuid.Nil, nil
 	}
 	return ndID, nil
+}
+
+// Requeue puts a task back into the normal priority queue
+// This is used when the actor pool is full to prevent data loss
+func (q *redisQueue) Requeue(ctx context.Context, ndID uuid.UUID) error {
+	// Remove the processing key first
+	processingKey := fmt.Sprintf("queue:notifications:processing:%s", ndID)
+	q.redis.Del(ctx, processingKey)
+
+	// Re-queue with normal priority (middle priority)
+	return q.redis.RPush(ctx, q.keyForPriority(PriorityNormal), ndID.String()).Err()
+}
+
+// RequeueToFront puts a task back to the front of the high priority queue
+// This is used when the actor pool becomes full during processing
+// to ensure high priority tasks are not lost
+func (q *redisQueue) RequeueToFront(ctx context.Context, ndID uuid.UUID) error {
+	// Remove the processing key first
+	processingKey := fmt.Sprintf("queue:notifications:processing:%s", ndID)
+	q.redis.Del(ctx, processingKey)
+
+	// Re-queue to the front of high priority queue (LPUSH to front)
+	return q.redis.LPush(ctx, q.keyForPriority(PriorityHigh), ndID.String()).Err()
 }

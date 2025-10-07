@@ -89,3 +89,46 @@
 - 同步數據庫架構到 schema.sql 和 init.sql
 - 同步 OpenAPI 文檔與代碼實現
 - 所有變更已提交到 git
+## 🐛 E2E 測試問題修復
+
+### 問題發現
+測試發現 `notification_destinations` 沒有資料，經過調查發現：
+
+1. **根本原因**：`EnqueueWorker` 嘗試將狀態更新為 `enqueued`，但資料庫 schema 的 check constraint 只允許：`pending`, `processing`, `sent`, `failed`, `cancelled`
+
+2. **錯誤訊息**：
+   ```
+   EnqueueWorker: update status failed: pq: new row for relation "notification_destinations" 
+   violates check constraint "notification_destinations_status_check"
+   ```
+
+### 解決方案
+修改 `internal/actor/enqueue_worker.go`：
+- 將狀態從 `enqueued` 改為 `processing`
+- 更新相關註釋以反映變更
+
+### 測試驗證
+```bash
+# 發送測試訊息
+curl -X POST http://localhost:8080/api/v1/external/notify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notify_key":"5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "message_type":"text",
+    "message":"✅ E2E Test - Fixed status constraint issue",
+    "priority":"high"
+  }'
+
+# 結果：
+# ✅ notification_destinations 成功創建（status=processing）
+# ✅ EnqueueWorker 成功 enqueue 到 Redis（無錯誤）
+# ✅ QueueConsumer 成功 dequeue 並 spawn actors
+# ✅ Actors 成功發送到 Teams（status=sent）
+# ✅ Redis 佇列已清空（high:0, normal:0, low:0）
+```
+
+### 修改文件
+- `internal/actor/enqueue_worker.go`：
+  - L18: 註釋更新 `pending -> processing`
+  - L76: 狀態更新從 `"enqueued"` 改為 `"processing"`
+

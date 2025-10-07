@@ -12,8 +12,13 @@ import (
 
 type mockPool struct{ calls int32 }
 
-func (m *mockPool) spawnActor(ctx context.Context, id uuid.UUID) {
+func (m *mockPool) SpawnActor(ctx context.Context, id uuid.UUID) bool {
 	atomic.AddInt32(&m.calls, 1)
+	return true // Always succeed for testing
+}
+
+func (m *mockPool) HasCapacity() bool {
+	return true // Always has capacity for testing
 }
 
 func TestQueueConsumer_Basic(t *testing.T) {

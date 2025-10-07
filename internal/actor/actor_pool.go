@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -19,57 +18,34 @@ type ActorPool struct {
 	actors       map[uuid.UUID]*NotificationActor
 	mu           sync.RWMutex
 	maxActors    int
-	pollInterval time.Duration
-	workerTicker *time.Ticker
 	stopChan     chan struct{}
 	wg           sync.WaitGroup
 }
 
 // NewActorPool creates a new actor pool for the async architecture
-// pollInterval controls how often the pool polls for retry-ready notifications
-func NewActorPool(redis *redis.Client, db ActorDB, tokenManager TokenManager, maxActors int, pollInterval time.Duration) *ActorPool {
+// Tasks are now provided by QueueConsumer instead of polling DB
+func NewActorPool(redis *redis.Client, db ActorDB, tokenManager TokenManager, maxActors int) *ActorPool {
 	return &ActorPool{
 		redis:        redis,
 		db:           db,
 		tokenManager: tokenManager,
 		actors:       make(map[uuid.UUID]*NotificationActor),
 		maxActors:    maxActors,
-		pollInterval: pollInterval,
 		stopChan:     make(chan struct{}),
 	}
 }
 
 // Start begins the actor pool's operation
+// Now just initializes the pool - tasks come from QueueConsumer via SpawnActor
 func (p *ActorPool) Start(ctx context.Context) {
 	log.Printf("Starting Actor Pool (max actors: %d)", p.maxActors)
-
-	// Start worker that polls for retry-ready notifications
-	if p.pollInterval <= 0 {
-		p.pollInterval = 100 * time.Millisecond
-	}
-	p.workerTicker = time.NewTicker(p.pollInterval)
-	p.wg.Add(1)
-	go func() {
-		defer p.wg.Done()
-		for {
-			select {
-			case <-p.workerTicker.C:
-				p.pollAndSpawnActors(ctx)
-			case <-p.stopChan:
-				log.Println("Actor Pool worker stopped")
-				return
-			}
-		}
-	}()
-
-	log.Println("Actor Pool started successfully")
+	log.Println("Actor Pool ready to receive tasks from QueueConsumer")
 }
 
 // Stop gracefully shuts down the actor pool
 func (p *ActorPool) Stop() {
 	log.Println("Stopping Actor Pool...")
 	close(p.stopChan)
-	p.workerTicker.Stop()
 	p.wg.Wait()
 
 	// Stop all active actors
@@ -151,34 +127,29 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 		actor.ID, notificationDestID, len(p.actors), p.maxActors)
 }
 
-// pollAndSpawnActors checks for retry-ready notifications and spawns actors
-func (p *ActorPool) pollAndSpawnActors(ctx context.Context) {
+// SpawnActor spawns a new actor for the given notification destination ID
+// Returns true if actor was successfully spawned, false if pool is full
+// This method is now called by QueueConsumer instead of polling DB
+func (p *ActorPool) SpawnActor(ctx context.Context, ndID uuid.UUID) bool {
 	p.mu.RLock()
 	currentActors := len(p.actors)
 	p.mu.RUnlock()
 
 	if currentActors >= p.maxActors {
-		log.Printf("Actor pool is full (%d/%d), skipping poll for new retries", currentActors, p.maxActors)
-		return
+		log.Printf("Actor pool is full (%d/%d), cannot spawn actor for %s", currentActors, p.maxActors, ndID)
+		return false
 	}
 
-	// Query notification_destinations WHERE status='pending' OR status='failed' AND next_retry_at <= NOW()
-	limit := p.maxActors - currentActors
-	if limit <= 0 {
-		return
-	}
+	log.Printf("Spawning actor for notification_dest=%s (pool: %d/%d)", ndID, currentActors, p.maxActors)
+	p.spawnActor(ctx, ndID)
+	return true
+}
 
-	log.Printf("Checking for retry-ready notifications (current actors: %d/%d, limit: %d)", currentActors, p.maxActors, limit)
-
-	retryReady, err := p.db.GetRetryReadyNotificationDestinations(ctx, limit)
-	if err != nil {
-		log.Printf("Failed to query retry-ready notifications: %v", err)
-		return
-	}
-
-	for _, nd := range retryReady {
-		p.spawnActor(ctx, nd.ID)
-	}
+// HasCapacity checks if the actor pool has available capacity
+func (p *ActorPool) HasCapacity() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return len(p.actors) < p.maxActors
 }
 
 // GetPoolStatus returns current status of the actor pool

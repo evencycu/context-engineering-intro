@@ -53,6 +53,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConfigResponse"
+              examples:
+                sample:
+                  summary: Example config
+                  value:
+                    server: { port: "8080", environment: "development" }
+                    database:
+                      {
+                        url: "postgresql://user:pass@localhost:5432/db?sslmode=disable",
+                      }
+                    redis: { url: "redis://localhost:6379" }
+                    teams: { app_id: "<id>", tenant_id: "<tenant>" }
+                    actor: { max_actors: 10 }
+                    logger: { level: "info", format: "json" }
         "401":
           $ref: "#/components/responses/Unauthorized"
   /config/validate:
@@ -69,6 +82,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConfigValidationResponse"
+              examples:
+                valid:
+                  summary: Valid configuration
+                  value:
+                    valid: true
+                    errors: []
+                    warnings: []
+                invalid:
+                  summary: Missing required environment variables
+                  value:
+                    valid: false
+                    errors:
+                      - field: "TN_DATABASE_URL"
+                        message: "missing required env"
+                      - field: "TN_REDIS_URL"
+                        message: "missing required env"
+                    warnings: []
         "401":
           $ref: "#/components/responses/Unauthorized"
   /api/v1/companies:
@@ -1226,48 +1256,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExternalHealthResponse"
 
-  /api/v1/queue/status:
+  /api/v1/queue/stats:
     get:
-      summary: Get queue status
-      description: Get the current status of the notification retry queue
-      tags: [Queue Management]
+      summary: Get queue lengths
+      description: Returns lengths of high/normal/low priority Redis queues
+      tags: [Queue]
       responses:
         "200":
-          description: Queue status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/QueueStatus"
-
-  /api/v1/queue/circuit-breaker/metrics:
-    get:
-      summary: Get circuit breaker metrics
-      description: Get metrics and statistics for the circuit breaker
-      tags: [Queue Management]
-      responses:
-        "200":
-          description: Circuit breaker metrics
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CircuitBreakerMetrics"
-
-  /api/v1/queue/circuit-breaker/reset:
-    post:
-      summary: Reset circuit breaker
-      description: Manually reset the circuit breaker to closed state
-      tags: [Queue Management]
-      responses:
-        "200":
-          description: Reset successful
+          description: Queue lengths
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Circuit breaker reset successfully"
+                  data:
+                    type: object
+                    properties:
+                      high:
+                        type: integer
+                        example: 0
+                      normal:
+                        type: integer
+                        example: 12
+                      low:
+                        type: integer
+                        example: 3
 
   # Billing API endpoints
   /api/v1/billing/usage:
@@ -1605,7 +1618,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidateFileResponse"
-
 
 components:
   parameters:
@@ -3276,4 +3288,3 @@ components:
         error:
           type: string
           example: ""
-

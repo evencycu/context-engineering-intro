@@ -1,5 +1,51 @@
 # 通知隊列與熔斷器機制
 
+## Two-loop Enqueue Design (Updated)
+
+This system now separates write and enqueue into two independent loops to improve reliability and simplicity.
+
+### 1) Producer Loop (API write only)
+- On request, the API writes `notification_destinations` rows with `status = pending`.
+- No Redis operations are performed in the request path.
+- Benefits: lower latency, zero coupling to Redis availability during writes.
+
+### 2) EnqueueWorker (background)
+- Periodically scans pending `notification_destinations`.
+- For each row, pushes the `notification_destination.id` into the Redis List by its `priority`:
+  - `queue:notifications:high`
+  - `queue:notifications:normal`
+  - `queue:notifications:low`
+- On successful enqueue, updates the row to `status = enqueued`.
+- Enqueue has no retry loop by design; failures keep the row as `pending` to be picked up in the next scan.
+
+### Consumer Side (unchanged)
+- `QueueConsumer` performs `BLPOP` across high → normal → low and hands tasks to `ActorPool`.
+- `ActorPool` spawns `NotificationActor` up to `maxActors`. When capacity is full, the consumer waits and does not dequeue.
+- Redis SETNX `processing` keys ensure unique processing across multiple nodes.
+
+### Configuration knobs
+- Enqueue scan interval: `internal/actor/notification_processor.go` → `NewEnqueueWorker(..., 200*time.Millisecond)`
+- Enqueue batch size: `internal/actor/enqueue_worker.go` → `GetPending(ctx, 100)`
+- Actor pool size: `internal/actor/actor_pool.go` → `maxActors` parameter
+
+### Queue visibility (ops)
+- Queue lengths:
+  - High: `redis-cli LLEN queue:notifications:high`
+  - Normal: `redis-cli LLEN queue:notifications:normal`
+  - Low: `redis-cli LLEN queue:notifications:low`
+- Keys overview: `redis-cli KEYS "queue:notifications:*"`
+
+### State transitions
+```
+API → write ND(status=pending)
+EnqueueWorker → enqueue → ND(status=enqueued)
+QueueConsumer/Actor → processing → sent/failed per delivery outcome
+```
+
+Notes:
+- The previous scanner that retried notifications has been removed. Enqueue errors keep rows in `pending` for the next worker sweep.
+- Circuit breaker remains in place for delivery (Teams 429/Retry-After handling).
+
 ## 📋 目錄
 
 - [概述](#概述)
@@ -113,7 +159,7 @@
   - `queue:notifications:processing:{notification_destination_id}`（SETNX，TTL 約 30m）
 
 Producer（在 `NotificationService.SendNotification` 持久化 `notification_destinations` 後）會依 `priority=high|normal|low` 將每筆 `notification_destination.id` 推入對應的 List；
-Consumer（`QueueConsumer`）會以 `BLPOP` 順序檢查 `high -> normal -> low`，取出一筆後，以 SETNX 設置 processing key，成功後交由 `ActorPool.spawnActor` 建立 `NotificationActor` 進行發送流程。
+Consumer（`QueueConsumer`）會以 `BLPOP` 順序檢查 `high -> normal -> low`，取出一筆後，以 SETNX 設置 processing key，成功後交由 `ActorPool.SpawnActor` 建立 `NotificationActor` 進行發送流程。
 
 此設計具備：
 - 優先序保證（高優先佇列先被消化）

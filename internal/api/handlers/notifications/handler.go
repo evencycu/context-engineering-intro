@@ -120,7 +120,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	// Create response
 	response := SendNotificationResponse{
 		NotificationID: notification.ID,
-		Status:         notification.Status,
+		Status:         string(notification.Status),
 		Message:        "Notification queued successfully",
 		Destinations:   len(req.Targets),
 	}
