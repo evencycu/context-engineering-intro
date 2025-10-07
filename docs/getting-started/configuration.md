@@ -2,6 +2,20 @@
 
 本文件詳細說明 Teams Notification API 的配置選項和環境變數設定。
 
+## 最新更新 (v1.0.0)
+
+### 🔧 **配置管理改進**
+- **統一配置系統**: 所有配置現在通過 `internal/config/config.go` 統一管理
+- **環境變數驗證**: 啟動時自動驗證必要的環境變數
+- **配置端點**: 新增 `/config` 和 `/config/validate` API 端點
+- **監控指標**: 新增 `/metrics` 端點提供系統監控數據
+
+### 🚨 **重要變更**
+- **環境變數驗證**: 服務啟動時會驗證所有必要的環境變數
+- **錯誤處理**: 標準化的錯誤響應格式
+- **日誌管理**: 結構化日誌輸出，支援多種格式
+- **Token 快取**: Redis 支援的 Token 快取機制
+
 ## 環境變數
 
 ### 必要環境變數
@@ -81,6 +95,41 @@ export READ_TIMEOUT="30s"
 
 # 寫入超時 (預設: 30s)
 export WRITE_TIMEOUT="30s"
+```
+
+## 配置驗證
+
+### 自動驗證
+服務啟動時會自動驗證以下配置：
+
+```bash
+# 必要環境變數檢查
+TEAMS_BOT_APP_ID          # Teams Bot 應用程式 ID
+TEAMS_BOT_APP_PASSWORD    # Teams Bot 密鑰
+TEAMS_TENANT_ID          # Teams 租戶 ID
+DATABASE_URL             # 數據庫連接字串
+REDIS_URL                # Redis 連接字串
+```
+
+### 手動驗證
+使用 API 端點驗證配置：
+
+```bash
+# 檢查配置狀態
+curl -H "Authorization: Bearer <token>" http://localhost:8080/config
+
+# 驗證配置
+curl -X POST -H "Authorization: Bearer <token>" http://localhost:8080/config/validate
+```
+
+### 監控端點
+
+```bash
+# 系統健康檢查
+curl http://localhost:8080/health
+
+# 系統指標
+curl http://localhost:8080/metrics
 ```
 
 ## 配置檔案

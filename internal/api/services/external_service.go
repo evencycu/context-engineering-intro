@@ -7,7 +7,6 @@ import (
 
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
-	"github.com/google/uuid"
 )
 
 // ExternalService handles external user notification requests
@@ -102,14 +101,14 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 
 	// Create notification request for NotificationService
 	notificationReq := &SendNotificationRequest{
-		ProjectID:    project.ID,
-		SenderID:     nil, // External notifications don't have a sender
-		MessageType:  req.MessageType,
-		Content:      req.Message,
-		Mentions:     req.Mentions,
-		Priority:     req.Priority,
-		Metadata:     req.Metadata,
-		Destinations: []uuid.UUID{}, // Empty means send to all destinations
+		ProjectID:   project.ID,
+		SenderID:    nil, // External notifications don't have a sender
+		MessageType: req.MessageType,
+		Content:     req.Message,
+		Mentions:    req.Mentions,
+		Priority:    req.Priority,
+		Metadata:    req.Metadata,
+		Targets:     req.TargetIDs, // Empty means send to all destinations
 	}
 
 	// Send notification using NotificationService (async)

@@ -44,7 +44,7 @@ type CreateProjectRequest struct {
 	Description  string    `json:"description" validate:"required,min=10,max=500"`
 	DailyLimit   int       `json:"daily_limit" validate:"min=1,max=10000"`
 	MonthlyLimit int       `json:"monthly_limit" validate:"min=1,max=300000"`
-	Priority     string    `json:"priority" validate:"oneof=low normal high urgent"`
+	Priority     string    `json:"priority" validate:"oneof=low normal high"`
 	CreatedBy    uuid.UUID `json:"created_by" validate:"required"`
 }
 
@@ -52,7 +52,7 @@ type CreateProjectRequest struct {
 type UpdateProjectRequest struct {
 	NotifyKey   string `json:"notify_key" validate:"omitempty,min=3,max=50,alphanum"`
 	Description string `json:"description" validate:"omitempty,min=10,max=500"`
-	Priority    string `json:"priority" validate:"omitempty,oneof=low normal high urgent"`
+	Priority    string `json:"priority" validate:"omitempty,oneof=low normal high"`
 }
 
 // UpdateLimitsRequest represents an update limits request

@@ -35,12 +35,22 @@ type NotificationActor struct {
 	Installation       *database.BotInstallation
 	Redis              *redis.Client
 	DB                 ActorDB
+	TokenManager       TokenManager // New field for token management
 	MaxRetries         int
 	CurrentRetry       int
 	Status             string
 	LastError          error
 	StopChan           chan struct{}
 	DoneChan           chan *ActorResult
+}
+
+// TokenManager interface for token management
+type TokenManager interface {
+	GetConnectorToken(ctx context.Context, botID, tenantID string) (string, error)
+	GetGraphToken(ctx context.Context, botID, tenantID string) (string, error)
+	InvalidateToken(ctx context.Context, botID, tenantID string, tokenType interface{}) error
+	RefreshToken(ctx context.Context, botID, tenantID string, tokenType interface{}) (string, error)
+	GetBotConfig(ctx context.Context, botID string) (interface{}, error)
 }
 
 // NotificationDestinationUpdate represents fields to update
@@ -80,6 +90,7 @@ func NewNotificationActor(
 	botAppPassword string,
 	redis *redis.Client,
 	db ActorDB,
+	tokenManager TokenManager,
 ) *NotificationActor {
 	return &NotificationActor{
 		ID:                 fmt.Sprintf("actor-%s", notificationDestID.String()[:8]),
@@ -94,6 +105,7 @@ func NewNotificationActor(
 		Installation:       installation,
 		Redis:              redis,
 		DB:                 db,
+		TokenManager:       tokenManager,
 		MaxRetries:         5,
 		CurrentRetry:       0,
 		Status:             "pending",
@@ -379,14 +391,39 @@ func (a *NotificationActor) attemptSend(ctx context.Context) (success bool, stat
 	return true, statusCode, nil, teamsMessageID, nil
 }
 
-// getConnectorToken gets a Bot Framework connector token
+// getConnectorToken gets a Bot Framework connector token using Token Manager
 func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, error) {
+	if a.TokenManager == nil {
+		// Fallback to direct token fetch if TokenManager is not available
+		return a.getConnectorTokenDirect(ctx)
+	}
+
 	tenantID := a.TenantID
 	if tenantID == "" {
 		tenantID = "botframework.com"
 	}
 
-	log.Printf("[%s] getConnectorToken: Requesting token from tenant %s, appID %s", a.ID, tenantID, a.BotAppID)
+	log.Printf("[%s] getConnectorToken: Using Token Manager for tenant %s, appID %s", a.ID, tenantID, a.BotAppID)
+
+	token, err := a.TokenManager.GetConnectorToken(ctx, a.BotAppID, tenantID)
+	if err != nil {
+		log.Printf("[%s] getConnectorToken: Token Manager failed: %v", a.ID, err)
+		// Fallback to direct token fetch
+		return a.getConnectorTokenDirect(ctx)
+	}
+
+	log.Printf("[%s] getConnectorToken: Successfully obtained token from cache", a.ID)
+	return token, nil
+}
+
+// getConnectorTokenDirect gets a Bot Framework connector token directly (fallback method)
+func (a *NotificationActor) getConnectorTokenDirect(ctx context.Context) (string, error) {
+	tenantID := a.TenantID
+	if tenantID == "" {
+		tenantID = "botframework.com"
+	}
+
+	log.Printf("[%s] getConnectorTokenDirect: Requesting token directly from tenant %s, appID %s", a.ID, tenantID, a.BotAppID)
 
 	form := url.Values{}
 	form.Set("grant_type", "client_credentials")
@@ -405,16 +442,16 @@ func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, erro
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Printf("[%s] getConnectorToken: HTTP request failed: %v", a.ID, err)
+		log.Printf("[%s] getConnectorTokenDirect: HTTP request failed: %v", a.ID, err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	log.Printf("[%s] getConnectorToken: Response status: %d %s", a.ID, resp.StatusCode, resp.Status)
+	log.Printf("[%s] getConnectorTokenDirect: Response status: %d %s", a.ID, resp.StatusCode, resp.Status)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		log.Printf("[%s] getConnectorToken: Error response body: %s", a.ID, string(body))
+		log.Printf("[%s] getConnectorTokenDirect: Error response body: %s", a.ID, string(body))
 		return "", fmt.Errorf("token request failed: %s: %s", resp.Status, string(body))
 	}
 
@@ -426,11 +463,11 @@ func (a *NotificationActor) getConnectorToken(ctx context.Context) (string, erro
 	}
 
 	if tr.AccessToken == "" {
-		log.Printf("[%s] getConnectorToken: Empty access token in response", a.ID)
+		log.Printf("[%s] getConnectorTokenDirect: Empty access token in response", a.ID)
 		return "", fmt.Errorf("empty access_token")
 	}
 
-	log.Printf("[%s] getConnectorToken: Successfully got token", a.ID)
+	log.Printf("[%s] getConnectorTokenDirect: Successfully obtained token", a.ID)
 	return tr.AccessToken, nil
 }
 

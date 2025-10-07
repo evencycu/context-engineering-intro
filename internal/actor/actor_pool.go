@@ -15,6 +15,7 @@ import (
 type ActorPool struct {
 	redis        *redis.Client
 	db           ActorDB
+	tokenManager TokenManager // New field for token management
 	actors       map[uuid.UUID]*NotificationActor
 	mu           sync.RWMutex
 	maxActors    int
@@ -26,10 +27,11 @@ type ActorPool struct {
 
 // NewActorPool creates a new actor pool for the async architecture
 // pollInterval controls how often the pool polls for retry-ready notifications
-func NewActorPool(redis *redis.Client, db ActorDB, maxActors int, pollInterval time.Duration) *ActorPool {
+func NewActorPool(redis *redis.Client, db ActorDB, tokenManager TokenManager, maxActors int, pollInterval time.Duration) *ActorPool {
 	return &ActorPool{
 		redis:        redis,
 		db:           db,
+		tokenManager: tokenManager,
 		actors:       make(map[uuid.UUID]*NotificationActor),
 		maxActors:    maxActors,
 		pollInterval: pollInterval,
@@ -134,6 +136,7 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 		appPassword,    // Get from environment
 		p.redis,
 		p.db,
+		p.tokenManager, // Pass Token Manager
 	)
 
 	// Override tenant ID from TeamsBot if available

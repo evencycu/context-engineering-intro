@@ -4,8 +4,14 @@ info:
   version: 1.0.0
   description: |
     This specification documents the REST endpoints implemented in `cmd/server/main.go`.
-    Only the routes listed here are currently available. Future features like billing analytics
-    and scheduled notifications are not included.
+    Includes all available routes including billing, file management, and batch notification features.
+
+    ## Recent Updates (v1.0.0)
+    - **Configuration Management**: Unified configuration system with environment variable validation
+    - **Error Handling**: Standardized error responses with proper HTTP status codes
+    - **Token Management**: Redis-backed token caching for improved performance
+    - **Monitoring**: Enhanced health checks and system metrics
+    - **Logging**: Structured logging with configurable levels and formats
 servers:
   - url: http://localhost:8080
     description: Local development (default configuration)
@@ -21,6 +27,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /metrics:
+    get:
+      summary: System metrics
+      tags: [System]
+      description: Returns system metrics including token cache statistics, actor pool status, and performance indicators
+      responses:
+        "200":
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+  /config:
+    get:
+      summary: Get system configuration
+      tags: [System]
+      description: Returns current system configuration (non-sensitive values only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Configuration information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /config/validate:
+    post:
+      summary: Validate configuration
+      tags: [System]
+      description: Validates current system configuration and environment variables
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Configuration validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigValidationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /api/v1/companies:
     get:
       summary: List companies
@@ -1219,6 +1269,492 @@ paths:
                     type: string
                     example: "Circuit breaker reset successfully"
 
+  # Billing API endpoints
+  /api/v1/billing/usage:
+    get:
+      summary: Get usage records
+      description: Retrieve usage records with filtering and pagination
+      tags: [Billing]
+      parameters:
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Usage records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+
+  /api/v1/billing/usage/summary:
+    get:
+      summary: Get usage summary
+      description: Get usage summary statistics
+      tags: [Billing]
+      parameters:
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Usage summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageSummaryResponse"
+
+  /api/v1/billing/plans:
+    get:
+      summary: Get billing plans
+      description: Retrieve all billing plans
+      tags: [Billing]
+      responses:
+        "200":
+          description: Billing plans
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlansResponse"
+    post:
+      summary: Create billing plan
+      description: Create a new billing plan
+      tags: [Billing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBillingPlanRequest"
+      responses:
+        "201":
+          description: Created billing plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+
+  /api/v1/billing/plans/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get billing plan
+      description: Get a specific billing plan
+      tags: [Billing]
+      responses:
+        "200":
+          description: Billing plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+    put:
+      summary: Update billing plan
+      description: Update a billing plan
+      tags: [Billing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBillingPlanRequest"
+      responses:
+        "200":
+          description: Updated billing plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+
+  /api/v1/billing/company/{companyId}:
+    parameters:
+      - name: companyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get company billing
+      description: Get billing information for a company
+      tags: [Billing]
+      responses:
+        "200":
+          description: Company billing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBillingResponse"
+
+  /api/v1/billing/analytics/overview:
+    get:
+      summary: Get analytics overview
+      description: Get billing analytics overview
+      tags: [Billing]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverviewResponse"
+
+  # File Management API endpoints
+  /api/v1/files:
+    get:
+      summary: List files
+      description: List files with filtering and pagination
+      tags: [Files]
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: is_public
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+    post:
+      summary: Upload file
+      description: Upload a single file
+      tags: [Files]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadFileRequest"
+      responses:
+        "201":
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+
+  /api/v1/files/upload/multiple:
+    post:
+      summary: Upload multiple files
+      description: Upload multiple files at once
+      tags: [Files]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadMultipleFilesRequest"
+      responses:
+        "201":
+          description: Files uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadMultipleResponse"
+
+  /api/v1/files/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get file
+      description: Get file information
+      tags: [Files]
+      responses:
+        "200":
+          description: File information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileResponse"
+    delete:
+      summary: Delete file
+      description: Delete a file
+      tags: [Files]
+      responses:
+        "200":
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileDeleteResponse"
+
+  /api/v1/files/{id}/download:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Download file
+      description: Download file content
+      tags: [Files]
+      responses:
+        "200":
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/files/validate:
+    post:
+      summary: Validate file
+      description: Validate file before upload
+      tags: [Files]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateFileRequest"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateFileResponse"
+
+  # Batch Notification API endpoints
+  /api/v1/batch/notifications:
+    post:
+      summary: Send batch notifications
+      description: Send notifications to multiple targets
+      tags: [Batch]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendBatchNotificationsRequest"
+      responses:
+        "201":
+          description: Batch notification created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendBatchNotificationsResponse"
+
+  /api/v1/batch/notifications/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get batch status
+      description: Get the status of a batch notification
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchStatusResponse"
+    delete:
+      summary: Cancel batch
+      description: Cancel a batch notification
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelBatchResponse"
+
+  /api/v1/batch/notifications/{id}/results:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get batch results
+      description: Get the results of a batch notification
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResultsResponse"
+
+  /api/v1/batch/templates:
+    get:
+      summary: List batch templates
+      description: List batch notification templates
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch templates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchTemplatesResponse"
+    post:
+      summary: Create batch template
+      description: Create a new batch notification template
+      tags: [Batch]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBatchTemplateRequest"
+      responses:
+        "201":
+          description: Batch template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchTemplateResponse"
+
+  /api/v1/batch/templates/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get batch template
+      description: Get a specific batch template
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchTemplateResponse"
+    put:
+      summary: Update batch template
+      description: Update a batch template
+      tags: [Batch]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBatchTemplateRequest"
+      responses:
+        "200":
+          description: Batch template updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchTemplateResponse"
+    delete:
+      summary: Delete batch template
+      description: Delete a batch template
+      tags: [Batch]
+      responses:
+        "200":
+          description: Batch template deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchTemplateDeleteResponse"
+
 components:
   parameters:
     ID:
@@ -1258,11 +1794,231 @@ components:
       properties:
         status:
           type: string
+          example: "healthy"
         timestamp:
           type: string
           format: date-time
         version:
           type: string
+          example: "1.0.0"
+    MetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        system:
+          $ref: "#/components/schemas/SystemMetrics"
+        token_cache:
+          $ref: "#/components/schemas/TokenCacheMetrics"
+        actor_pool:
+          $ref: "#/components/schemas/ActorPoolMetrics"
+        database:
+          $ref: "#/components/schemas/DatabaseMetrics"
+        redis:
+          $ref: "#/components/schemas/RedisMetrics"
+    SystemMetrics:
+      type: object
+      properties:
+        uptime:
+          type: string
+          description: "System uptime in seconds"
+        memory_usage:
+          type: number
+          description: "Memory usage in bytes"
+        cpu_usage:
+          type: number
+          description: "CPU usage percentage"
+        goroutines:
+          type: integer
+          description: "Number of active goroutines"
+    TokenCacheMetrics:
+      type: object
+      properties:
+        cache_hits:
+          type: integer
+          description: "Number of cache hits"
+        cache_misses:
+          type: integer
+          description: "Number of cache misses"
+        active_tokens:
+          type: integer
+          description: "Number of active cached tokens"
+        refresh_count:
+          type: integer
+          description: "Number of token refreshes"
+        error_count:
+          type: integer
+          description: "Number of token errors"
+    ActorPoolMetrics:
+      type: object
+      properties:
+        active_actors:
+          type: integer
+          description: "Number of active actors"
+        max_actors:
+          type: integer
+          description: "Maximum number of actors"
+        queue_size:
+          type: integer
+          description: "Current queue size"
+        processed_count:
+          type: integer
+          description: "Total processed notifications"
+        error_count:
+          type: integer
+          description: "Total errors"
+    DatabaseMetrics:
+      type: object
+      properties:
+        open_connections:
+          type: integer
+          description: "Number of open database connections"
+        idle_connections:
+          type: integer
+          description: "Number of idle connections"
+        max_connections:
+          type: integer
+          description: "Maximum connections"
+        query_count:
+          type: integer
+          description: "Total queries executed"
+    RedisMetrics:
+      type: object
+      properties:
+        connected:
+          type: boolean
+          description: "Redis connection status"
+        memory_usage:
+          type: string
+          description: "Redis memory usage"
+        key_count:
+          type: integer
+          description: "Number of keys in Redis"
+        operations_per_second:
+          type: number
+          description: "Redis operations per second"
+    ConfigResponse:
+      type: object
+      properties:
+        server:
+          $ref: "#/components/schemas/ServerConfig"
+        database:
+          $ref: "#/components/schemas/DatabaseConfig"
+        redis:
+          $ref: "#/components/schemas/RedisConfig"
+        teams:
+          $ref: "#/components/schemas/TeamsConfig"
+        actor:
+          $ref: "#/components/schemas/ActorConfig"
+    ServerConfig:
+      type: object
+      properties:
+        port:
+          type: string
+        environment:
+          type: string
+        read_timeout:
+          type: string
+        write_timeout:
+          type: string
+        rate_limit:
+          type: integer
+        burst:
+          type: integer
+    DatabaseConfig:
+      type: object
+      properties:
+        max_open_conns:
+          type: integer
+        max_idle_conns:
+          type: integer
+        conn_max_lifetime:
+          type: string
+        conn_max_idle_time:
+          type: string
+    RedisConfig:
+      type: object
+      properties:
+        pool_size:
+          type: integer
+        min_idle_conns:
+          type: integer
+        max_retries:
+          type: integer
+        timeout:
+          type: string
+    TeamsConfig:
+      type: object
+      properties:
+        app_id:
+          type: string
+        tenant_id:
+          type: string
+        base_url:
+          type: string
+        timeout:
+          type: string
+    ActorConfig:
+      type: object
+      properties:
+        max_actors:
+          type: integer
+        poll_interval:
+          type: string
+        retry_delay:
+          type: string
+        max_retries:
+          type: integer
+        circuit_breaker:
+          $ref: "#/components/schemas/CircuitBreakerConfig"
+    CircuitBreakerConfig:
+      type: object
+      properties:
+        failure_threshold:
+          type: integer
+        recovery_timeout:
+          type: string
+        half_open_max_calls:
+          type: integer
+    ConfigValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: "Whether configuration is valid"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigError"
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigWarning"
+    ConfigError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: "Configuration field name"
+        message:
+          type: string
+          description: "Error message"
+        code:
+          type: string
+          description: "Error code"
+    ConfigWarning:
+      type: object
+      properties:
+        field:
+          type: string
+          description: "Configuration field name"
+        message:
+          type: string
+          description: "Warning message"
+        suggestion:
+          type: string
+          description: "Suggested improvement"
     Company:
       type: object
       properties:
@@ -2003,6 +2759,59 @@ components:
           example: "Invalid request format"
         code:
           type: string
+          description: "Error code for programmatic handling"
+          example: "VALIDATION_FAILED"
+        details:
+          type: string
+          description: "Additional error details"
+          example: "Field 'email' is required"
+        timestamp:
+          type: string
+          format: date-time
+          description: "Error timestamp"
+        request_id:
+          type: string
+          description: "Request ID for tracing"
+          example: "req_123456789"
+    StandardErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/AppError"
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+    AppError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: "Error code"
+          enum:
+            - "UNAUTHORIZED"
+            - "INVALID_TOKEN"
+            - "TOKEN_EXPIRED"
+            - "INVALID_API_KEY"
+            - "TEAMS_AUTH_FAILED"
+            - "TEAMS_API_ERROR"
+            - "TEAMS_RATE_LIMIT"
+            - "DATABASE_ERROR"
+            - "RECORD_NOT_FOUND"
+            - "DUPLICATE_RECORD"
+            - "VALIDATION_FAILED"
+            - "INVALID_INPUT"
+            - "MISSING_FIELD"
+            - "INTERNAL_ERROR"
+            - "SERVICE_UNAVAILABLE"
+            - "TIMEOUT"
+        message:
+          type: string
+          description: "Human-readable error message"
+        cause:
+          type: string
+          description: "Underlying error cause"
           example: "VALIDATION_ERROR"
         details:
           type: object
@@ -2114,3 +2923,889 @@ components:
           format: date-time
           description: Timestamp of last state change
           example: "2025-10-01T13:50:08Z"
+
+    # Billing API Schemas
+    UsageRecordsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageRecord"
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 50
+        error:
+          type: string
+          example: ""
+
+    UsageRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        record_type:
+          type: string
+          enum: [notification, api_call, storage]
+        quantity:
+          type: integer
+        unit_cost:
+          type: number
+          format: decimal
+        total_cost:
+          type: number
+          format: decimal
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    UsageSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/UsageSummary"
+        error:
+          type: string
+          example: ""
+
+    UsageSummary:
+      type: object
+      properties:
+        total_notifications:
+          type: integer
+        total_cost:
+          type: number
+          format: decimal
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        breakdown:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              count:
+                type: integer
+              cost:
+                type: number
+                format: decimal
+
+    BillingPlansResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingPlan"
+        error:
+          type: string
+          example: ""
+
+    BillingPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price_per_notification:
+          type: number
+          format: decimal
+        price_per_month:
+          type: number
+          format: decimal
+        max_notifications_per_month:
+          type: integer
+        max_projects:
+          type: integer
+        max_users:
+          type: integer
+        features:
+          type: object
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBillingPlanRequest:
+      type: object
+      required: [name, description, price_per_notification, price_per_month]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+        price_per_notification:
+          type: number
+          format: decimal
+          minimum: 0
+        price_per_month:
+          type: number
+          format: decimal
+          minimum: 0
+        max_notifications_per_month:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+        max_projects:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        features:
+          type: object
+        is_active:
+          type: boolean
+          default: true
+
+    UpdateBillingPlanRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+        price_per_notification:
+          type: number
+          format: decimal
+          minimum: 0
+        price_per_month:
+          type: number
+          format: decimal
+          minimum: 0
+        max_notifications_per_month:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+        max_projects:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        features:
+          type: object
+        is_active:
+          type: boolean
+
+    BillingPlanResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/BillingPlan"
+        error:
+          type: string
+          example: ""
+
+    CompanyBillingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/CompanyBilling"
+        error:
+          type: string
+          example: ""
+
+    CompanyBilling:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        billing_plan_id:
+          type: string
+          format: uuid
+        billing_status:
+          type: string
+          enum: [active, suspended, cancelled]
+        payment_method:
+          type: string
+        billing_cycle:
+          type: string
+          enum: [monthly, yearly]
+        next_billing_date:
+          type: string
+          format: date
+        total_usage_cost:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AnalyticsOverviewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/AnalyticsOverview"
+        error:
+          type: string
+          example: ""
+
+    AnalyticsOverview:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+          format: decimal
+        total_notifications:
+          type: integer
+        active_companies:
+          type: integer
+        active_projects:
+          type: integer
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        trends:
+          type: object
+          properties:
+            revenue_trend:
+              type: string
+              enum: [up, down, stable]
+            notification_trend:
+              type: string
+              enum: [up, down, stable]
+
+    # File Management API Schemas
+    FileListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileInfo"
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 50
+        error:
+          type: string
+          example: ""
+
+    FileInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        file_size:
+          type: integer
+        content_type:
+          type: string
+        file_key:
+          type: string
+        file_url:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UploadFileRequest:
+      type: object
+      required: [project_id, file]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        file:
+          type: string
+          format: binary
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+          default: false
+        expires_at:
+          type: string
+          format: date-time
+
+    UploadMultipleFilesRequest:
+      type: object
+      required: [project_id, files]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+          default: false
+        expires_at:
+          type: string
+          format: date-time
+
+    FileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/FileInfo"
+        error:
+          type: string
+          example: ""
+
+    FileUploadMultipleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileInfo"
+        errors:
+          type: array
+          items:
+            type: string
+
+    FileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/FileInfo"
+        error:
+          type: string
+          example: ""
+
+    FileDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "File deleted successfully"
+        error:
+          type: string
+          example: ""
+
+    ValidateFileRequest:
+      type: object
+      required: [file_name, file_size, content_type]
+      properties:
+        file_name:
+          type: string
+        file_size:
+          type: integer
+          minimum: 1
+        content_type:
+          type: string
+
+    ValidateFileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        valid:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "File is valid"
+        error:
+          type: string
+          example: ""
+
+    # Batch Notification API Schemas
+    SendBatchNotificationsRequest:
+      type: object
+      required: [project_id, message_type, content, priority, targets]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        message_type:
+          type: string
+          enum: [text, file, adaptive_card]
+        content:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high]
+        mentions:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTarget"
+          minItems: 1
+        template_id:
+          type: string
+          format: uuid
+        schedule_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        max_retries:
+          type: integer
+          default: 3
+        retry_delay:
+          type: string
+          format: duration
+
+    BatchTarget:
+      type: object
+      properties:
+        destination_id:
+          type: string
+          format: uuid
+        conversation_id:
+          type: string
+        user_id:
+          type: string
+        email:
+          type: string
+        custom_data:
+          type: object
+
+    SendBatchNotificationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/BatchResult"
+        error:
+          type: string
+          example: ""
+
+    BatchResult:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        total_targets:
+          type: integer
+        processed_targets:
+          type: integer
+        successful_targets:
+          type: integer
+        failed_targets:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BatchStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/BatchStatus"
+        error:
+          type: string
+          example: ""
+
+    BatchStatus:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        total_targets:
+          type: integer
+        processed_targets:
+          type: integer
+        successful_targets:
+          type: integer
+        failed_targets:
+          type: integer
+        progress_percentage:
+          type: number
+          format: float
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BatchResultsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/BatchResults"
+        error:
+          type: string
+          example: ""
+
+    BatchResults:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTargetResult"
+        summary:
+          $ref: "#/components/schemas/BatchSummary"
+
+    BatchTargetResult:
+      type: object
+      properties:
+        target_id:
+          type: string
+        destination_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, sent, failed, cancelled]
+        success:
+          type: boolean
+        error_message:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        retry_count:
+          type: integer
+
+    BatchSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        successful:
+          type: integer
+        failed:
+          type: integer
+        pending:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+
+    CancelBatchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Batch cancelled successfully"
+        error:
+          type: string
+          example: ""
+
+    BatchTemplatesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTemplate"
+        total:
+          type: integer
+        error:
+          type: string
+          example: ""
+
+    BatchTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        message_type:
+          type: string
+          enum: [text, file, adaptive_card]
+        content:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high]
+        mentions:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTarget"
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBatchTemplateRequest:
+      type: object
+      required:
+        [
+          name,
+          description,
+          project_id,
+          message_type,
+          content,
+          priority,
+          targets,
+        ]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+        project_id:
+          type: string
+          format: uuid
+        message_type:
+          type: string
+          enum: [text, file, adaptive_card]
+        content:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high]
+        mentions:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTarget"
+          minItems: 1
+        is_active:
+          type: boolean
+          default: true
+
+    UpdateBatchTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+        message_type:
+          type: string
+          enum: [text, file, adaptive_card]
+        content:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high]
+        mentions:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchTarget"
+        is_active:
+          type: boolean
+
+    BatchTemplateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/BatchTemplate"
+        error:
+          type: string
+          example: ""
+
+    BatchTemplateDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Batch template deleted successfully"
+        error:
+          type: string
+          example: ""

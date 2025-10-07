@@ -100,13 +100,18 @@ func main() {
 	notificationDestRepo := repositories.NewNotificationDestinationRepository(db)
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
 
+	// Initialize Token Manager for Teams API token caching
+	tokenManager := services.NewTokenManager(redisClient)
+	logger.Info("Token Manager initialized successfully")
+
 	// Initialize Redis Queue
 	redisQueue := actor.NewRedisQueue(redisClient)
 	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, redisQueue)
 
 	// Initialize Actor Pool for async notification sending
 	actorDB := actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo)
-	actorPool := actor.NewActorPool(redisClient, actorDB, 10, 10*time.Second) // Max 10 actors, 10s poll interval
+	tokenManagerAdapter := services.NewTokenManagerAdapter(tokenManager)
+	actorPool := actor.NewActorPool(redisClient, actorDB, tokenManagerAdapter, 10, 3*time.Second) // Max 10 actors, 3s poll interval
 	actorPool.Start(ctx)
 	defer actorPool.Stop()
 	logger.Info("Actor Pool started successfully")

@@ -438,14 +438,14 @@ func (s *batchService) processBatch(ctx context.Context, batchID uuid.UUID) {
 	for _, target := range targets {
 		// Create notification for this target
 		notificationReq := &SendNotificationRequest{
-			ProjectID:    batch.ProjectID,
-			SenderID:     batch.SenderID,
-			MessageType:  batch.MessageType,
-			Content:      batch.Content,
-			Priority:     batch.Priority,
-			Mentions:     []string(batch.Mentions),
-			Metadata:     map[string]any(batch.Metadata),
-			Destinations: []uuid.UUID{}, // Will be determined by target
+			ProjectID:   batch.ProjectID,
+			SenderID:    batch.SenderID,
+			MessageType: batch.MessageType,
+			Content:     batch.Content,
+			Priority:    batch.Priority,
+			Mentions:    []string(batch.Mentions),
+			Metadata:    map[string]any(batch.Metadata),
+			Targets:     []string{}, // Will be determined by target
 		}
 
 		// If target has destination ID, use it

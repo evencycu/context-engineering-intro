@@ -816,7 +816,7 @@ type SendNotificationRequest struct {
 	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
 	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
 	Metadata     map[string]any         `json:"metadata"`
-	Destinations []uuid.UUID            `json:"destinations" validate:"omitempty,min=1"`
+	Targets      []string               `json:"targets" validate:"omitempty,min=1"`
 }
 
 // BaseService provides common service functionality
@@ -1299,14 +1299,16 @@ func NewNotificationService(repo repositories.NotificationRepository, destinatio
 	}
 }
 
+type QueueEnqueuer interface {
+	Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
+}
+
 type notificationService struct {
 	repo                 repositories.NotificationRepository
 	destinationRepo      repositories.DestinationRepository
 	notificationDestRepo repositories.NotificationDestinationRepository
 	broadcaster          BroadcastService
-	redisQueue           interface {
-		Enqueue(ctx context.Context, ndID uuid.UUID, p actor.Priority) error
-	}
+	redisQueue           QueueEnqueuer
 }
 
 // Create creates a new notification
@@ -1435,10 +1437,26 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	if err != nil {
 		return nil, err
 	}
+	// handle filter
+	filterFlag := len(req.Targets) > 0
+	filterList := make([]string, 0)
+	if filterFlag {
+		for _, rt := range req.Targets {
+			if strings.ToLower(rt) == "all" {
+				filterFlag = false
+				break
+			}
+			filterList = append(filterList, rt)
+		}
+	}
+
+	if filterFlag {
+		destinations = filterDestinations(destinations, filterList)
+	}
 
 	// Create notification_destinations entries for each target in destinations
 	// Each Teams target gets its own notification_destination record
-	if len(destinations) > 0 && s.notificationDestRepo != nil {
+	if len(destinations) > 0 {
 		var nds []*database.NotificationDestination
 		for _, d := range destinations {
 			for _, t := range d.Targets {
@@ -1489,6 +1507,24 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	// This will be implemented when ActorPool is wired in
 
 	return notification, nil
+}
+
+func filterDestinations(destinations []*database.Destination, targets []string) []*database.Destination {
+	filteredDestinations := make([]*database.Destination, 0)
+	for _, d := range destinations {
+		for _, t := range targets {
+			if strings.Contains(t, "@") {
+				if strings.ToLower(t) == strings.ToLower(d.Targets[0].Email) {
+					filteredDestinations = append(filteredDestinations, d)
+				}
+			} else {
+				if strings.ToLower(t) == strings.ToLower(d.Targets[0].ConversationID) {
+					filteredDestinations = append(filteredDestinations, d)
+				}
+			}
+		}
+	}
+	return filteredDestinations
 }
 
 // RetryNotification retries a failed notification

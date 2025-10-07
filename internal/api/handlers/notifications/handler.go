@@ -50,7 +50,7 @@ type SendNotificationRequest struct {
 	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
 	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
 	Metadata     map[string]interface{} `json:"metadata"`
-	Destinations []uuid.UUID            `json:"destinations" validate:"required,min=1"`
+	Targets      []string               `json:"targets" validate:"omitempty,min=1"`
 }
 
 // SendNotificationResponse represents a send notification response
@@ -104,7 +104,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 		AdaptiveCard: req.AdaptiveCard,
 		Priority:     req.Priority,
 		Metadata:     req.Metadata,
-		Destinations: req.Destinations,
+		Targets:      req.Targets,
 	}
 
 	// Send notification
@@ -122,7 +122,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 		NotificationID: notification.ID,
 		Status:         notification.Status,
 		Message:        "Notification queued successfully",
-		Destinations:   len(req.Destinations),
+		Destinations:   len(req.Targets),
 	}
 
 	// Add estimated delivery time based on priority
