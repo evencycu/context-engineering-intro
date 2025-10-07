@@ -494,7 +494,7 @@ func (a *NotificationActor) classifyFailure(statusCode int) string {
 	}
 }
 
-// scheduleRetry schedules the next retry
+// scheduleRetry schedules the next retry by re-enqueueing into Redis after backoff
 func (a *NotificationActor) scheduleRetry(ctx context.Context, failureReason string, retryAfter *int, err error) {
 	nextRetryAt := a.getNextRetryTime(a.CurrentRetry, retryAfter)
 
@@ -503,9 +503,8 @@ func (a *NotificationActor) scheduleRetry(ctx context.Context, failureReason str
 		errMsg = err.Error()
 	}
 
-	failedStatus := "failed"
+	// Keep status as processing while scheduling retry; update counters and observability fields
 	a.DB.UpdateNotificationDestination(ctx, a.NotificationDestID, &NotificationDestinationUpdate{
-		Status:        &failedStatus,
 		ErrorMessage:  &errMsg,
 		RetryCount:    &a.CurrentRetry,
 		NextRetryAt:   nextRetryAt,
@@ -513,8 +512,27 @@ func (a *NotificationActor) scheduleRetry(ctx context.Context, failureReason str
 		RetryAfter:    retryAfter,
 	})
 
-	log.Printf("[%s] Scheduled retry at %v (retry %d/%d, reason: %s)",
-		a.ID, nextRetryAt, a.CurrentRetry, a.MaxRetries, failureReason)
+	// Choose queue priority: prioritize 429 (rate limit) as high; otherwise normal
+	queueKey := "queue:notifications:normal"
+	if failureReason == "rate_limit" {
+		queueKey = "queue:notifications:high"
+	}
+
+	// Remove processing lock before re-enqueueing
+	processingKey := fmt.Sprintf("queue:notifications:processing:%s", a.NotificationDestID)
+
+	// Re-enqueue after backoff in a separate goroutine to avoid blocking actor shutdown
+	go func(nd uuid.UUID, delay time.Duration, qKey, procKey string) {
+		timer := time.NewTimer(delay)
+		defer timer.Stop()
+		<-timer.C
+		// best-effort: clear processing key and push back to queue
+		_ = a.Redis.Del(context.Background(), procKey).Err()
+		_ = a.Redis.LPush(context.Background(), qKey, nd.String()).Err()
+	}(a.NotificationDestID, time.Until(*nextRetryAt), queueKey, processingKey)
+
+	log.Printf("[%s] Scheduled re-enqueue at %v (retry %d/%d, reason: %s, queue=%s)",
+		a.ID, nextRetryAt, a.CurrentRetry, a.MaxRetries, failureReason, queueKey)
 }
 
 // getNextRetryTime calculates the next retry time

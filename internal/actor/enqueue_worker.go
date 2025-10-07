@@ -15,7 +15,7 @@ type NotificationDestinationRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
-// EnqueueWorker moves ND from pending -> processing by pushing to Redis
+// EnqueueWorker moves ND from pending -> enqueued by pushing to Redis
 type EnqueueWorker struct {
 	repo     NotificationDestinationRepository
 	queue    RedisQueue
@@ -73,7 +73,7 @@ func (w *EnqueueWorker) scanOnce(ctx context.Context) {
 			log.Printf("EnqueueWorker: enqueue %s failed: %v", nd.ID, err)
 			continue // keep pending; no retry here per spec
 		}
-		if err := w.repo.UpdateStatus(ctx, nd.ID, "processing"); err != nil {
+		if err := w.repo.UpdateStatus(ctx, nd.ID, "enqueued"); err != nil {
 			log.Printf("EnqueueWorker: update status for %s failed: %v", nd.ID, err)
 		}
 	}
