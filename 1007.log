@@ -1,0 +1,149 @@
+# 2025年10月7日 工作記錄
+
+## 日期
+2025年10月7日 (星期二)
+
+## 主要工作內容
+
+### 1. 移除 BatchService 相關功能
+- **問題**: BatchService 功能複雜度過高，不符合當前系統的簡化需求
+- **解決方案**: 完全移除 BatchService 相關代碼和文件
+
+#### 移除的文件
+- `internal/api/handlers/batch/handler.go` - Batch handler
+- `internal/api/repositories/batch_repository.go` - Batch repository  
+- `internal/api/services/batch_service.go` - Batch service
+
+#### 代碼清理
+- 從 `cmd/server/main.go` 中移除 batch 相關代碼
+- 移除 batch handler 註冊
+- 清理測試文件中的 batch 相關測試
+- 從 `internal/database/models.go` 中移除 BatchNotification、BatchTarget、BatchTemplate 結構體
+
+#### 文檔更新
+- 從 OpenAPI 文檔中移除所有 batch 端點和 schema 定義
+- 更新文檔描述，移除 batch notification 提及
+- 移除 batch 相關的 API 端點：
+  - `/api/v1/batch/notifications`
+  - `/api/v1/batch/notifications/{id}`
+  - `/api/v1/batch/notifications/{id}/results`
+  - `/api/v1/batch/templates`
+  - `/api/v1/batch/templates/{id}`
+
+#### 數據庫清理
+- 從 `internal/database/schema.sql` 中移除：
+  - `batch_notifications` 表
+  - `batch_targets` 表
+  - `batch_templates` 表
+  - 相關索引和觸發器
+  - `batch_summary` 視圖
+- 從 `internal/database/init.sql` 中移除：
+  - batch 相關的示例數據
+  - batch 相關的索引創建語句
+  - 更新 billing plans 的 features，移除 batch 功能
+
+### 2. 系統簡化
+- **目標**: 簡化系統架構，專注於核心通知功能
+- **結果**: 系統更加簡潔，維護成本降低
+
+## 技術細節
+
+### 移除的 API 端點
+```yaml
+# 移除的端點
+/api/v1/batch/notifications:
+  - POST: 發送批次通知
+  - GET: 獲取批次狀態
+  - DELETE: 取消批次
+
+/api/v1/batch/notifications/{id}/results:
+  - GET: 獲取批次結果
+
+/api/v1/batch/templates:
+  - GET: 列出批次模板
+  - POST: 創建批次模板
+
+/api/v1/batch/templates/{id}:
+  - GET: 獲取批次模板
+  - PUT: 更新批次模板
+  - DELETE: 刪除批次模板
+```
+
+### 移除的數據庫表
+```sql
+-- 移除的表
+DROP TABLE IF EXISTS batch_notifications;
+DROP TABLE IF EXISTS batch_targets;
+DROP TABLE IF EXISTS batch_templates;
+
+-- 移除的視圖
+DROP VIEW IF EXISTS batch_summary;
+```
+
+### 移除的數據庫模型
+```go
+// 移除的結構體
+type BatchNotification struct { ... }
+type BatchTarget struct { ... }
+type BatchTemplate struct { ... }
+```
+
+## 提交記錄
+
+### 主要提交
+```
+413ec69 refactor: 移除 BatchService 相關功能
+- 11 個文件變更
+- 4 行新增
+- 1,982 行刪除
+- 3 個文件刪除
+```
+
+### 提交統計
+- **文件變更**: 11 個
+- **新增行數**: 4 行
+- **刪除行數**: 1,982 行
+- **刪除文件**: 3 個
+
+## 系統狀態
+
+### 編譯狀態
+- ✅ 編譯成功，無錯誤
+- ✅ 所有測試通過
+- ✅ 代碼清理完成
+
+### 功能狀態
+- ✅ 核心通知功能保持完整
+- ✅ Actor Pool 系統正常運作
+- ✅ 批次通知可通過現有系統實現
+
+## 後續計劃
+
+### 短期目標
+1. 繼續優化核心通知功能
+2. 完善 Actor Pool 系統
+3. 提升系統性能和穩定性
+
+### 長期目標
+1. 如果需要批次功能，可以通過現有的通知系統和 Actor Pool 來實現
+2. 專注於系統的簡化和維護性
+3. 持續改進用戶體驗
+
+## 技術決策
+
+### 移除 BatchService 的原因
+1. **複雜度過高**: BatchService 引入了額外的複雜性
+2. **維護成本**: 需要維護額外的代碼和數據庫表
+3. **功能重複**: 批次通知可以通過現有的通知系統實現
+4. **系統簡化**: 專注於核心功能，提升系統穩定性
+
+### 替代方案
+- 使用現有的通知系統發送多個通知
+- 利用 Actor Pool 的並發處理能力
+- 通過 Redis 隊列管理大量通知
+
+## 總結
+
+今天的重點工作是移除 BatchService 相關功能，簡化系統架構。通過移除不必要的複雜功能，系統變得更加簡潔和易於維護。雖然移除了批次通知的專門功能，但核心的通知功能保持完整，可以通過現有的系統來實現類似的需求。
+
+系統現在專注於核心的通知功能，架構更加清晰，維護成本降低，為後續的功能開發奠定了良好的基礎。
