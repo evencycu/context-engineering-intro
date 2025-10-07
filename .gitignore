@@ -2,7 +2,8 @@ venv
 venv_linux
 __pycache__
 .ruff_cache
-.pytest_cacheserver
+.pytest_cache
+server
 *.log
 nohup.out
 /bin/

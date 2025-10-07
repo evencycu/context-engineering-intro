@@ -19,7 +19,6 @@ func TestFileService_Creation(t *testing.T) {
 	assert.NotNil(t, service)
 }
 
-
 // TestFileService_ValidateFile_Simple tests the ValidateFile method with simple validation
 func TestFileService_ValidateFile_Simple(t *testing.T) {
 	service := NewFileService(nil, nil)
