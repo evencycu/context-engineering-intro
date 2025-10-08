@@ -42,6 +42,7 @@ type NotificationActor struct {
 	LastError          error
 	StopChan           chan struct{}
 	DoneChan           chan *ActorResult
+	Priority           string
 }
 
 // TokenManager interface for token management
@@ -512,11 +513,12 @@ func (a *NotificationActor) scheduleRetry(ctx context.Context, failureReason str
 		RetryAfter:    retryAfter,
 	})
 
-	// Choose queue priority: prioritize 429 (rate limit) as high; otherwise normal
-	queueKey := "queue:notifications:normal"
-	if failureReason == "rate_limit" {
-		queueKey = "queue:notifications:high"
+	// Choose queue priority: respect original ND priority; bump to high on 429
+	effectivePriority := a.Priority
+	if effectivePriority == "" {
+		effectivePriority = "normal"
 	}
+	queueKey := fmt.Sprintf("queue:notifications:%s", effectivePriority)
 
 	// Remove processing lock before re-enqueueing
 	processingKey := fmt.Sprintf("queue:notifications:processing:%s", a.NotificationDestID)

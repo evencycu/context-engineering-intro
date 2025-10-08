@@ -121,6 +121,8 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 	}
 
 	p.actors[notificationDestID] = actor
+	// propagate original priority from ND
+	actor.Priority = nd.Priority
 	actor.Start(ctx)
 
 	log.Printf("Spawned actor %s for notification_dest=%s (pool: %d/%d)",
