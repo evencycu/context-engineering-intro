@@ -82,26 +82,26 @@
 
 ### 文檔（7 個文件）
 
-12. **docs/QUEUE_CIRCUIT_BREAKER.md** (483 行)
+12. **docs/02_ARCHITECTURE/queue-system-detailed.md** (佇列系統詳述)
     - 完整技術文檔
     - 架構設計
     - 工作流程
     - 配置說明
     - 監控維護
 
-13. **docs/QUICK_START_QUEUE.md** (232 行)
+13. **docs/05_DEPLOYMENT/DeploymentGuide.md** (部署指南)
     - 快速開始指南
     - 安裝步驟
     - 使用範例
     - 故障排查
 
-14. **docs/QUEUE_API_EXAMPLES.md** (424 行)
+14. **docs/03_DESIGN/SystemDesign.md** (系統設計文檔)
     - API 使用範例
     - curl 命令
     - 測試腳本
     - 資料庫查詢
 
-15. **docs/DATABASE_CONFIG.md** (281 行)
+15. **docs/03_DESIGN/ERD.md** (資料庫設計)
     - 資料庫配置說明
     - 連接字串
     - Migration 管理
@@ -503,10 +503,10 @@ JitterFraction: 0.1                 // 10% 抖動
 
 ## 📚 文檔連結
 
-1. [Queue 完整文檔](./docs/QUEUE_CIRCUIT_BREAKER.md)
-2. [快速開始指南](./docs/QUICK_START_QUEUE.md)
-3. [API 使用範例](./docs/QUEUE_API_EXAMPLES.md)
-4. [資料庫配置](./docs/DATABASE_CONFIG.md)
+1. [佇列系統詳述](../02_ARCHITECTURE/queue-system-detailed.md)
+2. [部署指南](../05_DEPLOYMENT/DeploymentGuide.md)
+3. [系統設計文檔](../03_DESIGN/SystemDesign.md)
+4. [資料庫設計](../03_DESIGN/ERD.md)
 5. [遷移總結](./MIGRATION_SUMMARY.md)
 6. [測試報告](./TEST_RESULTS.md)
 7. [變更日誌](./CHANGELOG_QUEUE.md)

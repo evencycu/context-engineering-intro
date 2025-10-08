@@ -379,11 +379,15 @@ docker run -d \
 
 ## 📚 Additional Documentation
 
-- **[Queue & Circuit Breaker Guide](./docs/QUEUE_CIRCUIT_BREAKER.md)** - 完整的失敗重試隊列和熔斷器機制說明
-- **[Queue Quick Start](./docs/QUICK_START_QUEUE.md)** - Queue 功能快速開始指南
-- **[API Documentation](./docs/API_README.md)** - 完整的 API 文檔
-- **[Architecture](./docs/ARCHITECTURE.md)** - 系統架構說明
-- **[Testing Guide](./docs/TEST_README.md)** - 測試指南
+- **[系統架構文檔](./docs/02_ARCHITECTURE/Architecture.md)** - 完整的系統架構說明
+- **[佇列系統詳述](./docs/02_ARCHITECTURE/queue-system-detailed.md)** - 佇列和熔斷器機制說明
+- **[Teams Token 快取](./docs/02_ARCHITECTURE/teams-token-cache-detailed.md)** - Teams Token 快取機制
+- **[系統設計文檔](./docs/03_DESIGN/SystemDesign.md)** - 系統設計詳述
+- **[資料庫設計](./docs/03_DESIGN/ERD.md)** - 資料庫實體關係圖
+- **[測試指南](./docs/04_TEST/TestPlan.md)** - 完整的測試計劃
+- **[部署指南](./docs/05_DEPLOYMENT/DeploymentGuide.md)** - 部署和配置指南
+- **[用戶手冊](./docs/06_USER_GUIDE/UserManual.md)** - 用戶使用指南
+- **[開發指南](./docs/07_DEVELOPMENT/DevelopmentGuide.md)** - 開發環境和流程指南
 
 ## 🔄 Queue & Circuit Breaker (新功能)
 
@@ -424,7 +428,7 @@ curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset
 - ✅ **持久化隊列**: 使用資料庫持久化，防止數據丟失
 - ✅ **可觀測性**: 提供監控 API 和指標
 
-詳細說明請參考: [Queue & Circuit Breaker Guide](./docs/QUEUE_CIRCUIT_BREAKER.md)
+詳細說明請參考: [佇列系統詳述](./docs/02_ARCHITECTURE/queue-system-detailed.md)
 
 ## 📄 License
 

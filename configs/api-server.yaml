@@ -142,7 +142,6 @@ security:
 
 # Feature Flags
 features:
-  batch_notifications: true
   scheduled_notifications: true
   file_attachments: true
   mentions: true

@@ -1,6 +1,6 @@
 # TeamsNotifyGoV2 Makefile
 
-.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate db-reset openapi-start openapi-stop openapi-status openapi-open
+.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate db-reset openapi-start openapi-stop openapi-status openapi-open test-e2e test-load test-api test-report test-full
 
 # Default target
 help:
@@ -14,6 +14,13 @@ help:
 	@echo "  run            - Run the application"
 	@echo "  test           - Run tests"
 	@echo "  clean          - Clean build artifacts"
+	@echo ""
+	@echo "E2E Testing:"
+	@echo "  test-e2e       - Run E2E tests"
+	@echo "  test-load      - Run load tests"
+	@echo "  test-api       - Run API tests"
+	@echo "  test-report    - Generate test reports"
+	@echo "  test-full      - Run full E2E test suite"
 	@echo ""
 	@echo "OpenAPI Documentation:"
 	@echo "  openapi-start  - Start OpenAPI server (Swagger UI)"
@@ -100,3 +107,25 @@ openapi-status:
 openapi-open:
 	@echo "Opening Swagger UI in browser..."
 	./scripts/openapi.sh open
+
+# E2E Testing
+test-e2e:
+	@echo "Running E2E tests..."
+	./scripts/testing/run_e2e_tests.sh e2e
+
+test-load:
+	@echo "Running load tests..."
+	./scripts/testing/run_e2e_tests.sh load
+
+test-api:
+	@echo "Running API tests..."
+	./scripts/testing/run_e2e_tests.sh api
+
+test-report:
+	@echo "Generating test reports..."
+	./scripts/testing/generate_test_report.sh generate
+
+# Full E2E test suite
+test-full:
+	@echo "Running full E2E test suite..."
+	./scripts/testing/run_e2e_tests.sh run
