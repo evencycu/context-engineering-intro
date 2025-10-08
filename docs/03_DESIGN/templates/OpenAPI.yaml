@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: Notification API
+  version: "1.0.0"
+  description: Minimal API spec for Teams notification backend (create, query, health, webhook).
+servers:
+  - url: https://api.example.com
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+
+  /notifications:
+    post:
+      summary: Create a notification job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Too Many Requests
+
+  /notifications/{id}:
+    get:
+      summary: Get notification status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationStatus'
+        '404':
+          description: Not found
+
+  /webhook/teams:
+    post:
+      summary: Inbound Teams message webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+
+components:
+  schemas:
+    CreateNotificationRequest:
+      type: object
+      required: [channelType, destination, content]
+      properties:
+        requestId:
+          type: string
+          description: Optional idempotency key
+        channelType:
+          type: string
+          enum: [personal, groupChat, channel]
+        destination:
+          type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              description: chatId / teamId+channelId / userAadId
+            tenantId:
+              type: string
+        content:
+          type: object
+          required: [type, body]
+          properties:
+            type:
+              type: string
+              enum: [text, adaptiveCard]
+            body:
+              type: string
+              description: html or card JSON string
+    JobAccepted:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          example: queued
+    NotificationStatus:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, sent, failed, retrying]
+        lastError:
+          type: string
+          nullable: true
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
