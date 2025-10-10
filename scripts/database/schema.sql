@@ -228,41 +228,6 @@ CREATE TABLE bot_health_status (
 );
 
 -- =============================================
--- Third Party Bot API Management
--- =============================================
-
--- Third Party Bot API Keys
-CREATE TABLE third_party_bot_api_keys (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    bot_id UUID NOT NULL REFERENCES third_party_bots(id) ON DELETE CASCADE,
-    notify_key VARCHAR(255) NOT NULL,
-    api_key_hash VARCHAR(255) NOT NULL,
-    permissions JSONB DEFAULT '{}'::jsonb,
-    rate_limit_per_minute INTEGER DEFAULT 100,
-    expires_at TIMESTAMP WITH TIME ZONE,
-    is_active BOOLEAN DEFAULT true,
-    created_by UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Third Party Bot API Usage
-CREATE TABLE third_party_bot_api_usage (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    bot_id UUID NOT NULL REFERENCES third_party_bots(id),
-    api_key_id UUID REFERENCES third_party_bot_api_keys(id),
-    endpoint VARCHAR(255) NOT NULL,
-    method VARCHAR(10) NOT NULL,
-    status_code INTEGER,
-    response_time_ms INTEGER,
-    request_size_bytes INTEGER,
-    response_size_bytes INTEGER,
-    ip_address INET,
-    user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- =============================================
 -- Billing and Usage Tables
 -- =============================================
 
@@ -463,11 +428,6 @@ CREATE INDEX idx_bot_health_status_bot_type ON bot_health_status(bot_type);
 CREATE INDEX idx_bot_health_status_status ON bot_health_status(status);
 CREATE INDEX idx_bot_health_status_last_check ON bot_health_status(last_check_at);
 
--- Third Party Bot API Usage indexes
-CREATE INDEX idx_third_party_bot_api_usage_bot_id ON third_party_bot_api_usage(bot_id);
-CREATE INDEX idx_third_party_bot_api_usage_created_at ON third_party_bot_api_usage(created_at);
-CREATE INDEX idx_third_party_bot_api_usage_endpoint ON third_party_bot_api_usage(endpoint);
-
 -- Usage Records indexes
 CREATE INDEX idx_usage_records_company_id ON usage_records(company_id);
 CREATE INDEX idx_usage_records_project_id ON usage_records(project_id);
@@ -523,7 +483,7 @@ CREATE TRIGGER update_destinations_updated_at BEFORE UPDATE ON destinations FOR 
 CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notification_destinations_updated_at BEFORE UPDATE ON notification_destinations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bot_routing_rules_updated_at BEFORE UPDATE ON bot_routing_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_third_party_bot_api_keys_updated_at BEFORE UPDATE ON third_party_bot_api_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- (removed third party bot api keys trigger)
 CREATE TRIGGER update_company_billing_updated_at BEFORE UPDATE ON company_billing FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -574,11 +534,11 @@ SELECT
 FROM teams_bots tb
 LEFT JOIN bot_installations bi 
   ON bi.bot_id = tb.id 
- AND bi.bot_type = CASE WHEN tb.type='platform' THEN 'platform' ELSE 'third_party' END
+ AND bi.bot_type = CASE WHEN tb.type='platform' THEN 'platform'::bot_type ELSE 'third_party'::bot_type END
 LEFT JOIN LATERAL (
     SELECT status, last_check_at, response_time_ms
     FROM bot_health_status bhs
-    WHERE bhs.bot_id = tb.id AND bhs.bot_type = CASE WHEN tb.type='platform' THEN 'platform' ELSE 'third_party' END
+    WHERE bhs.bot_id = tb.id AND bhs.bot_type = CASE WHEN tb.type='platform' THEN 'platform'::bot_type ELSE 'third_party'::bot_type END
     ORDER BY last_check_at DESC
     LIMIT 1
 ) h ON true
@@ -621,19 +581,12 @@ GROUP BY f.project_id, p.notify_key, p.company_id, c.name;
 
 -- Bot installations indexes
 CREATE INDEX idx_bot_installations_bot_tenant ON bot_installations(bot_id, bot_type, teams_tenant_id);
-CREATE INDEX idx_bot_installations_scope_status ON bot_installations(scope, installation_status);
-CREATE INDEX idx_bot_installations_conversation ON bot_installations(conversation_id);
-CREATE INDEX idx_bot_installations_team_channel ON bot_installations(teams_team_id, teams_channel_id) WHERE teams_team_id IS NOT NULL;
-CREATE INDEX idx_bot_installations_chat ON bot_installations(teams_chat_id) WHERE teams_chat_id IS NOT NULL;
-CREATE INDEX idx_bot_installations_user ON bot_installations(teams_user_id) WHERE teams_user_id IS NOT NULL;
-CREATE INDEX idx_bot_installations_activity ON bot_installations(last_activity_at) WHERE last_activity_at IS NOT NULL;
+-- removed invalid legacy indexes (scope, teams_* columns not present)
 
 -- Destinations targets indexes (GIN for JSONB queries)
 CREATE INDEX idx_destinations_targets_gin ON destinations USING GIN(targets);
-CREATE INDEX idx_destinations_tenant_status ON destinations(teams_tenant_id, status);
 
 -- Notifications indexes
-CREATE INDEX idx_notifications_project_status ON notifications(project_id, status);
 CREATE INDEX idx_notifications_sender ON notifications(sender_id);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 

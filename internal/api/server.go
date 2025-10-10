@@ -14,14 +14,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
 )
 
@@ -83,6 +87,26 @@ func NewServer(cfg Config) *Server {
 			"status":    "healthy",
 			"timestamp": time.Now().UTC(),
 			"version":   "1.0.0",
+		})
+	})
+
+	// System endpoints (no authentication required for monitoring)
+	router.GET("/metrics", func(c *gin.Context) {
+		// This will be handled by the system handler
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Metrics endpoint - will be implemented by system handler",
+		})
+	})
+	router.GET("/config", func(c *gin.Context) {
+		// This will be handled by the system handler
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Config endpoint - will be implemented by system handler",
+		})
+	})
+	router.POST("/config/validate", func(c *gin.Context) {
+		// This will be handled by the system handler
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Config validation endpoint - will be implemented by system handler",
 		})
 	})
 
@@ -157,6 +181,10 @@ func (s *Server) RegisterRoutes(
 	messagesHandler *messages.Handler,
 	provisionHandler *provision.Handler,
 	externalHandler *external.Handler,
+	systemHandler *system.Handler,
+	billingHandler *billing.Handler,
+	fileHandler *files.Handler,
+	queueHandler *queue.Handler,
 ) {
 	// API v1 routes
 	v1 := s.router.Group("/api/v1")
@@ -238,6 +266,18 @@ func (s *Server) RegisterRoutes(
 
 		// External API routes
 		externalHandler.RegisterRoutes(v1)
+
+		// System routes
+		systemHandler.RegisterRoutes(v1)
+
+		// Billing routes
+		billingHandler.RegisterRoutes(v1)
+
+		// File routes
+		fileHandler.RegisterRoutes(v1)
+
+		// Queue routes
+		queueHandler.RegisterRoutes(v1)
 
 	}
 }

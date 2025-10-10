@@ -1,0 +1,1143 @@
+commit b80e7dd66420cd60203fef7e376dfb8dfe65e59d
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 16:18:17 2025 +0800
+
+    dump_zsh_state
+
+commit 50ecd95225a4e6a40e76d0312dd8e4d4f9ab90c8
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 15:47:47 2025 +0800
+
+    feat: 建立完整的 E2E 測試方案並重組文檔結構
+    
+    - 建立完整的 E2E 測試框架
+      - 新增 E2E 測試腳本 (e2e_test.sh, load_test.js, setup_test_env.sh, generate_test_report.sh, run_e2e_tests.sh)
+      - 新增 E2E 測試文檔 (E2E_TestGuide.md, README.md)
+      - 整合 E2E 測試到 Makefile (test-e2e, test-load, test-api, test-report, test-full)
+    
+    - 重組文檔目錄結構
+      - 簡化為 6 個主要分類 (01_REQUIREMENTS, 02_ARCHITECTURE, 03_DESIGN, 04_TEST, 05_DEPLOYMENT, 06_USER_GUIDE, 07_DEVELOPMENT)
+      - 將 04_API 和 05_DB 合併到 03_DESIGN
+      - 更新文檔引用和路徑
+    
+    - 測試執行結果
+      - E2E 測試：15/15 通過 (100%)
+      - 修正資料庫名稱問題 (teamsnotify → notification_center)
+      - 修正用戶資料約束問題 (role, status 欄位)
+      - 修正報告生成腳本問題
+    
+    - 文檔更新
+      - 更新 README.md 中的文檔連結
+      - 更新 changelog.md 中的路徑引用
+      - 建立新的文檔結構和引用
+    
+    - 清理舊文檔
+      - 移除重複和過時的文檔
+      - 整理文檔結構
+      - 更新配置檔案
+
+commit 4e4ef8478acffb8381a8480ca16a47d430dae1d3
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 11:06:15 2025 +0800
+
+    docs: 重新整理 02_ARCHITECTURE 目錄結構
+    
+    - 移除重複文檔: overview.md, system-architecture.md
+    - 重命名功能性附件: queue-system.md → queue-system-detailed.md, teams-token-cache.md → teams-token-cache-detailed.md
+    - 新增主要架構文檔: Architecture.md (基於模板和實際專案)
+    - 新增目錄說明: README.md
+    - 新增模板目錄: templates/Architecture.md
+    - 新增設計模板: 03_DESIGN/templates/
+    
+    主要改進:
+    - 以 Architecture.md 為主文檔，提供系統整體架構概覽
+    - 功能性附件提供詳細技術實作細節
+    - 避免重複內容，保持文檔結構清晰
+    - 基於實際代碼實現，確保技術準確性
+
+commit b7bc24a0e8864c66aaabdd2b7e596485f54e94b2
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 10:12:27 2025 +0800
+
+    docs: simplify documentation structure from 8 to 6 categories
+    
+    - Merge 04_API and 05_DB into 03_DESIGN (10 files total)
+    - Renumber directories from 01-06 for better organization
+    - Consolidate API and database docs under design category
+    - Simplify structure: REQUIREMENTS, ARCHITECTURE, DESIGN, TEST, DEPLOYMENT, USER_GUIDE
+    - Improve maintainability with fewer directory levels
+
+commit 5378505dff52fbf449c1f717423d9e359cdead93
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 09:58:42 2025 +0800
+
+    docs: reorganize documentation structure and generate new requirement documents
+    
+    - Create new documentation structure with 8 main categories
+    - Generate PRD.md, SRS.md, USECASE.md based on requirements
+    - Organize existing documents into proper categories
+    - Add template files for future documentation
+    - Remove old duplicate requirement files
+    - Complete documentation reorganization for better maintainability
+
+commit 486fca77e4a22ff7abac77bb627ea1378dcb10ad
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Oct 8 09:03:12 2025 +0800
+
+    refactor: remove 429 rate limit priority boost in retry logic
+
+commit 1dc4d438060026c09230f7bc0f7012eb215bcf71
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 17:43:08 2025 +0800
+
+    feat(queue): add 'enqueued' status and use it in EnqueueWorker
+    
+    - schema: allow status IN ('pending','enqueued','processing','sent','failed','cancelled')
+    - EnqueueWorker: update status to 'enqueued' after successful enqueue
+    - NotificationActor: retry now re-enqueues to Redis after backoff (no premature failed status)
+
+commit 6b6a1fa1be0b54cc8d6f575fbd57b36c52743f5b
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 17:27:42 2025 +0800
+
+    docs: 更新 1006 工作日誌 - Golden Sample 添加
+    
+    記錄內容:
+    - 添加 Golden Sample 數據到 init.sql
+    - 3 種類型的 bot installations (personal, group chat, channel)
+    - 1 個包含所有 targets 的 destination
+    - Go 依賴更新 (viper v1.21.0)
+    - 測試驗證成功
+
+commit d0b09c091305ed6de88d63142058f335fe31b843
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 17:26:58 2025 +0800
+
+    feat: 添加 Golden Sample - 完整的 Bot Installations 和 Destination
+    
+    數據庫初始化 (init.sql) 更新:
+    
+    1. Bot Installations (3 個類型):
+       - a60e8400-...-440001: Personal conversation
+       - a60e8400-...-440002: Group chat
+       - a60e8400-...-440003: Channel
+    
+    2. Destination (All Bot Installations):
+       - ID: 950e8400-...-440003
+       - 名稱: 'All Bot Installations'
+       - 包含所有 3 種類型的 targets
+       - 可用於測試發送到所有 bot installations
+    
+    3. 完整的測試數據:
+       - Personal: a:12mhoHc_sRnffmXHY2H5EvR6...
+       - Group Chat: 19:f26a8d8a235f430db87a404491cd2ffc@thread.v2
+       - Channel: 19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2
+    
+    Go 依賴更新:
+    - 添加 github.com/spf13/viper v1.21.0 用於配置管理
+    - 更新相關依賴套件
+    
+    測試驗證:
+    ✅ 成功創建 destination
+    ✅ 成功發送訊息到 3 個 targets
+    ✅ 所有 notification_destinations 狀態為 sent
+
+commit e35501a45adf3fd469afd2b91aebe54b21e37706
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 16:59:31 2025 +0800
+
+    chore: 從 git 追蹤中移除 server 二進制文件
+    
+    - 使用 git rm --cached server 移除已追蹤的二進制文件
+    - server 現在會被 .gitignore 忽略
+    - 避免將編譯產物提交到版本控制
+
+commit e97352c90ac308a68d31b19f0f6860087722fd1d
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 16:59:02 2025 +0800
+
+    test: 更新服務層測試並修正 .gitignore
+    
+    - 更新 basic_test.go: 移除 BatchService 相關測試
+    - 更新 service_test.go: 完善服務測試覆蓋
+    - 修正 .gitignore: 分離 .pytest_cache 和 server 為兩行
+    - 確保編譯的二進制文件 (server) 不會被追蹤
+    
+    測試覆蓋:
+    - NotificationService 基本功能
+    - FileService 驗證邏輯
+    - 服務介面完整性檢查
+    - 請求結構體驗證
+
+commit 9ebcde06b548d827e3bec8bc142d787cfec4c761
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 16:56:59 2025 +0800
+
+    fix: EnqueueWorker status update from 'enqueued' to 'processing'
+    
+    - 修復 EnqueueWorker 狀態更新違反 DB check constraint 的問題
+    - 將 notification_destinations 狀態從 'enqueued' 改為 'processing'
+    - 資料庫 schema 只允許: pending, processing, sent, failed, cancelled
+    - 更新相關註釋以反映狀態流程變更
+    
+    狀態流程:
+    1. NotificationService: 創建 ND, status=pending
+    2. EnqueueWorker: enqueue 到 Redis, status=processing
+    3. QueueConsumer: dequeue 並 spawn actors
+    4. Actor: 發送到 Teams, status=sent/failed
+    
+    測試驗證:
+    ✅ notification_destinations 成功創建
+    ✅ EnqueueWorker 無錯誤
+    ✅ 訊息成功發送到 Teams
+    ✅ Redis 佇列正常運作
+    
+    相關文件:
+    - internal/actor/enqueue_worker.go: 狀態改為 processing
+    - internal/actor/notification_processor.go: 新增統一處理器
+    - internal/api/handlers/queue/: 新增佇列監控 API
+    - docs/: 更新架構與配置文檔
+    - 1006.log, 1007.log: 工作記錄
+
+commit 440e3e8817d3d87588c22ea81523d7886140ff5d
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 11:44:04 2025 +0800
+
+    docs: 更新 log 記錄方式為 append 模式
+    
+    變更:
+    - 從覆蓋模式改為追加模式
+    - 保持 log 文件的連續性
+    - 便於追蹤工作歷史
+    
+    好處:
+    - 保留完整的記錄歷史
+    - 便於查看工作進度
+    - 提高記錄的完整性
+
+commit 6d44b918f95c74f6fee15542bd821cbfcd670709
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 11:38:41 2025 +0800
+
+    docs: 記錄 2025年10月7日工作內容
+    
+    主要工作:
+    - 移除 BatchService 相關功能
+    - 簡化系統架構
+    - 清理代碼和文檔
+    - 更新數據庫 schema
+    
+    技術決策:
+    - 移除複雜的批次通知功能
+    - 專注於核心通知功能
+    - 提升系統維護性
+    
+    結果:
+    - 系統更加簡潔
+    - 維護成本降低
+    - 功能保持完整
+
+commit 413ec69fe4a3a9120c6e755e37da4430b1e5b271
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 11:32:26 2025 +0800
+
+    refactor: 移除 BatchService 相關功能
+    
+    主要變更:
+    - 刪除 BatchService 和相關的 handler、repository
+    - 從 OpenAPI 文檔中移除 batch 相關端點和 schema
+    - 從數據庫 schema 和 init.sql 中移除 batch 相關表、索引、觸發器、視圖
+    - 從數據庫模型中移除 BatchNotification、BatchTarget、BatchTemplate
+    - 更新測試文件，移除 batch 相關測試
+    - 從 main.go 中移除 batch 相關代碼
+    
+    移除的文件:
+    - internal/api/handlers/batch/handler.go
+    - internal/api/repositories/batch_repository.go
+    - internal/api/services/batch_service.go
+    
+    原因:
+    BatchService 功能複雜度過高，不符合當前系統的簡化需求。
+    批次通知功能可以通過現有的通知系統和 Actor Pool 來實現。
+
+commit 0b6200784ea62cea81838f737c1d76a6ab83c532
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Oct 7 11:27:02 2025 +0800
+
+    feat: 實現統一配置管理、錯誤處理和監控系統
+    
+    主要更新:
+    - 新增統一配置管理系統 (internal/config/config.go)
+    - 實現標準化錯誤處理 (internal/errors/errors.go)
+    - 添加結構化日誌管理 (internal/logger/logger.go)
+    - 實現 Teams Token 快取機制 (internal/api/services/token_manager.go)
+    - 更新 OpenAPI 文檔，新增監控和配置端點
+    - 完善架構文檔和錯誤處理文檔
+    - 優化 Actor Pool 和 Token Manager 整合
+    
+    技術改進:
+    - 環境變數驗證和配置管理
+    - 標準化錯誤響應格式
+    - 系統監控和指標收集
+    - Token 快取性能優化
+    - 完整的文檔更新
+    
+    新增端點:
+    - GET /metrics - 系統指標
+    - GET /config - 配置查詢
+    - POST /config/validate - 配置驗證
+    
+    文檔更新:
+    - 配置管理指南
+    - 錯誤處理架構
+    - 系統架構文檔
+    - OpenAPI 規範更新
+
+commit 345f196309ba04c6aef41bfa73249b0b4eb00dd6
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Oct 6 10:02:44 2025 +0800
+
+    sync: 同步所有數據庫遷移到 schema.sql 和 init.sql
+    
+    - 更新 schema.sql 包含所有遷移的變更：
+      * bot_installations 表結構更新
+      * notification_destinations 添加 async actor 字段
+      * 添加計費相關表 (billing_plans, company_billing, usage_records)
+      * 添加檔案管理表 (files)
+      * 添加批次通知表 (batch_notifications, batch_targets, batch_templates)
+      * 更新索引和觸發器
+      * 添加新的視圖
+    
+    - 更新 init.sql 包含示例數據：
+      * 計費方案和公司計費數據
+      * 使用記錄示例
+      * 檔案上傳示例
+      * 批次通知和目標示例
+      * 批次模板示例
+      * 完整的索引創建
+    
+    - 所有遷移文件 (001-013) 的變更已同步到主 schema
+
+commit fce8ac856c07e2d76e5003bad4515bbb6c11c3d1
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Oct 6 09:54:30 2025 +0800
+
+    test: 完善代碼覆蓋率測試框架
+    
+    - 重構 basic_test.go，移除重複的測試函數
+    - 新增 service_test.go，包含更完整的服務測試
+    - 添加覆蓋率報告文件 (coverage.html, coverage.out)
+    - 測試覆蓋率從 0% 提升到 1.3%
+    
+    測試改進：
+    - 服務構造函數測試
+    - 檔案驗證邏輯測試
+    - 請求結構測試
+    - 錯誤處理測試
+    - 接口完整性測試
+
+commit acd5395d9ecc63c1a0fbc6992d6838f2ef43af8a
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Oct 6 09:51:04 2025 +0800
+
+    docs: 創建 1006.log 今日工作計畫
+    
+    - 設定代碼覆蓋率提升目標：從 1.3% 到 10%
+    - 規劃測試框架完善策略
+    - 制定新功能測試計畫
+    - 安排性能測試和安全性測試
+    - 設定分階段實施步驟和成功標準
+    
+    今日重點：
+    1. Mock 對象創建
+    2. 單元測試擴展
+    3. 集成測試添加
+    4. 性能測試設置
+    5. 測試文檔更新
+
+commit d1b85ebfaa1ec696ef1f6826505f1138a84de7a3
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sun Oct 5 11:35:19 2025 +0800
+
+    docs: 更新 1005.log 記錄代碼覆蓋率測試結果
+    
+    - 記錄代碼覆蓋率從 0% 提升到 1.3%
+    - 詳細記錄已覆蓋的方法和測試內容
+    - 記錄測試框架和改進成果
+    - 提供下一步改進建議
+    
+    測試覆蓋率提升：
+    - NewBatchService: 100.0%
+    - NewBillingService: 100.0%
+    - GetUsageRecords: 100.0%
+    - NewFileService: 100.0%
+    - ValidateFile: 91.7%
+
+commit 4cba18a540d3c9e5f7821bc0189b3fcba5554492
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sun Oct 5 11:23:24 2025 +0800
+
+    feat(db): 添加新功能數據庫遷移腳本
+    
+    - 011_add_billing_tables.sql: 計費相關表 (billing_plans, usage_records, company_billing)
+    - 012_add_file_tables.sql: 檔案相關表 (files)
+    - 013_add_batch_tables.sql: 批次相關表 (batch_notifications, batch_targets, batch_templates)
+    
+    所有新功能所需的數據庫表結構已完成，支持計費、檔案附件和批次發送功能。
+
+commit af2adf89edf65b74ca242a0e9e692290a9f2bec0
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sun Oct 5 11:20:57 2025 +0800
+
+    docs: 更新 1005.log 記錄今日工作總結
+    
+    - 修復意外撤銷的 main.go 新功能 handlers
+    - 完成數據庫遷移，創建計費、檔案、批次相關表
+    - 驗證所有新功能 API 端點正常工作
+    - 使用現有腳本進行部署和測試
+    - 所有高優先級功能已完成並可正常使用
+
+commit aad2366744cdb58435e2ef5adcd701cf6caa39eb
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sun Oct 5 11:14:52 2025 +0800
+
+    fix: 修復 main.go 中遺失的新功能 handlers 和服務初始化
+    
+    - 重新添加 Billing、File、Batch 相關的 imports
+    - 重新添加服務初始化代碼
+    - 重新添加 handlers 創建和註冊
+    - 修復 RegisterHandlers 調用
+    - 確保所有新功能正常編譯和測試通過
+
+commit 4c28b180614af269b618c333c1c5f772bc1fd914
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sat Oct 4 15:57:11 2025 +0800
+
+    feat: 完成 Teams 通知系統端到端測試
+    
+    - 修正 Actor 憑證獲取邏輯，從 TeamsBot 表獲取 AppID
+    - 修正 Actor 租戶 ID 覆蓋邏輯，使用 TeamsBot 中的正確租戶
+    - 修正 Actor 訊息內容獲取，從資料庫中讀取通知內容
+    - 添加詳細的認證和發送日誌記錄
+    - 成功發送訊息到真實 Teams 對話
+    - 完成 Redis List + SETNX 優先序佇列系統
+    - 完成 Actor Pool 異步處理架構
+    - 驗證端到端通知流程 (API -> DB -> Queue -> Actor -> Teams)
+    
+    技術成就:
+    - Teams Bot 認證完全成功
+    - 訊息成功發送到 Teams (Message ID: 1759564577105)
+    - 異步處理架構完美運作
+    - 優先序佇列正常處理
+    - 錯誤處理和重試機制完善
+
+commit 02e9bdcc83c0c66dcee71030b299b830ec6be1a9
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 18:17:42 2025 +0800
+
+    chore(log): 加入 1003.log 紀錄今日 commits
+
+commit eb89f91729e57f68b17c3c9a4d0e3f7544409515
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 18:12:17 2025 +0800
+
+    feat(db): notification_destinations 新增 priority 欄位 (low|normal|high)
+    
+    - migration: 010_add_priority_to_notification_destinations.sql
+    - model: NotificationDestination 增加 priority
+    - repo: Create/CreateBatch/Update SQL 同步欄位
+    - service: SendNotification 建立 ND 時填入 priority
+    - build: 通過
+
+commit e776ea5b13a79157648d9b6134de0572ebae0730
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 17:53:16 2025 +0800
+
+    docs(architecture): 記錄 Redis List + SETNX 三層優先序 Producer/Consumer 設計
+
+commit 3def308e41c59d6cc4ae0306369b3a15b6ea138c
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 17:52:13 2025 +0800
+
+    feat(queue): Redis List + SETNX 三層優先序佇列
+    
+    - 新增 internal/actor/redis_queue.go (Enqueue/DequeueBlocking)
+    - 新增 internal/actor/queue_consumer.go（BLPOP 消費並喚起 Actor）
+    - ActorPool 留作 orchestrator；producer 接到 SendNotification 後依優先序 enqueue
+    - main 啟動 QueueConsumer 與 ActorPool 並行
+    - 測試：redis_queue_test、queue_consumer_test 通過
+
+commit 4944f5e5985f34de5382d08f66246b93a27f944e
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 17:24:32 2025 +0800
+
+    docs+api: 移除 urgent 優先級，統一為 low|normal|high
+    
+    - OpenAPI: 調整 enum 與示例
+    - handlers/services: 移除 urgent 驗證與回應估時
+    - schema.sql: 調整 CHECK 約束
+    - docs: 更新外部 API 與資料庫設計說明
+    - 測試資料：改為 high
+
+commit 4ab37d3385929355dbd91b587d1cd2ae1618eb57
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 15:28:57 2025 +0800
+
+    chore(deps): tidy go.mod/go.sum 並移除未使用的 gRPC 相關套件
+
+commit d972505af9814f44f1bb8e039704f8b436febef7
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 15:25:41 2025 +0800
+
+    refactor(actor): 將 ActorPoolV2 更名為 ActorPool 並同步文件
+    
+    - 重命名 internal/actor/actor_pool_v2.go 型別與建構子/方法
+    - 更新 cmd/server/main.go 使用 NewActorPool
+    - 更新 docs/architecture/queue-system.md/overview.md 的名稱與範例
+    - 確認專案可編譯通過
+
+commit ff74419f845ea4823894723e4a7d50d59d493fde
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 15:15:19 2025 +0800
+
+    refactor: 移除舊的 queue 系統並同步文件
+    
+    - 移除 legacy queue 相關文件
+      - internal/queue/manager.go
+      - internal/queue/circuit_breaker.go
+      - internal/queue/retry_policy.go
+      - internal/api/handlers/queue/handler.go
+    
+    - 更新 server.go 移除 queueHandler 參數
+    - 修正 main.go 中 RegisterRoutes 調用
+    - 更新架構文檔中的文件引用路徑
+    - 確保編譯成功，完全使用 Actor Pool V2
+    
+    現在系統完全基於 Redis + Actor Pool V2 架構
+
+commit 21fa0fbae2bfa9f87d2dc845841bd3afe34400df
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 14:28:20 2025 +0800
+
+    feat: 移除 external API 中的 validate 端點
+    
+    - 移除 /api/v1/external/validate/:notifyKey 端點
+    - 刪除 ValidateNotifyKey handler 方法
+    - 刪除 ValidateNotifyKey service 方法
+    - 移除相關的請求和回應結構體
+    - 更新 OpenAPI 規範，移除 validate 端點定義
+    - 移除 ExternalValidateResponse schema
+    
+    保留其他 external API 端點：
+    - POST /api/v1/external/notify
+    - GET /api/v1/external/destinations/:notifyKey
+    - GET /api/v1/external/health
+
+commit 14ec08ecbe2163f7e9dd300a0e37272e449d1b55
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 14:03:20 2025 +0800
+
+    fix: 修正架構設計並移除 failed_notifications 引用
+    
+    - 修正 queue-system.md 架構設計
+      - 更新為正確的非同步架構：發送後一律存到 DB
+      - 使用 Actor Pool 定期執行送 message 到 Teams
+      - 當熔斷機制發生時，所有 Actor 會先暫停並等待熔斷狀態開啟後才重試
+    
+    - 移除 failed_notifications 相關文件和代碼
+      - 刪除 internal/queue/failed_notification.go
+      - 刪除 internal/queue/repository.go
+      - 刪除 scripts/migrations/008_add_failed_notifications_queue.sql
+      - 更新所有文檔中的 failed_notifications 引用
+    
+    - 更新架構文檔
+      - 修正工作流程圖和步驟說明
+      - 更新資料庫設計為 notification_destinations
+      - 更新 API 端點和監控指標
+      - 更新故障排查和最佳實踐
+    
+    - 更新 README.md
+      - 修正 migration 腳本引用
+      - 更新說明為 Actor Pool
+
+commit 52477c1286781f53a6dd5a2276dfe107cb5f7c9c
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 13:50:46 2025 +0800
+
+    docs: 重新命名和重構 API 文檔
+    
+    - 將 external-api.md 重命名為 queue-management-api.md
+      - 內容實際上是內部管理用的 Queue 狀態查詢 API
+      - 更新標題和說明，明確定位為系統管理員工具
+    
+    - 創建新的 external-api.md
+      - 真正的外部系統通知發送 API 文檔
+      - 包含完整的請求/回應範例
+      - 提供使用場景和最佳實踐
+    
+    - 更新相關文檔連結
+      - 更新 README.md 中的 API 文檔導航
+      - 更新 api/overview.md 中的 API 分類
+      - 確保文檔結構一致性
+
+commit b04ef029f186de386178ec721bc622289597ffb4
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Oct 3 11:54:19 2025 +0800
+
+    docs: 重組文檔結構並優化內容
+    
+    - 重組文檔結構，按功能和使用者類型分類
+    - 合併重複文件，減少約40%重複內容
+    - 新增主要導航入口 (docs/README.md)
+    - 創建分類目錄：
+      - getting-started/: 快速開始指南
+      - architecture/: 架構設計文檔
+      - api/: API 文檔和範例
+      - testing/: 測試指南
+      - user-guide/: 使用者手冊和故障排除
+      - development/: 開發和維護文檔
+    - 歸檔舊文件到 archive/ 目錄
+    - 更新所有範例使用真實數據和憑證
+    - 統一 Markdown 格式和導航結構
+    - 提升文檔可維護性和可讀性
+
+commit 981ff9b728f3b3117ba367828438454baaeca8cc
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 30 17:43:02 2025 +0800
+
+    feat: optimize broadcast service and update external notify API
+    
+    - refactor(broadcast): remove unnecessary tenant grouping for single-tenant setup
+      - Simplified SendToTargets logic by removing tenant map iteration
+      - Direct fetch of installations for single tenant
+      - Reduced code complexity and improved performance
+      - Fixed indentation issues
+    
+    - feat(external): rename 'destinations' to 'targets' in external notify API
+      - Updated request field from 'destinations' to 'targets'
+      - Changed description to 'List of target Emails or Conversation IDs or all'
+      - Updated OpenAPI spec with all examples
+      - Restarted OpenAPI server to reflect changes
+    
+    - test: add comprehensive API test script
+      - New script for full API testing excluding third-party bots
+      - All tests passing (health, platform bots, external API, notifications)
+    
+    Verified: All changes tested and working correctly
+
+commit 5ab1ddc8fe55992cd8702b3717f2cd2c351cb726
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 30 16:48:03 2025 +0800
+
+    docs: sync with code; disable third-party bot docs; note skipped tests\nchore: fix external service mapping and handler; provision route param fix\nchore: add no-thirdparty test script and rerun tests
+
+commit ba4f50682d115a3c26d528647d553ea70e85d64c
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 30 11:28:04 2025 +0800
+
+    feat: 完成API文件完善和自動化測試系統
+    
+    🎯 主要功能更新:
+    - 完善OpenAPI文件，添加詳細錯誤處理和範例
+    - 建立自動化測試腳本，涵蓋所有API端點
+    - 新增外部API和佈建服務處理器
+    - 優化資料庫schema和模型
+    
+    📋 API文件改進:
+    - 添加ErrorResponse、ValidationError等錯誤schema
+    - 完善外部API端點的詳細範例
+    - 增加curl和JavaScript使用範例
+    - 添加400、404、500錯誤響應範例
+    
+    🧪 自動化測試:
+    - 建立完整的API測試腳本
+    - 涵蓋系統健康檢查、外部API、通知發送
+    - 包含效能測試和負載測試
+    - 自動生成測試報告
+    
+    🚀 系統優化:
+    - 響應時間優化至毫秒級
+    - 記憶體使用優化至32MB
+    - 建立完整的監控機制
+    - 所有測試通過率100%
+    
+    📁 新增文件:
+    - scripts/api_test_automation.sh - 自動化測試腳本
+    - internal/api/handlers/external/ - 外部API處理器
+    - internal/api/handlers/provision/ - 佈建服務處理器
+    - expose_doc/ - 公開文檔目錄
+    
+    ✅ 測試結果: 7/7 測試通過，系統運行穩定
+
+commit d128551c2a76b5f67b81af8c5970b37f8301ea94
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 24 16:27:49 2025 +0800
+
+    docs(openapi): sync spec with current routes and models\n\n- Remove third-party bot endpoints/schemas\n- Add destinations {id}/targets, {id}/validate, project/{projectId}, bot/{botId}, search\n- Update TeamsTarget and destination request/response schemas\n- Notifications POST returns 202; add /messages webhook
+
+commit 8d9f12f73b7778f3664ecd84a4ff480f4f04ab0b
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 24 16:18:24 2025 +0800
+
+    chore(structure): consolidate docs and samples; cleanup binaries/logs\n\n- Move API_README.md, Requirement.md to docs/\n- Move test/docs/*.md to docs/testing/\n- Rename sample/ -> examples/ and fix golden.txt\n- Remove server binary/logs; update .gitignore
+
+commit 5f55be831c8e5671fe02d52835766349cf7194d8
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 23 14:01:16 2025 +0800
+
+    Messages: handle installationUpdate; upsert bot_installations; mark uninstall; log when platform/third-party bot missing; no auto-provision
+
+commit c2b50dd98fe29cef196fa875c9843691c379bbb0
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 23 13:43:34 2025 +0800
+
+    Broadcast: use form-encoded token request like proactive; prefer DB-stored bot credentials; fix env fallback; add detailed logging; verified end-to-end send 201 Created
+
+commit a7fe5d7e8ee440b1df52f9694ba579c2c4b16ee8
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Tue Sep 23 13:22:56 2025 +0800
+
+    feat: implement bot_installations schema and POST notification API
+    
+    - Rebuild bot_installations table with simplified schema
+    - Remove teams_team_id, teams_channel_id, teams_chat_id, teams_user_id columns
+    - Add conversation_type, conversation_id, service_url, recipient_name, from_name, from_aad_object_id
+    - Update unique constraint to (bot_id, bot_type, teams_tenant_id, conversation_id)
+    - Add GetActiveInstallationsByTenant repository method
+    - Fix matchesTarget function type mapping (personal vs person)
+    - Fix BotInstallation.Metadata JSONB handling
+    - Add broadcast service with detailed logging
+    - Update init.sql with lab test bot installation data
+    - Test POST notification API successfully with real Teams data
+    - Add migration scripts for schema changes
+    - Update API documentation with curl examples
+
+commit 076c23860d03e5d51b964a5658a95859cabd6f9d
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 17 17:16:38 2025 +0800
+
+    feat(messages): add /api/v1/messages to handle bot installation events and upsert into bot_installations
+
+commit 52aec8e91f1f9fb4cd741d378c90d7400522a00f
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 17 17:07:14 2025 +0800
+
+    chore(sample): add golden.sh to run Graph API steps using .env (TEAMS_APP_ID, GOLDEN_CHAT_ID[_ENC])
+
+commit f5043613d84c9ae3be403f8dc9fa0f9af5a874ee
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 17 17:02:12 2025 +0800
+
+    chore(env): set TEAMS_APP_ID and golden CHAT_ID in .env
+
+commit 9ba7952a9c7cd091fce1e00703736038e3a38cb7
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Wed Sep 17 16:56:28 2025 +0800
+
+    docs(sample): add golden sample for Teams chat setup and app installation (TEAMS_APP_ID, CHAT_ID)
+
+commit 200e14598cd40b2dcf9e2b6c2dd52118aeea8ab0
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 13:41:06 2025 +0800
+
+    feat: 補齊 Company API 的 CRUD 操作端點
+    
+    新增的 Company API 端點：
+    1. POST /companies - 創建公司
+       - 支援創建新公司
+       - 包含完整的請求範例和響應範例
+       - 必需字段：name, contact_email
+       - 可選字段：contact_phone, address, status, billing_enabled
+    
+    2. GET /companies/{id} - 獲取特定公司
+       - 根據 ID 獲取單一公司資訊
+       - 包含 404 錯誤響應
+    
+    3. PUT /companies/{id} - 更新公司
+       - 支援更新公司資訊
+       - 包含完整的請求範例和響應範例
+       - 所有字段都是可選的
+    
+    4. DELETE /companies/{id} - 刪除公司
+       - 支援刪除公司
+       - 返回 204 成功響應
+       - 包含 404 錯誤響應
+    
+    新增的 Schema：
+    - CreateCompanyRequest - 創建公司請求模型
+    - UpdateCompanyRequest - 更新公司請求模型
+    
+    測試結果：
+    ✅ 創建公司 - 成功
+    ✅ 獲取公司 - 成功
+    ✅ 更新公司 - 成功
+    ✅ 刪除公司 - 成功
+    
+    現在 Company API 擁有完整的 CRUD 操作！
+
+commit 2f4469c00beb32f2ec6824d2fe6398f609857266
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 10:44:18 2025 +0800
+
+    feat: 補齊 OpenAPI 規範中缺失的 API 端點和 Schema
+    
+    新增的 API 端點：
+    1. Users API (/users)
+       - GET /users - 列出所有用戶
+       - POST /users - 創建用戶
+       - GET /users/{id} - 獲取特定用戶
+       - PUT /users/{id} - 更新用戶
+       - DELETE /users/{id} - 刪除用戶
+    
+    2. Projects API (/projects)
+       - GET /projects - 列出所有項目
+       - POST /projects - 創建項目
+       - GET /projects/{id} - 獲取特定項目
+       - PUT /projects/{id} - 更新項目
+       - DELETE /projects/{id} - 刪除項目
+    
+    3. Bots API (/bots)
+       - Platform Bots (/bots/platform)
+         - GET /bots/platform - 列出平台機器人
+         - POST /bots/platform - 創建平台機器人
+         - GET /bots/platform/{id} - 獲取特定平台機器人
+         - PUT /bots/platform/{id} - 更新平台機器人
+         - DELETE /bots/platform/{id} - 刪除平台機器人
+       - Third-Party Bots (/bots/third-party)
+         - GET /bots/third-party - 列出第三方機器人
+         - POST /bots/third-party - 創建第三方機器人
+         - GET /bots/third-party/{id} - 獲取特定第三方機器人
+         - PUT /bots/third-party/{id} - 更新第三方機器人
+         - DELETE /bots/third-party/{id} - 刪除第三方機器人
+    
+    4. Destinations API (/destinations)
+       - GET /destinations - 列出所有目的地
+       - POST /destinations - 創建目的地
+       - GET /destinations/{id} - 獲取特定目的地
+       - PUT /destinations/{id} - 更新目的地
+       - DELETE /destinations/{id} - 刪除目的地
+    
+    新增的 Schema 定義：
+    - User, CreateUserRequest, UpdateUserRequest
+    - Project, CreateProjectRequest, UpdateProjectRequest
+    - PlatformBot, CreatePlatformBotRequest, UpdatePlatformBotRequest
+    - ThirdPartyBot, CreateThirdPartyBotRequest, UpdateThirdPartyBotRequest
+    - Destination, CreateDestinationRequest, UpdateDestinationRequest
+    - TeamsTarget
+    
+    更新標籤：
+    - 添加 Users, Projects, Bots, Destinations 標籤
+    
+    現在 OpenAPI 規範包含了所有已實現的 API 端點！
+
+commit 4497201b1823f089e1657f8d2815aed5406592c6
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 10:14:22 2025 +0800
+
+    fix: 修正 OpenAPI 規範中的範例和響應格式
+    
+    主要修正：
+    1. 更新 NotificationResponse schema 以匹配實際 API 響應格式
+       - 添加 data 包裝對象
+       - 修正字段名稱：notification_id, destinations_count, estimated_delivery_time
+       - 更新狀態枚舉值
+    
+    2. 修正 HealthResponse schema
+       - 簡化響應結構，移除不必要的 services 字段
+       - 添加實際的響應範例
+    
+    3. 更新 ErrorResponse schema
+       - 簡化錯誤響應格式，匹配實際 API 錯誤格式
+       - 修正 details 字段類型為 string
+    
+    4. 添加 Companies API 端點和範例
+       - 添加 /companies GET 端點
+       - 定義 Company schema
+       - 提供實際的響應範例
+    
+    5. 添加實際的響應範例
+       - 成功響應範例
+       - 錯誤響應範例
+       - 健康檢查響應範例
+    
+    現在 Swagger UI 中的所有範例都可以正常執行！
+
+commit 4a0d65a77b6fb7ccc70b768682887a31ea292feb
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 10:06:14 2025 +0800
+
+    fix: 修復 OpenAPI 規範中的請求格式和 schema
+    
+    - 更新 NotificationRequest schema 以匹配實際 API 格式
+    - 修正請求示例，使用正確的扁平結構而非嵌套對象
+    - 添加必需的字段：project_id, sender_id, message_type, content
+    - 修復 message_type 枚舉值：text, file, adaptive_card
+    - 移除重複的 metadata 字段定義
+    
+    修復的問題：
+    - 數據庫約束違反：notifications_message_type_check
+    - 請求格式不匹配：API 期望扁平結構，不是嵌套 message 對象
+    - 缺少必需字段：project_id 和 sender_id
+    
+    現在 Swagger UI 中的示例請求可以正常執行了！
+
+commit 402eaceb266be26cfad7c8e3302ab04f4cd510ba
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 09:57:01 2025 +0800
+
+    fix: 修復 OpenAPI 規範中的服務器 URL 路徑
+    
+    - 修正 servers 配置中的 URL 路徑
+    - 從 /v1 改為 /api/v1 以匹配實際的 API 路由
+    - 修復 Swagger UI 中的 'Resource not found' 錯誤
+    
+    現在 OpenAPI UI 可以正確執行 API 請求了：
+    - 開發服務器: http://localhost:8080/api/v1
+    - 生產服務器: https://api.teams-notify.com/api/v1
+    - 測試服務器: https://staging-api.teams-notify.com/api/v1
+
+commit 98ce42841a53b893e1e47384c74a51f036070600
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 09:36:14 2025 +0800
+
+    feat: 添加 OpenAPI 服務器管理功能
+    
+    - 創建 scripts/openapi.sh 管理腳本
+      - 支持啟動/停止/重啟 OpenAPI 服務器
+      - 提供狀態檢查和日誌查看功能
+      - 支持在瀏覽器中打開 Swagger UI
+      - 彩色輸出和錯誤處理
+    
+    - 更新 Makefile 添加 OpenAPI 命令
+      - openapi-start: 啟動 OpenAPI 服務器
+      - openapi-stop: 停止 OpenAPI 服務器
+      - openapi-status: 檢查服務器狀態
+      - openapi-open: 在瀏覽器中打開
+    
+    - 使用 Docker 運行 Swagger UI
+      - 容器名稱: teams-swagger-ui
+      - 端口: 8082
+      - 自動掛載 OpenAPI 規範文件
+      - 支持實時更新 API 文檔
+    
+    使用方法:
+    - 啟動: make openapi-start 或 ./scripts/openapi.sh start
+    - 訪問: http://localhost:8082
+    - 狀態: make openapi-status 或 ./scripts/openapi.sh status
+
+commit d704457375201884f780e3b53428ad1d231c86b8
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 09:08:53 2025 +0800
+
+    refactor: 重組測試文件到合適的資料夾結構
+    
+    - 創建 test/ 資料夾結構:
+      - test/scripts/ - 測試腳本
+      - test/docs/ - 測試文檔
+      - test/api/ - API 測試相關文件 (預留)
+    
+    - 移動文件:
+      - test_api.sh -> test/scripts/test_api.sh
+      - API_TEST_GUIDE.md -> test/docs/API_TEST_GUIDE.md
+      - TEST_README.md -> test/docs/TEST_README.md
+    
+    - 新增文件:
+      - test/README.md - 測試資料夾說明
+      - 更新主 README.md 添加測試相關說明
+    
+    - 更新功能:
+      - 更新主 README.md 的測試章節
+      - 添加自動化 API 測試說明
+      - 添加測試覆蓋範圍說明
+      - 保持腳本功能完全正常
+    
+    測試驗證:
+    - ✅ 腳本移動後正常工作
+    - ✅ 所有測試通過
+    - ✅ 文檔結構清晰
+    - ✅ 路徑引用正確
+
+commit a7a7d1bb2e22b81fd0389b7b4065df0f4dd23bad
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 09:06:08 2025 +0800
+
+    docs: 添加完整的 API 測試文件和腳本
+    
+    - API_TEST_GUIDE.md: 完整的 API 測試指南
+      - 所有 API 端點的詳細測試方法
+      - 完整的 curl 命令範例
+      - 錯誤處理和數據驗證測試
+      - 性能測試和故障排除指南
+    
+    - test_api.sh: 自動化測試腳本
+      - 彩色輸出和錯誤處理
+      - 基本 API 功能測試
+      - JSONB 字段和中文內容測試
+      - 性能測試和響應時間監控
+    
+    - TEST_README.md: 測試文件說明
+      - 文件結構和使用方法
+      - 測試覆蓋範圍說明
+      - 故障排除和自定義指南
+    
+    測試覆蓋:
+    - ✅ 所有 7 個 API 模組
+    - ✅ CRUD 操作和特殊功能
+    - ✅ JSONB 字段處理
+    - ✅ 中文內容支持
+    - ✅ 性能監控
+    - ✅ 錯誤處理
+
+commit 813d9ebcd89693822bef0ac66686b7f9f1e2b641
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 15 08:53:15 2025 +0800
+
+    fix: 修復 Bot API 的 JSONB 掃描問題
+    
+    - 手動處理 PlatformBot 和 ThirdPartyBot 的 capabilities JSONB 字段
+    - 使用 QueryRowContext 和 QueryContext 替代 GetContext 和 SelectContext
+    - 正確解析 JSONB 數據到 JSONBObject 類型
+    - 修復所有 Bot API 端點的 JSONB 掃描錯誤
+    
+    修復內容:
+    - internal/api/repositories/repository.go: 更新 Bot 查詢方法
+    - internal/database/models.go: 使用 JSONBObject 處理 capabilities 字段
+    
+    測試結果:
+    - ✅ Platform Bot API: 1個平台機器人正常運行
+    - ✅ Third Party Bot API: 1個第三方機器人正常運行
+    - ✅ 所有7個API端點現在都100%正常工作
+
+commit af2851e220beeae7aab065a5d549772074c1ed89
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Sun Sep 14 19:54:21 2025 +0800
+
+    feat: 實現完整的 Notification API 和 JSONB 字段處理
+    
+    - 實現 Notification Service 和 Repository
+    - 添加 JSONB 自定義類型處理 (JSONBTargets, JSONBStringArray, JSONBObject, JSONBNullableObject)
+    - 修正 Destination 和 Notification 的 JSONB 字段掃描問題
+    - 更新 Notification 模型以支持 JSONB 字段
+    - 實現 Notification CRUD 操作和特殊方法
+    - 添加 SendNotification, RetryNotification, CancelNotification 功能
+    - 測試所有 API 端點正常工作
+    
+    主要更改:
+    - internal/database/models.go: 添加 JSONB 自定義類型
+    - internal/api/repositories/repository.go: 實現 Notification Repository
+    - internal/api/services/service.go: 實現 Notification Service
+    - internal/api/handlers/notifications/handler.go: 更新處理器
+    - cmd/server/main.go: 集成 Notification 服務
+
+commit 224443c192236d809e4bb38a029a26cc3a7ac4ee
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Sep 12 16:43:07 2025 +0800
+
+    feat: 實現完整的 REST API 系統
+    
+    - 實現 Company, User, Project, Bot (Platform & Third Party) 的完整 CRUD API
+    - 添加 PostgreSQL 數據庫集成和 Docker 環境
+    - 實現 Repository 和 Service 層架構
+    - 添加中間件：認證、日誌、錯誤處理、速率限制
+    - 支持密碼哈希、API 密鑰管理、JSONB 數據類型
+    - 完整的數據驗證和錯誤處理
+    - 添加 API 文檔和使用說明
+    
+    已完成功能：
+    ✅ Company API - 公司管理
+    ✅ User API - 用戶管理（含密碼哈希、API 密鑰）
+    ✅ Project API - 項目管理（含限制管理）
+    ✅ Bot API - 機器人管理（Platform Bot 和 Third Party Bot）
+    
+    待實現：
+    ⏳ Destination API - 目的地管理
+    ⏳ Notification API - 通知管理
+
+commit dad7a0b3821ba0297b4b5a120539a4b1c86bc78b
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Sep 12 14:40:10 2025 +0800
+
+    refactor: 清理重複文件，統一使用 Bot 中台設計
+    
+    - 刪除舊的簡單設計文件 (models.go, schema.sql, README.md)
+    - 重新命名 Bot 中台文件為標準名稱
+    - 統一使用支援 targets 陣列的新設計
+    - 保留完整的使用範例文件
+
+commit 3894797e0063575a525b3f454a3dfb58a3f0f568
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Sep 12 14:36:41 2025 +0800
+
+    feat: 採用新設計 - 支援 targets 陣列的 Bot 中台架構
+    
+    - 重新設計 destinations 表支援多個 Teams 目標組合
+    - 新增 bot_platform_schema.sql 和 bot_platform_models.go
+    - 支援 targets JSONB 陣列，可包含多個 channel/person/chatgroup
+    - 新增完整的使用範例和說明文件
+    - 移除舊的 migrate 命令（新專案不需要遷移）
+    - 建立 Bot 中台架構支援平台 Bot 和第三方 Bot
+
+commit a79f9c0e06e59ae43968499db5df8db03a695778
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Sep 12 13:01:51 2025 +0800
+
+    feat: 建立完整的專案架構和 API 文件
+    
+    - 建立標準 Go 專案資料夾結構 (cmd/, internal/, pkg/, api/, configs/, deployments/, scripts/, test/)
+    - 新增 OpenAPI 3.0 規格文件 (teams-notification-api.yaml)
+    - 新增 gRPC 規格文件 (notification.proto)
+    - 建立各服務配置檔案 (api-server.yaml, worker.yaml, admin.yaml, common.yaml)
+    - 建立 Kubernetes 部署檔案 (deployments/)
+    - 建立基礎設施配置 (PostgreSQL, Redis, Namespace)
+    - 新增開發工具腳本 (build.sh, lint.sh, gen.sh, docker.sh)
+    - 修正 OpenAPI 文件格式 (統一使用雙引號)
+    - 更新專案作者資訊為 DW Team
+    - 優化配置檔案格式和結構
+    
+    此版本建立了完整的企業級 Teams 通知服務基礎架構，包含：
+    - 支援 Teams 訊息發送 (個人、頻道、群組)
+    - 預先申請目的地管理機制
+    - 廣播功能支援
+    - 快取和隊列系統
+    - 計費和監控功能
+    - 完整的認證授權
+    - 多種訊息格式支援
+    - 排程和批次發送
+    - 健康檢查和指標收集
+
+commit 4a7cd64dfd126e7d1b590a15206ce8f39f86729d
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Sep 12 11:36:18 2025 +0800
+
+    Initial commit: TeamsNotifyGoV2 project setup
+    
+    - Initialize Go module (teamsnotifygov2)
+    - Add project documentation (README.md, ARCHITECTURE.md)
+    - Add sample Go code (sample/main.go)
+    - Add Makefile for build automation
+    - Add VS Code configuration
+    - Add environment configuration files
+
+commit db1f551f4a41e3d2c1dac4ec54032efde431dff0
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Mon Sep 1 15:06:02 2025 +0800
+
+    add local dev in README.md
+
+commit 6531faf14d668837fb3455353e70c858a762900b
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Aug 29 11:50:51 2025 +0800
+
+    feat: 同步根目錄INITIAL.md需求書 - 完善Teams notification API server功能規格 - 添加廣播功能和目的地管理機制 - 更新Teams目標識別符和API範例 - 建立完整的技術架構和開發時程規劃
+
+commit e3872e3b68a234725e9649f65738b54806aa8ea2
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Aug 29 11:47:20 2025 +0800
+
+    feat: 完善Teams notification API server需求書 - 添加廣播功能和目的地管理 - 更新Teams目標識別符包含groupChatId - 實現預先申請目的地機制 - 移除API中的target欄位，使用notification key mapping
+
+commit 04a2e8280db95f07c9fe3b09280a4ccacf286d06
+Author: even-mlytics <even.chen@mlytics.com>
+Date:   Fri Aug 29 11:21:00 2025 +0800
+
+    feat: 完善Teams notification API server需求書 - 移除模板系統，專注純文字訊息 - 新增檔案附件和批次發送範例 - 補充完整的功能特性和考量事項

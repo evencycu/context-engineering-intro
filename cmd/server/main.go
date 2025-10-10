@@ -18,6 +18,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
 	qhandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
@@ -136,6 +137,10 @@ func main() {
 	fileRepo := repositories.NewFileRepository(db)
 	fileService := services.NewFileService(fileRepo, localStorage)
 
+	// System services
+	metricsService := services.NewMetricsService(redisClient)
+	configService := services.NewConfigService()
+
 	// Queue system replaced by Actor Pool V2
 
 	// Create handlers
@@ -152,6 +157,8 @@ func main() {
 	fileHandler := files.NewHandler(fileService)
 	// Queue observability handler
 	queueHandler := qhandler.NewHandler(redisClient)
+	// System handler
+	systemHandler := system.NewHandler(metricsService, configService)
 
 	// Create server
 	server := api.NewServer(api.Config{
@@ -192,7 +199,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, billingHandler, fileHandler, queueHandler)
+	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, systemHandler, billingHandler, fileHandler, queueHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)

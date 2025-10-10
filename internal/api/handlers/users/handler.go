@@ -109,8 +109,8 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	}
 
 	// Remove sensitive fields from response
-	createdUser.PasswordHash = ""
-	createdUser.APIKeyHash = ""
+	createdUser.PasswordHash = nil
+	createdUser.APIKeyHash = nil
 
 	c.JSON(http.StatusCreated, gin.H{
 		"data":    createdUser,
@@ -150,8 +150,8 @@ func (h *Handler) ListUsers(c *gin.Context) {
 
 	// Remove sensitive fields from response
 	for _, user := range users {
-		user.PasswordHash = ""
-		user.APIKeyHash = ""
+		user.PasswordHash = nil
+		user.APIKeyHash = nil
 	}
 
 	// Get total count
@@ -209,8 +209,8 @@ func (h *Handler) GetUser(c *gin.Context) {
 	}
 
 	// Remove sensitive fields from response
-	user.PasswordHash = ""
-	user.APIKeyHash = ""
+	user.PasswordHash = nil
+	user.APIKeyHash = nil
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": user,
@@ -285,8 +285,8 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	}
 
 	// Remove sensitive fields from response
-	updatedUser.PasswordHash = ""
-	updatedUser.APIKeyHash = ""
+	updatedUser.PasswordHash = nil
+	updatedUser.APIKeyHash = nil
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":    updatedUser,
@@ -468,8 +468,8 @@ func (h *Handler) GetUsersByCompany(c *gin.Context) {
 
 	// Remove sensitive fields from response
 	for _, user := range users {
-		user.PasswordHash = ""
-		user.APIKeyHash = ""
+		user.PasswordHash = nil
+		user.APIKeyHash = nil
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -492,8 +492,8 @@ func (h *Handler) GetUsersByRole(c *gin.Context) {
 
 	// Remove sensitive fields from response
 	for _, user := range users {
-		user.PasswordHash = ""
-		user.APIKeyHash = ""
+		user.PasswordHash = nil
+		user.APIKeyHash = nil
 	}
 
 	c.JSON(http.StatusOK, gin.H{

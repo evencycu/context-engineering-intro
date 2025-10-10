@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: teamsnotify-postgres-persistent
+    environment:
+      POSTGRES_DB: notification_center
+      POSTGRES_USER: teamsnotify
+      POSTGRES_PASSWORD: teamsnotify
+    ports:
+      - "5432:5432"
+    volumes:
+      - teamsnotify_postgres_data:/var/lib/postgresql/data
+      - ./scripts/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamsnotify -d notification_center"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: teamsnotify-redis-persistent
+    ports:
+      - "6379:6379"
+    volumes:
+      - teamsnotify_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: teamsnotify-adminer-persistent
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  teamsnotify_postgres_data:
+    driver: local
+  teamsnotify_redis_data:
+    driver: local
+
+networks:
+  default:
+    name: teamsnotify-persistent-network

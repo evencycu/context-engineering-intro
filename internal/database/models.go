@@ -68,8 +68,8 @@ type User struct {
 	Role            string     `json:"role" db:"role"`
 	Status          string     `json:"status" db:"status"`
 	LastLoginAt     *time.Time `json:"last_login_at" db:"last_login_at"`
-	PasswordHash    string     `json:"-" db:"password_hash"`
-	APIKeyHash      string     `json:"-" db:"api_key_hash"`
+	PasswordHash    *string    `json:"-" db:"password_hash"`
+	APIKeyHash      *string    `json:"-" db:"api_key_hash"`
 	APIKeyExpiresAt *time.Time `json:"api_key_expires_at" db:"api_key_expires_at"`
 }
 

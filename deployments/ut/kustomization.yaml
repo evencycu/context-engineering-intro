@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: teams-notification-ut
+
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - configmap.yaml
+  - postgres.yaml
+  - redis.yaml
+  - api-server.yaml
+  # removed worker/admin
+
+commonLabels:
+  app: teams-notification
+  environment: ut
+  tier: testing
+
+images:
+  - name: teams-notification/api-server
+    newTag: ut-latest
+  # removed worker/admin images
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: teams-notification-api-server
+    spec:
+      template:
+        spec:
+          containers:
+          - name: api-server
+            env:
+            - name: DEBUG_MODE
+              value: "true"
+            - name: MOCK_EXTERNAL_APIS
+              value: "true"

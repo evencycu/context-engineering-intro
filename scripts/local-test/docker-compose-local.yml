@@ -1,0 +1,93 @@
+# scripts/local-test/docker-compose-local.yml
+version: "3.8"
+
+services:
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgres:15-alpine
+    container_name: teamsnotify-postgres-local
+    environment:
+      POSTGRES_DB: notification_center
+      POSTGRES_USER: teamsnotify
+      POSTGRES_PASSWORD: teamsnotify123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../scripts/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ../../scripts/database/init.sql:/docker-entrypoint-initdb.d/02-init.sql
+    networks:
+      - teamsnotify-local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamsnotify -d notification_center"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 快取和佇列
+  redis:
+    image: redis:7-alpine
+    container_name: teamsnotify-redis-local
+    volumes:
+      - redis_data:/data
+      - ../../configs/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - teamsnotify-local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server
+  api-server:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: teamsnotify-api-server-local
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      - ENVIRONMENT=local
+      - LOG_LEVEL=debug
+      - PORT=8080
+      - DATABASE_URL=postgresql://teamsnotify:teamsnotify123@postgres:5432/notification_center?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - TEAMS_BOT_APP_ID=${TEAMS_BOT_APP_ID:-local-test-app-id}
+      - TEAMS_TENANT_ID=${TEAMS_TENANT_ID:-local-test-tenant-id}
+      - TEAMS_BOT_APP_PASSWORD=${TEAMS_BOT_APP_PASSWORD:-local-test-app-password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - teamsnotify-local
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  teamsnotify-local:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

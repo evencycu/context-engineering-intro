@@ -80,9 +80,26 @@ start_test_environment() {
         exit 1
     fi
     
-    # 啟動服務
-    log "啟動 PostgreSQL 和 Redis..."
-    docker-compose up -d postgres redis
+    # 檢查現有服務
+    log "檢查現有服務..."
+    local postgres_running=false
+    local redis_running=false
+    
+    if docker ps --format "table {{.Names}}" | grep -q "postgres"; then
+        postgres_running=true
+        log "PostgreSQL 容器已運行，重用現有服務"
+    fi
+    
+    if docker ps --format "table {{.Names}}" | grep -q "redis"; then
+        redis_running=true
+        log "Redis 容器已運行，重用現有服務"
+    fi
+    
+    # 只在需要時啟動服務
+    if [ "$postgres_running" = false ] || [ "$redis_running" = false ]; then
+        log "啟動 PostgreSQL 和 Redis..."
+        docker-compose up -d postgres redis
+    fi
     
     # 等待服務就緒
     log "等待服務就緒..."
@@ -92,7 +109,7 @@ start_test_environment() {
     local max_attempts=30
     local attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec teamsnotify-postgres pg_isready -U teamsnotify -d teamsnotify &> /dev/null; then
+        if docker exec teamsnotify-postgres-local pg_isready -U teamsnotify -d notification_center &> /dev/null; then
             success "PostgreSQL 已就緒"
             break
         fi
@@ -109,7 +126,7 @@ start_test_environment() {
     # 檢查 Redis
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec teamsnotify-redis redis-cli ping | grep -q "PONG"; then
+        if docker exec teamsnotify-redis-local redis-cli ping | grep -q "PONG"; then
             success "Redis 已就緒"
             break
         fi
@@ -128,14 +145,20 @@ start_test_environment() {
 run_database_migrations() {
     log "📊 執行資料庫遷移..."
     
-    # 檢查遷移檔案是否存在
-    if [ ! -f "internal/database/schema.sql" ]; then
-        error "找不到資料庫結構檔案: internal/database/schema.sql"
+    # 檢查遷移檔案是否存在（更新為現有路徑）
+    if [ ! -f "scripts/database/schema.sql" ]; then
+        error "找不到資料庫結構檔案: scripts/database/schema.sql"
         exit 1
     fi
     
+    # 確保目標資料庫存在（舊資料卷可能未包含 notification_center 資料庫）
+    if ! docker exec teamsnotify-postgres-local psql -U teamsnotify -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='notification_center'" | grep -q 1; then
+        log "建立資料庫 notification_center..."
+        docker exec teamsnotify-postgres-local psql -U teamsnotify -d postgres -c "CREATE DATABASE notification_center;"
+    fi
+
     # 執行遷移
-    docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < internal/database/schema.sql
+    docker exec -i teamsnotify-postgres-local psql -U teamsnotify -d notification_center < scripts/database/schema.sql
     
     if [ $? -eq 0 ]; then
         success "資料庫遷移完成"
@@ -267,7 +290,7 @@ verify_test_environment() {
     fi
     
     # 檢查資料庫連線
-    if docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "SELECT 1;" > /dev/null 2>&1; then
+    if docker exec teamsnotify-postgres-local psql -U teamsnotify -d notification_center -c "SELECT 1;" > /dev/null 2>&1; then
         success "資料庫連線正常"
     else
         error "資料庫連線失敗"
@@ -275,7 +298,7 @@ verify_test_environment() {
     fi
     
     # 檢查 Redis 連線
-    if docker exec teamsnotify-redis redis-cli ping | grep -q "PONG"; then
+    if docker exec teamsnotify-redis-local redis-cli ping | grep -q "PONG"; then
         success "Redis 連線正常"
     else
         error "Redis 連線失敗"

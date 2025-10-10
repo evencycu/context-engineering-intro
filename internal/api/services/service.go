@@ -108,12 +108,13 @@ func (s *userService) Create(ctx context.Context, req *CreateRequest[database.Us
 	req.Data.Status = "active"
 
 	// Hash password if provided
-	if req.Data.PasswordHash != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Data.PasswordHash), bcrypt.DefaultCost)
+	if req.Data.PasswordHash != nil && *req.Data.PasswordHash != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*req.Data.PasswordHash), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash password: %w", err)
 		}
-		req.Data.PasswordHash = string(hashedPassword)
+		hashedStr := string(hashedPassword)
+		req.Data.PasswordHash = &hashedStr
 	}
 
 	err := s.repo.Create(ctx, &req.Data)
@@ -135,12 +136,13 @@ func (s *userService) Update(ctx context.Context, id uuid.UUID, req *UpdateReque
 	req.Data.UpdatedAt = time.Now()
 
 	// Hash password if provided
-	if req.Data.PasswordHash != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Data.PasswordHash), bcrypt.DefaultCost)
+	if req.Data.PasswordHash != nil && *req.Data.PasswordHash != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*req.Data.PasswordHash), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash password: %w", err)
 		}
-		req.Data.PasswordHash = string(hashedPassword)
+		hashedStr := string(hashedPassword)
+		req.Data.PasswordHash = &hashedStr
 	}
 
 	err := s.repo.Update(ctx, &req.Data)
@@ -199,7 +201,10 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	}
 
 	// Verify old password
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword))
+	if user.PasswordHash == nil {
+		return fmt.Errorf("user has no password set")
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(oldPassword))
 	if err != nil {
 		return fmt.Errorf("invalid old password: %w", err)
 	}
@@ -211,7 +216,8 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	}
 
 	// Update password
-	user.PasswordHash = string(hashedPassword)
+	hashedStr := string(hashedPassword)
+	user.PasswordHash = &hashedStr
 	user.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, user)
@@ -228,7 +234,7 @@ func (s *userService) GenerateAPIKey(ctx context.Context, userID uuid.UUID) (str
 	apiKey := uuid.New().String()
 	expiresAt := time.Now().Add(365 * 24 * time.Hour) // 1 year
 
-	user.APIKeyHash = apiKey
+	user.APIKeyHash = &apiKey
 	user.APIKeyExpiresAt = &expiresAt
 	user.UpdatedAt = time.Now()
 
@@ -247,7 +253,7 @@ func (s *userService) RevokeAPIKey(ctx context.Context, userID uuid.UUID) error 
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	user.APIKeyHash = ""
+	user.APIKeyHash = nil
 	user.APIKeyExpiresAt = nil
 	user.UpdatedAt = time.Now()
 
