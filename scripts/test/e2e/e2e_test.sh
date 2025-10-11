@@ -75,7 +75,7 @@ check_services() {
     fi
     
     # 檢查資料庫
-    if docker exec teamsnotify-postgres-local psql -U teamsnotify -d notification_center -c "SELECT 1;" > /dev/null 2>&1; then
+    if docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "SELECT 1;" > /dev/null 2>&1; then
         log "✅ 資料庫連線正常"
     else
         log "❌ 資料庫連線失敗"
@@ -83,7 +83,7 @@ check_services() {
     fi
     
     # 檢查 Redis
-    if docker exec teamsnotify-redis-local redis-cli ping | grep -q "PONG"; then
+    if docker exec teamsnotify-redis redis-cli ping | grep -q "PONG"; then
         log "✅ Redis 連線正常"
     else
         log "❌ Redis 連線失敗"

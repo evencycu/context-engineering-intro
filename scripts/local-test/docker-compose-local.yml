@@ -5,7 +5,7 @@ services:
   # PostgreSQL 資料庫
   postgres:
     image: postgres:15-alpine
-    container_name: teamsnotify-postgres-local
+    container_name: teamsnotify-postgres
     environment:
       POSTGRES_DB: notification_center
       POSTGRES_USER: teamsnotify
@@ -27,7 +27,7 @@ services:
   # Redis 快取和佇列
   redis:
     image: redis:7-alpine
-    container_name: teamsnotify-redis-local
+    container_name: teamsnotify-redis
     volumes:
       - redis_data:/data
       - ../../configs/redis.conf:/usr/local/etc/redis/redis.conf

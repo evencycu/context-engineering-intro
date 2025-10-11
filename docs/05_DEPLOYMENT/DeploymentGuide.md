@@ -564,6 +564,167 @@ curl -X GET "https://graph.microsoft.com/v1.0/me" \
 
 ---
 
-**版本**: v1.0
-**最後更新**: 2025-10-08
+## 14. 部署模式比較
+
+### 14.1 本地進程部署 (Local Process)
+
+**優點**:
+- 最快啟動速度，無需 Docker 映像構建
+- 最佳調試體驗，可直接使用 IDE 斷點
+- 最低資源使用，應用程式直接運行在主機
+
+**缺點**:
+- 環境隔離性差，可能受主機環境影響
+- 需要手動管理依賴
+- 數據可能不持久
+
+**使用場景**: 快速開發和深度調試
+
+### 14.2 本地 Docker 部署 (Local Docker)
+
+**優點**:
+- 環境隔離性好，避免環境衝突
+- 確保開發環境與生產環境一致性
+- 快速重置，每次啟動都是乾淨環境
+
+**缺點**:
+- 啟動速度較慢，需要構建映像
+- 數據不持久，容器停止後數據丟失
+- 調試相對複雜
+
+**使用場景**: 功能測試和集成測試
+
+### 14.3 持久化 Docker 部署 (Persistent Docker)
+
+**優點**:
+- 數據持久化，適合長期開發
+- 保持 Docker 環境隔離優勢
+- 更接近生產環境的部署方式
+
+**缺點**:
+- 啟動速度中等
+- 相對本地進程部署佔用更多資源
+- 調試相對複雜
+
+**使用場景**: 長期功能開發和數據依賴測試
+
+### 14.4 部署模式選擇建議
+
+| 開發階段 | 推薦模式 | 原因 |
+|---------|---------|------|
+| 快速迭代 | 本地進程 | 最快反饋和最佳調試體驗 |
+| 功能測試 | 本地 Docker | 環境隔離和快速重置 |
+| 長期開發 | 持久化 Docker | 數據保留和真實環境模擬 |
+
+## 15. 常見部署問題與解決方案
+
+### 15.1 端口衝突問題
+
+**問題**: 多個部署模式同時運行造成端口衝突
+
+**解決方案**:
+```bash
+# 檢查端口使用情況
+lsof -i :8080
+lsof -i :5432
+lsof -i :6379
+
+# 停止所有相關容器
+docker stop $(docker ps -q --filter "name=teamsnotify")
+
+# 清理容器
+docker rm $(docker ps -aq --filter "name=teamsnotify")
+```
+
+### 15.2 數據庫連接問題
+
+**問題**: 本地進程模式無法連接到數據庫
+
+**解決方案**:
+```bash
+# 確保數據庫容器運行
+docker-compose -f scripts/local-test/docker-compose-local.yml up -d postgres redis
+
+# 檢查數據庫連接
+docker exec teamsnotify-postgres-local pg_isready -U teamsnotify
+
+# 測試連接
+docker exec teamsnotify-postgres-local psql -U teamsnotify -d notification_center -c "SELECT 1;"
+```
+
+### 15.3 密碼認證失敗
+
+**問題**: 持久化模式密碼認證失敗
+
+**解決方案**:
+```bash
+# 檢查環境變數
+echo $DATABASE_URL
+echo $REDIS_URL
+
+# 重新設定正確的連接字符串
+export DATABASE_URL="postgresql://teamsnotify:teamsnotify_password@localhost:5432/notification_center?sslmode=disable"
+export REDIS_URL="redis://localhost:6379/0"
+```
+
+### 15.4 容器重複問題
+
+**問題**: 同時存在多組容器造成資源浪費
+
+**解決方案**:
+```bash
+# 清理所有相關容器
+docker stop teamsnotify-postgres-persistent teamsnotify-redis-persistent teamsnotify-postgres-local teamsnotify-redis-local
+docker rm teamsnotify-postgres-persistent teamsnotify-redis-persistent teamsnotify-postgres-local teamsnotify-redis-local
+
+# 確認清理完成
+docker ps -a
+```
+
+## 16. 智能部署腳本使用指南
+
+### 16.1 部署腳本概覽
+
+| 腳本 | 用途 | 模式 |
+|------|------|------|
+| `scripts/smart-deploy.sh` | 智能部署主腳本 | 支持三種模式 |
+| `scripts/dev-deploy.sh` | 開發部署腳本 | 本地 Docker |
+| `scripts/quick-redeploy.sh` | 快速重構腳本 | 本地 Docker |
+
+### 16.2 使用示例
+
+```bash
+# 本地進程部署
+./scripts/smart-deploy.sh local-process
+
+# 本地 Docker 部署 (清理模式)
+./scripts/smart-deploy.sh local-docker --clean --migrate --test
+
+# 持久化 Docker 部署
+./scripts/smart-deploy.sh persistent-docker --clean --migrate
+
+# 快速重構 (僅 API Server)
+./scripts/quick-redeploy.sh
+```
+
+### 16.3 部署後驗證
+
+```bash
+# 健康檢查
+curl http://localhost:8080/health
+
+# 系統指標
+curl http://localhost:8080/api/v1/metrics
+
+# 配置驗證
+curl -X POST http://localhost:8080/api/v1/config/validate
+
+# 隊列狀態
+curl http://localhost:8080/api/v1/queue/stats
+```
+
+---
+
+**版本**: v1.1
+**最後更新**: 2025-10-11
 **作者**: TeamsNotify DevOps Team

@@ -43,10 +43,10 @@ type DatabaseConfig struct {
 
 // RedisConfig represents Redis configuration
 type RedisConfig struct {
-	PoolSize      int    `json:"pool_size"`
-	MinIdleConns  int    `json:"min_idle_conns"`
-	MaxRetries    int    `json:"max_retries"`
-	Timeout       string `json:"timeout"`
+	PoolSize     int    `json:"pool_size"`
+	MinIdleConns int    `json:"min_idle_conns"`
+	MaxRetries   int    `json:"max_retries"`
+	Timeout      string `json:"timeout"`
 }
 
 // TeamsConfig represents Teams configuration
@@ -59,18 +59,18 @@ type TeamsConfig struct {
 
 // ActorConfig represents actor configuration
 type ActorConfig struct {
-	MaxActors    int                `json:"max_actors"`
-	PollInterval string             `json:"poll_interval"`
-	RetryDelay   string             `json:"retry_delay"`
-	MaxRetries   int                `json:"max_retries"`
+	MaxActors      int                  `json:"max_actors"`
+	PollInterval   string               `json:"poll_interval"`
+	RetryDelay     string               `json:"retry_delay"`
+	MaxRetries     int                  `json:"max_retries"`
 	CircuitBreaker CircuitBreakerConfig `json:"circuit_breaker"`
 }
 
 // CircuitBreakerConfig represents circuit breaker configuration
 type CircuitBreakerConfig struct {
-	FailureThreshold   int    `json:"failure_threshold"`
-	RecoveryTimeout    string `json:"recovery_timeout"`
-	HalfOpenMaxCalls   int    `json:"half_open_max_calls"`
+	FailureThreshold int    `json:"failure_threshold"`
+	RecoveryTimeout  string `json:"recovery_timeout"`
+	HalfOpenMaxCalls int    `json:"half_open_max_calls"`
 }
 
 // LoggerConfig represents logger configuration
@@ -95,8 +95,8 @@ type ConfigError struct {
 
 // ConfigWarning represents a configuration warning
 type ConfigWarning struct {
-	Field     string `json:"field"`
-	Message   string `json:"message"`
+	Field      string `json:"field"`
+	Message    string `json:"message"`
 	Suggestion string `json:"suggestion"`
 }
 
@@ -194,8 +194,8 @@ func (s *configService) ValidateConfig(ctx context.Context) (*ConfigValidationRe
 	if env := getEnv("ENVIRONMENT", "development"); env == "production" {
 		if logLevel := getEnv("LOG_LEVEL", "info"); logLevel == "debug" {
 			warnings = append(warnings, ConfigWarning{
-				Field:     "LOG_LEVEL",
-				Message:   "debug logging in production",
+				Field:      "LOG_LEVEL",
+				Message:    "debug logging in production",
 				Suggestion: "consider using 'info' or 'warn' level in production",
 			})
 		}
@@ -205,8 +205,8 @@ func (s *configService) ValidateConfig(ctx context.Context) (*ConfigValidationRe
 	if redisURL := getEnv("REDIS_URL", ""); redisURL != "" {
 		if !strings.HasPrefix(redisURL, "redis://") && !strings.HasPrefix(redisURL, "rediss://") {
 			warnings = append(warnings, ConfigWarning{
-				Field:     "REDIS_URL",
-				Message:   "Redis URL should use redis:// or rediss:// protocol",
+				Field:      "REDIS_URL",
+				Message:    "Redis URL should use redis:// or rediss:// protocol",
 				Suggestion: "use redis:// for unencrypted or rediss:// for encrypted connections",
 			})
 		}
@@ -216,8 +216,8 @@ func (s *configService) ValidateConfig(ctx context.Context) (*ConfigValidationRe
 	if dbURL := getEnv("DATABASE_URL", ""); dbURL != "" {
 		if !strings.HasPrefix(dbURL, "postgres://") && !strings.HasPrefix(dbURL, "postgresql://") {
 			warnings = append(warnings, ConfigWarning{
-				Field:     "DATABASE_URL",
-				Message:   "Database URL should use postgres:// or postgresql:// protocol",
+				Field:      "DATABASE_URL",
+				Message:    "Database URL should use postgres:// or postgresql:// protocol",
 				Suggestion: "use postgresql:// for PostgreSQL connections",
 			})
 		}

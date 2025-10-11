@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 PROJECT_NAME="teams-notification"
 VERSION=${VERSION:-"1.0.0"}
 DOCKER_REGISTRY=${DOCKER_REGISTRY:-"teams-notification"}
-COMPOSE_FILE="docker-compose.yml"
+COMPOSE_FILE="scripts/docker/docker-compose.yml"
 COMPOSE_DEV_FILE="docker-compose.dev.yml"
 COMPOSE_PROD_FILE="docker-compose.prod.yml"
 

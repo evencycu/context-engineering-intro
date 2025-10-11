@@ -55,20 +55,14 @@ func NewServer(cfg Config) *Server {
 	// Create router
 	router := gin.New()
 
-	// Add middleware
-	router.Use(gin.Logger())
+	// Add middleware in performance-optimized order
+	// 1. Recovery first (safety)
 	router.Use(gin.Recovery())
-	router.Use(requestid.New())
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowHeaders:     []string{"*"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
 
-	// Rate limiting
+	// 2. Request ID for tracing (lightweight)
+	router.Use(requestid.New())
+
+	// 3. Rate limiting (early rejection for performance)
 	limiter := rate.NewLimiter(cfg.RateLimit, cfg.Burst)
 	router.Use(func(c *gin.Context) {
 		if !limiter.Allow() {
@@ -81,6 +75,19 @@ func NewServer(cfg Config) *Server {
 		c.Next()
 	})
 
+	// 4. CORS (after rate limiting)
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "https://yourdomain.com"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// 5. Logger last (most expensive, after other checks)
+	router.Use(gin.Logger())
+
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -90,25 +97,7 @@ func NewServer(cfg Config) *Server {
 		})
 	})
 
-	// System endpoints (no authentication required for monitoring)
-	router.GET("/metrics", func(c *gin.Context) {
-		// This will be handled by the system handler
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Metrics endpoint - will be implemented by system handler",
-		})
-	})
-	router.GET("/config", func(c *gin.Context) {
-		// This will be handled by the system handler
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Config endpoint - will be implemented by system handler",
-		})
-	})
-	router.POST("/config/validate", func(c *gin.Context) {
-		// This will be handled by the system handler
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Config validation endpoint - will be implemented by system handler",
-		})
-	})
+	// System endpoints are now handled by the system handler under /api/v1
 
 	// API v1 routes will be registered by handlers
 

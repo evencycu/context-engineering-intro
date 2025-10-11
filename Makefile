@@ -123,51 +123,51 @@ openapi-open:
 # E2E Testing
 test-e2e:
 	@echo "Running E2E tests..."
-	./scripts/testing/run_e2e_tests.sh e2e
+	./scripts/test/e2e/run_e2e_tests.sh e2e
 
 test-load:
 	@echo "Running load tests..."
-	./scripts/testing/run_e2e_tests.sh load
+	./scripts/test/e2e/run_e2e_tests.sh load
 
 test-api:
 	@echo "Running API tests..."
-	./scripts/testing/run_e2e_tests.sh api
+	./scripts/test/e2e/run_e2e_tests.sh api
 
 test-report:
 	@echo "Generating test reports..."
-	./scripts/testing/generate_test_report.sh generate
+	./scripts/utils/generate_test_report.sh generate
 
 # Full E2E test suite
 test-full:
 	@echo "Running full E2E test suite..."
-	./scripts/testing/run_e2e_tests.sh run
+	./scripts/test/e2e/run_e2e_tests.sh run
 
 # Development deployment
 dev-deploy:
 	@echo "Running development deployment..."
-	./scripts/dev-deploy.sh
+	./scripts/deploy/local/dev-deploy.sh
 
 # Smart deployment with different modes
 deploy-local:
 	@echo "Deploying to local process..."
-	./scripts/smart-deploy.sh local-process
+	./scripts/deploy/local/smart-deploy.sh local-process
 
 deploy-docker:
 	@echo "Deploying to local Docker..."
-	./scripts/smart-deploy.sh local-docker
+	./scripts/deploy/local/smart-deploy.sh local-docker
 
 deploy-persistent:
 	@echo "Deploying to persistent Docker..."
-	./scripts/smart-deploy.sh persistent-docker
+	./scripts/deploy/local/smart-deploy.sh persistent-docker
 
 # Persistent Docker management
 persistent-up:
 	@echo "Starting persistent Docker services..."
-	docker-compose -f docker-compose-persistent.yml up -d
+	docker-compose -f scripts/docker/docker-compose-persistent.yml up -d
 
 persistent-down:
 	@echo "Stopping persistent Docker services..."
-	docker-compose -f docker-compose-persistent.yml down
+	docker-compose -f scripts/docker/docker-compose-persistent.yml down
 
 persistent-logs:
 	@echo "Showing persistent Docker logs..."
@@ -175,5 +175,5 @@ persistent-logs:
 
 persistent-clean:
 	@echo "Cleaning persistent Docker data..."
-	docker-compose -f docker-compose-persistent.yml down -v
+	docker-compose -f scripts/docker/docker-compose-persistent.yml down -v
 	docker volume rm teamsnotify_postgres_data teamsnotify_redis_data 2>/dev/null || true

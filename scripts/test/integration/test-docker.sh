@@ -37,7 +37,7 @@ curl -s -X POST "$API_URL/api/v1/external/notify" \
 
 # 測試資料庫連線
 echo "🐘 測試資料庫連線..."
-docker-compose -f scripts/local-test/docker-compose-local.yml exec postgres psql -U teamsnotify -d teamsnotify -c "SELECT version();" || echo "❌ 資料庫連線失敗"
+docker-compose -f scripts/local-test/docker-compose-local.yml exec postgres psql -U teamsnotify -d notification_center -c "SELECT version();" || echo "❌ 資料庫連線失敗"
 
 # 測試 Redis 連線
 echo "🔴 測試 Redis 連線..."

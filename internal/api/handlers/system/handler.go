@@ -27,6 +27,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/metrics", h.GetMetrics)
 	rg.GET("/config", h.GetConfig)
 	rg.POST("/config/validate", h.ValidateConfig)
+
+	// Alert endpoints
+	rg.GET("/alerts", h.GetAlerts)
+	rg.GET("/alerts/history", h.GetAlertHistory)
+	rg.POST("/alerts/check", h.CheckAlerts)
 }
 
 // GetMetrics returns system metrics
@@ -69,4 +74,31 @@ func (h *Handler) ValidateConfig(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, validation)
+}
+
+// GetAlerts returns current alerts
+func (h *Handler) GetAlerts(c *gin.Context) {
+	// For now, return empty alerts
+	c.JSON(http.StatusOK, gin.H{
+		"data":    []interface{}{},
+		"message": "No active alerts",
+	})
+}
+
+// GetAlertHistory returns alert history
+func (h *Handler) GetAlertHistory(c *gin.Context) {
+	// For now, return empty history
+	c.JSON(http.StatusOK, gin.H{
+		"data":    []interface{}{},
+		"message": "No alert history",
+	})
+}
+
+// CheckAlerts manually triggers alert checking
+func (h *Handler) CheckAlerts(c *gin.Context) {
+	// For now, return success
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Alert check completed",
+		"alerts_found": 0,
+	})
 }

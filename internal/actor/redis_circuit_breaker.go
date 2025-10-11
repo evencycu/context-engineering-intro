@@ -11,9 +11,9 @@ import (
 
 // redisCircuitBreaker implements CircuitBreaker interface using Redis
 type redisCircuitBreaker struct {
-	redis    *redis.Client
-	key      string
-	timeout  time.Duration
+	redis     *redis.Client
+	key       string
+	timeout   time.Duration
 	threshold int
 }
 
@@ -30,7 +30,7 @@ func NewRedisCircuitBreaker(redis *redis.Client) CircuitBreaker {
 		redis:     redis,
 		key:       "circuit_breaker:teams_api",
 		timeout:   5 * time.Minute, // Circuit breaker timeout
-		threshold: 5,                // Failure threshold
+		threshold: 5,               // Failure threshold
 	}
 }
 
@@ -76,13 +76,13 @@ func (cb *redisCircuitBreaker) RecordFailure(ctx context.Context, retryAfter int
 			// Use Retry-After if provided
 			openUntil = time.Now().Add(time.Duration(retryAfter) * time.Second)
 		}
-		
+
 		pipe := cb.redis.Pipeline()
 		pipe.Set(ctx, cb.key+":state", "open", 0)
 		pipe.Set(ctx, cb.key+":open_until", openUntil.Format(time.RFC3339), 0)
 		pipe.Expire(ctx, cb.key+":open_until", cb.timeout)
 		_, err = pipe.Exec(ctx)
-		
+
 		log.Printf("Circuit breaker opened due to %d failures (open until %v)", failures, openUntil)
 		return err
 	}

@@ -216,10 +216,10 @@ deploy_persistent_docker() {
     log "部署到持久化 Docker..."
     
     # 檢查持久化容器是否存在
-    if ! docker ps -a | grep -q "teamsnotify-postgres-persistent"; then
+    if ! docker ps -a | grep -q "teamsnotify-postgres"; then
         log "創建持久化 PostgreSQL 容器..."
         docker run -d \
-            --name teamsnotify-postgres-persistent \
+            --name teamsnotify-postgres \
             -e POSTGRES_DB=notification_center \
             -e POSTGRES_USER=teamsnotify \
             -e POSTGRES_PASSWORD=teamsnotify \
@@ -228,19 +228,19 @@ deploy_persistent_docker() {
             postgres:15-alpine
     else
         log "啟動現有持久化 PostgreSQL 容器..."
-        docker start teamsnotify-postgres-persistent
+        docker start teamsnotify-postgres
     fi
     
-    if ! docker ps -a | grep -q "teamsnotify-redis-persistent"; then
+    if ! docker ps -a | grep -q "teamsnotify-redis"; then
         log "創建持久化 Redis 容器..."
         docker run -d \
-            --name teamsnotify-redis-persistent \
+            --name teamsnotify-redis \
             -p 6379:6379 \
             -v teamsnotify_redis_data:/data \
             redis:7-alpine
     else
         log "啟動現有持久化 Redis 容器..."
-        docker start teamsnotify-redis-persistent
+        docker start teamsnotify-redis
     fi
     
     # 等待服務就緒
@@ -315,8 +315,8 @@ show_services_info() {
         echo "📋 停止命令: docker-compose -f scripts/local-test/docker-compose-local.yml down"
     elif [ "$DEPLOY_MODE" = "persistent-docker" ]; then
         echo "💡 部署模式: 持久化 Docker (保持數據)"
-        echo "📋 停止命令: docker stop teamsnotify-postgres-persistent teamsnotify-redis-persistent"
-        echo "🗑️  清理命令: docker rm teamsnotify-postgres-persistent teamsnotify-redis-persistent"
+        echo "📋 停止命令: docker stop teamsnotify-postgres teamsnotify-redis"
+        echo "🗑️  清理命令: docker rm teamsnotify-postgres teamsnotify-redis"
     fi
     echo ""
 }

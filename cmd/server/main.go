@@ -219,7 +219,7 @@ type Config struct {
 func loadConfig() *Config {
 	return &Config{
 		Port:      getEnv("PORT", "8080"),
-		JWTSecret: getEnv("JWT_SECRET", "your-secret-key"),
+		JWTSecret: getEnv("JWT_SECRET", ""),
 		RateLimit: rate.Limit(100), // 100 requests per second
 	}
 }

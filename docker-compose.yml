@@ -1,60 +1,14 @@
-version: '3.8'
+# 根目錄 Docker Compose 檔案 - 向後兼容
+# 實際檔案位於 scripts/docker/docker-compose.yml
+
+version: "3.8"
+
+# 這個檔案用於向後兼容，實際配置在 scripts/docker/docker-compose.yml
+# 請使用以下命令：
+# docker-compose -f scripts/docker/docker-compose.yml [command]
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: teamsnotify-postgres
-    environment:
-      POSTGRES_DB: teamsnotify
-      POSTGRES_USER: teamsnotify
-      POSTGRES_PASSWORD: teamsnotify123
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./internal/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./internal/database/init.sql:/docker-entrypoint-initdb.d/02-init.sql
-    networks:
-      - teamsnotify-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U teamsnotify -d teamsnotify"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: teamsnotify-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - teamsnotify-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  adminer:
-    image: adminer:4.8.1
-    container_name: teamsnotify-adminer
-    ports:
-      - "8081:8080"
-    networks:
-      - teamsnotify-network
-    restart: unless-stopped
-    depends_on:
-      - postgres
-
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  teamsnotify-network:
-    driver: bridge
+  # 重定向到實際的配置檔案
+  redirect:
+    image: alpine:latest
+    command: echo "請使用: docker-compose -f scripts/docker/docker-compose.yml [command]"

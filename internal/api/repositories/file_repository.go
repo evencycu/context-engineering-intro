@@ -129,14 +129,25 @@ func (r *fileRepository) List(ctx context.Context, req *ListFilesRequest) ([]*da
 		return nil, 0, err
 	}
 
-	// Build ORDER BY clause
+	// Build ORDER BY clause with whitelist validation
 	orderBy := "ORDER BY created_at DESC"
 	if req.SortBy != "" {
-		orderBy = fmt.Sprintf("ORDER BY %s", req.SortBy)
-		if req.SortOrder == "asc" {
-			orderBy += " ASC"
-		} else {
-			orderBy += " DESC"
+		// Whitelist allowed sort columns to prevent SQL injection
+		allowedSortColumns := map[string]bool{
+			"created_at":   true,
+			"updated_at":   true,
+			"file_name":    true,
+			"file_size":    true,
+			"content_type": true,
+		}
+
+		if allowedSortColumns[req.SortBy] {
+			orderBy = fmt.Sprintf("ORDER BY %s", req.SortBy)
+			if req.SortOrder == "asc" {
+				orderBy += " ASC"
+			} else {
+				orderBy += " DESC"
+			}
 		}
 	}
 
