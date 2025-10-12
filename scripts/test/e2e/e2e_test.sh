@@ -123,38 +123,26 @@ prepare_test_data() {
     log "✅ 建立測試用戶: $USER_ID"
     
     # 建立測試專案
-    PROJECT_RESPONSE=$(curl -s -X POST "$API_BASE/projects" \
+    PROVISION_RESPONSE=$(curl -s -X POST "$API_BASE/provision" \
         -H "Content-Type: application/json" \
         -d "{
-            \"name\": \"E2E Test Project\",
-            \"description\": \"E2E 測試專案\",
+            \"project_name\": \"E2E Test Project\",
+            \"project_description\": \"E2E 測試專案\",
             \"company_id\": \"$COMPANY_ID\",
-            \"created_by\": \"$USER_ID\"
-        }")
-    
-    PROJECT_ID=$(echo "$PROJECT_RESPONSE" | jq -r '.data.id')
-    NOTIFY_KEY=$(echo "$PROJECT_RESPONSE" | jq -r '.data.notify_key')
-    log "✅ 建立測試專案: $PROJECT_ID (notify_key: $NOTIFY_KEY)"
-    
-    # 建立測試目的地
-    DESTINATION_RESPONSE=$(curl -s -X POST "$API_BASE/destinations" \
-        -H "Content-Type: application/json" \
-        -d "{
-            \"name\": \"E2E Test Destination\",
-            \"description\": \"E2E 測試目的地\",
-            \"project_id\": \"$PROJECT_ID\",
+            \"created_by\": \"$USER_ID\",
             \"teams_tenant_id\": \"051cece0-e4dc-4aed-b471-bf29824e1ee6\",
-            \"targets\": [
-                {
-                    \"type\": \"personal\",
-                    \"conversation_id\": \"a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR\",
-                    \"tenant_id\": \"051cece0-e4dc-4aed-b471-bf29824e1ee6\"
-                }
-            ]
+            \"targets\": [{
+                \"type\": \"personal\",
+                \"conversation_id\": \"a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR\",
+                \"display_name\": \"Test User\"
+            }]
         }")
     
-    DESTINATION_ID=$(echo "$DESTINATION_RESPONSE" | jq -r '.data.id')
-    log "✅ 建立測試目的地: $DESTINATION_ID"
+    PROJECT_ID=$(echo "$PROVISION_RESPONSE" | jq -r '.data.project.id')
+    NOTIFY_KEY=$(echo "$PROVISION_RESPONSE" | jq -r '.data.notify_key')
+    DESTINATION_ID=$(echo "$PROVISION_RESPONSE" | jq -r '.data.destination.id')
+    log "✅ 建立測試專案: $PROJECT_ID (notify_key: $NOTIFY_KEY)"
+    log "✅ 建立測試目的地: $DESTINATION_ID (由 provision API 自動建立)"
     
     # 儲存測試資料供後續使用
     echo "COMPANY_ID=$COMPANY_ID" > "$TEST_RESULTS_DIR/test_data.env"
@@ -162,6 +150,14 @@ prepare_test_data() {
     echo "PROJECT_ID=$PROJECT_ID" >> "$TEST_RESULTS_DIR/test_data.env"
     echo "NOTIFY_KEY=$NOTIFY_KEY" >> "$TEST_RESULTS_DIR/test_data.env"
     echo "DESTINATION_ID=$DESTINATION_ID" >> "$TEST_RESULTS_DIR/test_data.env"
+    
+    # 同時更新根目錄的 test_data.env
+    mkdir -p "test_data"
+    echo "COMPANY_ID=$COMPANY_ID" > "test_data/test_data.env"
+    echo "USER_ID=$USER_ID" >> "test_data/test_data.env"
+    echo "PROJECT_ID=$PROJECT_ID" >> "test_data/test_data.env"
+    echo "NOTIFY_KEY=$NOTIFY_KEY" >> "test_data/test_data.env"
+    echo "DESTINATION_ID=$DESTINATION_ID" >> "test_data/test_data.env"
 }
 
 # 基本功能測試
@@ -175,7 +171,7 @@ test_basic_functionality() {
     run_test "健康檢查" "curl -sS '$BASE_URL/health' | jq -r '.status' | grep -q 'healthy'"
     
     # 測試 2: 佇列狀態檢查
-    run_test "佇列狀態檢查" "curl -sS '$API_BASE/queue/status' | jq -r '.circuit_state' | grep -q 'closed'"
+    run_test "佇列狀態檢查" "curl -sS '$API_BASE/queue/stats' | jq -r '.circuit_state' | grep -q 'closed'"
     
     # 測試 3: 外部通知發送
     run_test "外部通知發送" "curl -sS -X POST '$API_BASE/external/notify' \
@@ -245,7 +241,7 @@ test_queue_system() {
     source "$TEST_RESULTS_DIR/test_data.env"
     
     # 測試 1: 佇列狀態監控
-    run_test "佇列狀態監控" "curl -sS '$API_BASE/queue/status' | jq -r '.total_pending' | grep -q '^[0-9]'"
+    run_test "佇列狀態監控" "curl -sS '$API_BASE/queue/stats' | jq -r '.total_pending' | grep -q '^[0-9]'"
     
     # 測試 2: 熔斷器狀態
     run_test "熔斷器狀態檢查" "curl -sS '$API_BASE/queue/circuit-breaker/metrics' | jq -r '.state' | grep -q 'closed'"
@@ -261,7 +257,7 @@ test_queue_system() {
     
     sleep 3  # 等待處理
     
-    run_test "佇列處理能力" "curl -sS '$API_BASE/queue/status' | jq -r '.total_pending' | awk '{if (\$1 <= 5) exit 0; else exit 1}'"
+    run_test "佇列處理能力" "curl -sS '$API_BASE/queue/stats' | jq -r '.total_pending' | awk '{if (\$1 <= 5) exit 0; else exit 1}'"
 }
 
 # 資料一致性測試

@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
@@ -21,12 +22,14 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/monitoring"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
 )
 
 // Server represents the API server
@@ -85,7 +88,11 @@ func NewServer(cfg Config) *Server {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 5. Logger last (most expensive, after other checks)
+	// 5. Business metrics logger (for business events)
+	businessMetricsMiddleware := middleware.NewBusinessMetricsMiddleware(logrus.New())
+	router.Use(businessMetricsMiddleware.BusinessMetricsLogger())
+
+	// 6. Logger last (most expensive, after other checks)
 	router.Use(gin.Logger())
 
 	// Health check
@@ -174,6 +181,7 @@ func (s *Server) RegisterRoutes(
 	billingHandler *billing.Handler,
 	fileHandler *files.Handler,
 	queueHandler *queue.Handler,
+	monitoringHandler *monitoring.MonitoringHandler,
 ) {
 	// API v1 routes
 	v1 := s.router.Group("/api/v1")
@@ -268,5 +276,11 @@ func (s *Server) RegisterRoutes(
 		// Queue routes
 		queueHandler.RegisterRoutes(v1)
 
+		// Monitoring routes
+		v1.GET("/monitoring/health", monitoringHandler.GetSystemHealth)
+		v1.GET("/monitoring/performance", monitoringHandler.GetPerformanceMetrics)
+		v1.GET("/monitoring/business", monitoringHandler.GetBusinessHealth)
+		v1.GET("/monitoring/alerts", monitoringHandler.GetAlertStatus)
+		v1.GET("/monitoring/dashboard", monitoringHandler.GetDashboard)
 	}
 }

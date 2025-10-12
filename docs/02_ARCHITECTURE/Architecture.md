@@ -262,6 +262,16 @@ Consumer Side:
 | `/api/v1/config/validate` | 配置驗證 | 無 | < 300ms |
 | `/api/v1/queue/stats` | 佇列統計 | 無 | < 200ms |
 
+#### 12.1.3 監控系統端點
+
+| 端點 | 用途 | 認證 | 響應時間 |
+|------|------|------|----------|
+| `/api/v1/monitoring/health` | 系統健康檢查 | 無 | < 200ms |
+| `/api/v1/monitoring/performance` | 性能指標 | 無 | < 500ms |
+| `/api/v1/monitoring/business` | 業務指標 | 無 | < 300ms |
+| `/api/v1/monitoring/alerts` | 警報狀態 | 無 | < 200ms |
+| `/api/v1/monitoring/dashboard` | 監控儀表板 | 無 | < 500ms |
+
 ### 12.2 告警機制
 
 #### 12.2.1 告警規則
@@ -278,6 +288,7 @@ Consumer Side:
 | `/api/v1/alerts` | 當前告警 | 無 | 返回活躍告警列表 |
 | `/api/v1/alerts/history` | 告警歷史 | 無 | 返回告警歷史記錄 |
 | `/api/v1/alerts/check` | 手動檢查 | 無 | 手動觸發告警檢查 |
+| `/api/v1/monitoring/alerts` | 監控警報 | 無 | 返回監控系統警報狀態 |
 
 ### 12.3 日誌管理
 

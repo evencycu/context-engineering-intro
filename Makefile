@@ -1,6 +1,5 @@
 # TeamsNotifyGoV2 Makefile
 
-.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate db-reset openapi-start openapi-stop openapi-status openapi-open test-e2e test-load test-api test-report test-full
 
 # Default target
 help:
@@ -8,7 +7,6 @@ help:
 	@echo "  docker-up      - Start PostgreSQL and Redis with Docker Compose"
 	@echo "  docker-down    - Stop Docker containers"
 	@echo "  docker-logs    - Show Docker container logs"
-	@echo "  db-migrate     - Run database migrations"
 	@echo "  db-reset       - Reset database (drop and recreate)"
 	@echo "  build          - Build the application"
 	@echo "  run            - Run the application"
@@ -56,14 +54,11 @@ docker-logs:
 	docker-compose logs -f
 
 # Database operations
-db-migrate:
-	@echo "Running database migrations..."
 	@if [ -z "$$(docker ps -q -f name=teamsnotify-postgres)" ]; then \
 		echo "PostgreSQL container is not running. Please run 'make docker-up' first."; \
 		exit 1; \
 	fi
 	docker exec -i teamsnotify-postgres psql -U teamsnotify -d teamsnotify < internal/database/schema.sql
-	@echo "Database migration completed!"
 
 db-reset:
 	@echo "Resetting database..."
@@ -91,7 +86,6 @@ clean:
 	go clean
 
 # Development setup
-dev-setup: docker-up db-migrate
 	@echo "Development environment is ready!"
 	@echo "PostgreSQL: localhost:5432"
 	@echo "Redis: localhost:6379"

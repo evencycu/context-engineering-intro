@@ -106,12 +106,11 @@ curl -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer test-token" \
   -d '{
-    "title": "Provision API 測試通知",
-    "message": "這是一個使用 provision API 建立的專案發送的測試通知",
-    "message_type": "text",
     "project_id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
-    "destination_ids": ["cf867660-26ae-4437-828c-6fb2c2e3eb19"],
-    "priority": "normal"
+    "message_type": "text",
+    "content": "這是一個使用 provision API 建立的專案發送的測試通知",
+    "priority": "normal",
+    "targets": ["cf867660-26ae-4437-828c-6fb2c2e3eb19"]
   }'
 ```
 

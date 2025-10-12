@@ -63,14 +63,21 @@ flowchart TB
 | `/api/v1/config` | GET | 配置信息 | 無 | < 200ms |
 | `/api/v1/config/validate` | POST | 配置驗證 | 無 | < 300ms |
 
-### 3.2 業務監控端點
+### 3.2 監控系統端點
+
+| 端點 | 方法 | 用途 | 認證 | 響應時間 |
+|------|------|------|------|----------|
+| `/api/v1/monitoring/health` | GET | 系統健康檢查 | 無 | < 200ms |
+| `/api/v1/monitoring/performance` | GET | 性能指標 | 無 | < 500ms |
+| `/api/v1/monitoring/business` | GET | 業務指標 | 無 | < 300ms |
+| `/api/v1/monitoring/alerts` | GET | 警報狀態 | 無 | < 200ms |
+| `/api/v1/monitoring/dashboard` | GET | 監控儀表板 | 無 | < 500ms |
+
+### 3.3 佇列管理端點
 
 | 端點 | 方法 | 用途 | 認證 | 響應時間 |
 |------|------|------|------|----------|
 | `/api/v1/queue/stats` | GET | 佇列統計 | 無 | < 200ms |
-| `/api/v1/alerts` | GET | 當前告警 | 無 | < 200ms |
-| `/api/v1/alerts/history` | GET | 告警歷史 | 無 | < 300ms |
-| `/api/v1/alerts/check` | POST | 手動檢查 | 無 | < 500ms |
 
 ---
 
@@ -325,6 +332,21 @@ curl http://localhost:8080/health | jq '.'
 ```bash
 # 系統指標
 curl http://localhost:8080/api/v1/metrics | jq '.'
+
+# 監控系統健康檢查
+curl http://localhost:8080/api/v1/monitoring/health | jq '.'
+
+# 性能指標
+curl http://localhost:8080/api/v1/monitoring/performance | jq '.'
+
+# 業務指標
+curl http://localhost:8080/api/v1/monitoring/business | jq '.'
+
+# 警報狀態
+curl http://localhost:8080/api/v1/monitoring/alerts | jq '.'
+
+# 監控儀表板
+curl http://localhost:8080/api/v1/monitoring/dashboard | jq '.'
 
 # 佇列統計
 curl http://localhost:8080/api/v1/queue/stats | jq '.'

@@ -1292,12 +1292,13 @@ func validateTeamsTargets(targets database.JSONBTargets) error {
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, _ interface{}) NotificationService {
+func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, metricsService MetricsService) NotificationService {
 	return &notificationService{
 		repo:                 repo,
 		destinationRepo:      destinationRepo,
 		notificationDestRepo: notificationDestRepo,
 		broadcaster:          broadcaster,
+		metricsService:       metricsService,
 	}
 }
 
@@ -1306,6 +1307,7 @@ type notificationService struct {
 	destinationRepo      repositories.DestinationRepository
 	notificationDestRepo repositories.NotificationDestinationRepository
 	broadcaster          BroadcastService
+	metricsService       MetricsService
 }
 
 // Create creates a new notification
@@ -1479,6 +1481,15 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 				return nil, fmt.Errorf("failed to create notification_destinations: %w", err)
 			}
 		}
+	}
+
+	// Update metrics
+	if s.metricsService != nil {
+		// Increment pending notifications
+		s.metricsService.IncrementNotificationPending(ctx)
+
+		// Update active projects count (simplified - in real implementation, query from DB)
+		// s.metricsService.UpdateActiveProjects(ctx, int64(len(destinations)))
 	}
 
 	// TODO: Spawn actors for each notification_destination

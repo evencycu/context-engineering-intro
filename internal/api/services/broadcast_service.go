@@ -28,6 +28,7 @@ type broadcastService struct {
 	teamsBotRepo    repositories.TeamsBotRepository
 	installRepo     repositories.BotInstallationRepository
 	destinationRepo repositories.DestinationRepository
+	metricsService  MetricsService
 }
 
 // BroadcastResult represents the result of a broadcast operation
@@ -56,11 +57,13 @@ func NewBroadcastService(
 	teamsBotRepo repositories.TeamsBotRepository,
 	installRepo repositories.BotInstallationRepository,
 	destinationRepo repositories.DestinationRepository,
+	metricsService MetricsService,
 ) BroadcastService {
 	return &broadcastService{
 		teamsBotRepo:    teamsBotRepo,
 		installRepo:     installRepo,
 		destinationRepo: destinationRepo,
+		metricsService:  metricsService,
 	}
 }
 
@@ -473,7 +476,18 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 	log.Printf("sendToInstallation: Sending request to %s, conversation_id=%s", url, inst.ConversationID)
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
+
+	// Update metrics for Teams API call
+	if s.metricsService != nil {
+		s.metricsService.IncrementTeamsAPICall(ctx)
+	}
+
 	if err != nil {
+		// Update metrics for API error
+		if s.metricsService != nil {
+			s.metricsService.IncrementTeamsAPIError(ctx)
+		}
+
 		log.Printf("sendToInstallation: Failed to send request: %v", err)
 		return TargetResult{
 			TargetID:       inst.ConversationID,
@@ -489,6 +503,11 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 	log.Printf("sendToInstallation: Received response status %d: %s", resp.StatusCode, resp.Status)
 
 	if resp.StatusCode >= 400 {
+		// Update metrics for API error
+		if s.metricsService != nil {
+			s.metricsService.IncrementTeamsAPIError(ctx)
+		}
+
 		body, _ := io.ReadAll(resp.Body)
 		log.Printf("sendToInstallation: Error response body: %s", string(body))
 		return TargetResult{
@@ -505,6 +524,12 @@ func (s *broadcastService) sendToInstallation(ctx context.Context, inst *databas
 	var response map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&response); err == nil {
 		if id, ok := response["id"].(string); ok {
+			// Update metrics for successful notification
+			if s.metricsService != nil {
+				s.metricsService.IncrementNotificationSent(ctx)
+				s.metricsService.UpdateResponseTime(ctx, float64(time.Since(start).Milliseconds()))
+			}
+
 			return TargetResult{
 				TargetID:       inst.ConversationID,
 				ConversationID: inst.ConversationID,

@@ -157,21 +157,93 @@ curl -X POST http://localhost:8080/api/v1/provision/{notify_key}/enable
 curl -X POST http://localhost:8080/api/v1/provision/{notify_key}/disable
 ```
 
-### 5.3 Queue Management API - 系統監控
+### 5.3 系統監控
+
+#### 5.3.1 基本健康檢查
+
+```bash
+# 系統健康檢查
+curl -X GET http://localhost:8080/health | jq '.'
+
+# 詳細健康檢查
+curl -X GET http://localhost:8080/api/v1/monitoring/health | jq '.'
+```
+
+#### 5.3.2 監控指標查詢
+
+```bash
+# 系統指標
+curl -X GET http://localhost:8080/api/v1/metrics | jq '.'
+
+# 性能指標
+curl -X GET http://localhost:8080/api/v1/monitoring/performance | jq '.'
+
+# 業務指標
+curl -X GET http://localhost:8080/api/v1/monitoring/business | jq '.'
+
+# 警報狀態
+curl -X GET http://localhost:8080/api/v1/monitoring/alerts | jq '.'
+
+# 監控儀表板
+curl -X GET http://localhost:8080/api/v1/monitoring/dashboard | jq '.'
+```
+
+#### 5.3.3 Queue Management API - 佇列監控
 
 Queue Management API 用於監控和管理通知佇列狀態、電路斷路器狀態。
 
-#### 監控隊列狀態
-
 ```bash
 # 查詢隊列狀態
-curl -X GET http://localhost:8080/api/v1/queue/status | jq '.'
+curl -X GET http://localhost:8080/api/v1/queue/stats | jq '.'
+```
 
-# 查詢熔斷器指標
-curl -X GET http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '.'
+#### 5.3.4 監控指標說明
 
-# 重置熔斷器
-curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset | jq '.'
+**系統健康檢查回應範例**:
+```json
+{
+  "data": {
+    "status": "healthy",
+    "timestamp": "2025-10-12T08:55:11.062154085+08:00",
+    "components": {
+      "api": {
+        "status": "healthy",
+        "message": "API service running"
+      },
+      "database": {
+        "status": "healthy", 
+        "message": "Database connection successful"
+      },
+      "redis": {
+        "status": "healthy",
+        "message": "Redis connection successful"
+      }
+    },
+    "overall": {
+      "score": 100,
+      "grade": "A",
+      "message": "System is healthy"
+    }
+  }
+}
+```
+
+**業務指標回應範例**:
+```json
+{
+  "business": {
+    "notifications_sent": 5,
+    "notifications_failed": 1,
+    "notifications_pending": 35,
+    "success_rate": 83.33,
+    "average_response_time_ms": 0,
+    "teams_api_calls": 6,
+    "teams_api_errors": 1,
+    "queue_processing_rate_per_minute": 0,
+    "active_projects": 3,
+    "active_destinations": 5
+  }
+}
 ```
 
 ---

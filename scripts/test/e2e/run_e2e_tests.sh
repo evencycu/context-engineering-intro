@@ -166,7 +166,7 @@ show_test_summary() {
     local failed_tests=0
     
     # 檢查 E2E 測試結果
-    if [ -f "$TEST_RESULTS_DIR/e2e/e2e_report_"*.json ]; then
+    if ls "$TEST_RESULTS_DIR/e2e/e2e_report_"*.json >/dev/null 2>&1; then
         local e2e_file=$(ls $TEST_RESULTS_DIR/e2e/e2e_report_*.json | tail -1)
         if [ -f "$e2e_file" ]; then
             local e2e_total=$(jq -r '.test_summary.total_tests' "$e2e_file" 2>/dev/null || echo "0")

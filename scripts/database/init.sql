@@ -74,3 +74,30 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- Index definitions are maintained in scripts/database/schema.sql
+
+-- Insert system settings
+INSERT INTO system_settings (key, value, description, is_public) VALUES
+('max_message_length', '4000', 'Maximum message length in characters', true),
+('max_attachment_size', '10485760', 'Maximum attachment size in bytes (10MB)', true),
+('allowed_file_types', '["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "jpg", "jpeg", "png", "gif"]', 'Allowed file types for attachments', true),
+('rate_limit_per_minute', '100', 'Rate limit per minute per user', true),
+('retry_attempts', '3', 'Maximum retry attempts for failed notifications', false),
+('cleanup_retention_days', '90', 'Number of days to retain old notifications', false),
+('bot_health_check_interval', '60', 'Bot health check interval in seconds', false),
+('max_bot_installations_per_tenant', '100', 'Maximum bot installations per tenant', false)
+ON CONFLICT (key) DO NOTHING;
+
+-- Insert feature flags
+INSERT INTO feature_flags (name, description, enabled) VALUES
+('file_attachments', 'Enable file attachment feature', true),
+('mentions', 'Enable @mention feature', true),
+('adaptive_cards', 'Enable adaptive card feature', true),
+('webhooks', 'Enable webhook notifications', false),
+('analytics', 'Enable analytics dashboard', true),
+('billing', 'Enable billing and usage tracking', true),
+('admin_panel', 'Enable admin panel', true),
+('audit_logs', 'Enable audit logging', true),
+('third_party_bots', 'Enable third party bot support', true),
+('bot_routing', 'Enable intelligent bot routing', true),
+('maintenance_mode', 'Enable maintenance mode', false)
+ON CONFLICT (name) DO NOTHING;

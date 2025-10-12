@@ -53,7 +53,6 @@
 
 ### 資料庫（1 個文件）
 
-8. **scripts/migrations/008_add_failed_notifications_queue.sql** (77 行)
    - 建立 failed_notifications 表
    - 5 個索引
    - 1 個觸發器

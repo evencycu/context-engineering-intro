@@ -91,7 +91,7 @@ echo ""
 
 # Test 2: Get queue status
 print_test 2 "Get queue status"
-if queue_status=$(api_call "GET" "/queue/status" "" 200); then
+if queue_status=$(api_call "GET" "/queue/stats" "" 200); then
     print_info "Queue Status:"
     echo "$queue_status" | jq '.' 2>/dev/null || echo "$queue_status"
 else
@@ -144,7 +144,7 @@ if [ -n "$TEST_NOTIFY_KEY" ]; then
         
         # Check queue status again
         print_info "Checking queue status after notification..."
-        api_call "GET" "/queue/status" "" 200 | jq '.' 2>/dev/null
+        api_call "GET" "/queue/stats" "" 200 | jq '.' 2>/dev/null
     else
         print_info "Test notification failed (expected - for testing queue)"
     fi
@@ -159,7 +159,7 @@ print_info "Monitoring queue for 10 seconds..."
 
 for i in {1..5}; do
     sleep 2
-    status=$(api_call "GET" "/queue/status" "" 200 2>/dev/null)
+    status=$(api_call "GET" "/queue/stats" "" 200 2>/dev/null)
     pending=$(echo "$status" | jq -r '.total_pending' 2>/dev/null || echo "0")
     retrying=$(echo "$status" | jq -r '.total_retrying' 2>/dev/null || echo "0")
     failed=$(echo "$status" | jq -r '.total_failed' 2>/dev/null || echo "0")

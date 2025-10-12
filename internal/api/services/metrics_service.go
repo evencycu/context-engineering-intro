@@ -12,6 +12,15 @@ import (
 // MetricsService provides system metrics collection
 type MetricsService interface {
 	GetMetrics(ctx context.Context) (*MetricsResponse, error)
+	IncrementNotificationSent(ctx context.Context) error
+	IncrementNotificationFailed(ctx context.Context) error
+	IncrementNotificationPending(ctx context.Context) error
+	IncrementTeamsAPICall(ctx context.Context) error
+	IncrementTeamsAPIError(ctx context.Context) error
+	UpdateResponseTime(ctx context.Context, responseTimeMs float64) error
+	UpdateQueueProcessingRate(ctx context.Context, rate float64) error
+	UpdateActiveProjects(ctx context.Context, count int64) error
+	UpdateActiveDestinations(ctx context.Context, count int64) error
 }
 
 // MetricsResponse represents the metrics response
@@ -22,6 +31,7 @@ type MetricsResponse struct {
 	ActorPool  ActorPoolMetrics  `json:"actor_pool"`
 	Database   DatabaseMetrics   `json:"database"`
 	Redis      RedisMetrics      `json:"redis"`
+	Business   BusinessMetrics   `json:"business"`
 }
 
 // SystemMetrics represents system-level metrics
@@ -73,6 +83,20 @@ type RedisMetrics struct {
 	EvictedKeys      int64   `json:"evicted_keys"`
 	ExpiredKeys      int64   `json:"expired_keys"`
 	ConnectedClients int64   `json:"connected_clients"`
+}
+
+// BusinessMetrics represents business-level metrics
+type BusinessMetrics struct {
+	NotificationsSent    int64   `json:"notifications_sent"`
+	NotificationsFailed  int64   `json:"notifications_failed"`
+	NotificationsPending int64   `json:"notifications_pending"`
+	SuccessRate          float64 `json:"success_rate"`
+	AverageResponseTime  float64 `json:"average_response_time_ms"`
+	TeamsAPICalls        int64   `json:"teams_api_calls"`
+	TeamsAPIErrors       int64   `json:"teams_api_errors"`
+	QueueProcessingRate  float64 `json:"queue_processing_rate_per_minute"`
+	ActiveProjects       int64   `json:"active_projects"`
+	ActiveDestinations   int64   `json:"active_destinations"`
 }
 
 // metricsService implements MetricsService
@@ -151,6 +175,12 @@ func (s *metricsService) GetMetrics(ctx context.Context) (*MetricsResponse, erro
 		return nil, err
 	}
 
+	// Business metrics
+	businessMetrics, err := s.getBusinessMetrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create response
 	response := &MetricsResponse{
 		Timestamp:  now,
@@ -159,6 +189,7 @@ func (s *metricsService) GetMetrics(ctx context.Context) (*MetricsResponse, erro
 		ActorPool:  actorPoolMetrics,
 		Database:   databaseMetrics,
 		Redis:      redisMetrics,
+		Business:   businessMetrics,
 	}
 
 	// Update cache
@@ -234,4 +265,106 @@ func (s *metricsService) getRedisMetrics(ctx context.Context) (RedisMetrics, err
 		ExpiredKeys:      expiredKeys,
 		ConnectedClients: connectedClients,
 	}, nil
+}
+
+// getBusinessMetrics collects business-level metrics
+func (s *metricsService) getBusinessMetrics(ctx context.Context) (BusinessMetrics, error) {
+	// Get metrics from Redis cache
+	notificationsSent, _ := s.redisClient.Get(ctx, "metrics:notifications_sent").Int64()
+	notificationsFailed, _ := s.redisClient.Get(ctx, "metrics:notifications_failed").Int64()
+	notificationsPending, _ := s.redisClient.Get(ctx, "metrics:notifications_pending").Int64()
+	teamsAPICalls, _ := s.redisClient.Get(ctx, "metrics:teams_api_calls").Int64()
+	teamsAPIErrors, _ := s.redisClient.Get(ctx, "metrics:teams_api_errors").Int64()
+	activeProjects, _ := s.redisClient.Get(ctx, "metrics:active_projects").Int64()
+	activeDestinations, _ := s.redisClient.Get(ctx, "metrics:active_destinations").Int64()
+	
+	// Calculate success rate
+	var successRate float64
+	totalNotifications := notificationsSent + notificationsFailed
+	if totalNotifications > 0 {
+		successRate = float64(notificationsSent) / float64(totalNotifications) * 100
+	}
+	
+	// Get average response time from Redis
+	avgResponseTime, _ := s.redisClient.Get(ctx, "metrics:avg_response_time_ms").Float64()
+	
+	// Get queue processing rate (notifications per minute)
+	queueProcessingRate, _ := s.redisClient.Get(ctx, "metrics:queue_processing_rate").Float64()
+	
+	return BusinessMetrics{
+		NotificationsSent:     notificationsSent,
+		NotificationsFailed:   notificationsFailed,
+		NotificationsPending:  notificationsPending,
+		SuccessRate:           successRate,
+		AverageResponseTime:   avgResponseTime,
+		TeamsAPICalls:         teamsAPICalls,
+		TeamsAPIErrors:        teamsAPIErrors,
+		QueueProcessingRate:   queueProcessingRate,
+		ActiveProjects:        activeProjects,
+		ActiveDestinations:    activeDestinations,
+	}, nil
+}
+
+// IncrementNotificationSent increments the notification sent counter
+func (s *metricsService) IncrementNotificationSent(ctx context.Context) error {
+	return s.redisClient.Incr(ctx, "metrics:notifications_sent").Err()
+}
+
+// IncrementNotificationFailed increments the notification failed counter
+func (s *metricsService) IncrementNotificationFailed(ctx context.Context) error {
+	return s.redisClient.Incr(ctx, "metrics:notifications_failed").Err()
+}
+
+// IncrementNotificationPending increments the notification pending counter
+func (s *metricsService) IncrementNotificationPending(ctx context.Context) error {
+	return s.redisClient.Incr(ctx, "metrics:notifications_pending").Err()
+}
+
+// IncrementTeamsAPICall increments the Teams API call counter
+func (s *metricsService) IncrementTeamsAPICall(ctx context.Context) error {
+	return s.redisClient.Incr(ctx, "metrics:teams_api_calls").Err()
+}
+
+// IncrementTeamsAPIError increments the Teams API error counter
+func (s *metricsService) IncrementTeamsAPIError(ctx context.Context) error {
+	return s.redisClient.Incr(ctx, "metrics:teams_api_errors").Err()
+}
+
+// UpdateResponseTime updates the average response time
+func (s *metricsService) UpdateResponseTime(ctx context.Context, responseTimeMs float64) error {
+	// Update running average
+	pipe := s.redisClient.Pipeline()
+	pipe.Get(ctx, "metrics:avg_response_time_ms")
+	pipe.Get(ctx, "metrics:response_time_count")
+	cmds, err := pipe.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	
+	oldAvg, _ := cmds[0].(*redis.StringCmd).Float64()
+	count, _ := cmds[1].(*redis.StringCmd).Int64()
+	
+	newCount := count + 1
+	newAvg := (oldAvg*float64(count) + responseTimeMs) / float64(newCount)
+	
+	pipe = s.redisClient.Pipeline()
+	pipe.Set(ctx, "metrics:avg_response_time_ms", newAvg, 0)
+	pipe.Set(ctx, "metrics:response_time_count", newCount, 0)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+// UpdateQueueProcessingRate updates the queue processing rate
+func (s *metricsService) UpdateQueueProcessingRate(ctx context.Context, rate float64) error {
+	return s.redisClient.Set(ctx, "metrics:queue_processing_rate", rate, 0).Err()
+}
+
+// UpdateActiveProjects updates the active projects count
+func (s *metricsService) UpdateActiveProjects(ctx context.Context, count int64) error {
+	return s.redisClient.Set(ctx, "metrics:active_projects", count, 0).Err()
+}
+
+// UpdateActiveDestinations updates the active destinations count
+func (s *metricsService) UpdateActiveDestinations(ctx context.Context, count int64) error {
+	return s.redisClient.Set(ctx, "metrics:active_destinations", count, 0).Err()
 }

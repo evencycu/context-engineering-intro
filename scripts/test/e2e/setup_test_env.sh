@@ -142,12 +142,21 @@ start_test_environment() {
 }
 
 # 執行資料庫遷移
+    # 清理現有資料庫結構
+    log "清理現有資料庫結構..."
+    docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
 run_database_migrations() {
     log "📊 執行資料庫遷移..."
+    # 清理現有資料庫結構
+    log "清理現有資料庫結構..."
+    docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
     
     # 檢查遷移檔案是否存在（更新為現有路徑）
-    if [ ! -f "scripts/database/schema.sql" ]; then
-        error "找不到資料庫結構檔案: scripts/database/schema.sql"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+    
+    if [ ! -f "$PROJECT_ROOT/scripts/database/schema.sql" ]; then
+        error "找不到資料庫結構檔案: $PROJECT_ROOT/scripts/database/schema.sql"
         exit 1
     fi
     
@@ -158,13 +167,26 @@ run_database_migrations() {
     fi
 
     # 執行遷移
-    docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/database/schema.sql
+    docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < "$PROJECT_ROOT/scripts/database/schema.sql"
     
     if [ $? -eq 0 ]; then
         success "資料庫遷移完成"
     else
         error "資料庫遷移失敗"
         exit 1
+    fi
+    
+    # 載入初始數據
+    if [ -f "$PROJECT_ROOT/scripts/database/init.sql" ]; then
+        log "載入初始數據..."
+        docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < "$PROJECT_ROOT/scripts/database/init.sql"
+        if [ $? -eq 0 ]; then
+            success "初始數據載入完成"
+        else
+            warning "初始數據載入失敗，繼續執行測試"
+        fi
+    else
+        warning "找不到初始數據檔案: $PROJECT_ROOT/scripts/database/init.sql"
     fi
 }
 
@@ -306,7 +328,7 @@ verify_test_environment() {
     fi
     
     # 檢查佇列狀態
-    local queue_status=$(curl -sS "$API_BASE/queue/status")
+    local queue_status=$(curl -sS "$API_BASE/queue/stats")
     if echo "$queue_status" | jq -r '.circuit_state' | grep -q "closed"; then
         success "佇列系統正常"
     else

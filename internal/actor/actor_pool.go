@@ -125,6 +125,9 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 	actor.Priority = nd.Priority
 	actor.Start(ctx)
 
+	// Start a goroutine to clean up the actor when it completes
+	go p.cleanupActorWhenDone(ctx, notificationDestID, actor)
+
 	log.Printf("Spawned actor %s for notification_dest=%s (pool: %d/%d)",
 		actor.ID, notificationDestID, len(p.actors), p.maxActors)
 }
@@ -170,4 +173,18 @@ func (p *ActorPool) GetPoolStatus() map[string]interface{} {
 		"available_slots": p.maxActors - len(p.actors),
 		"actors":          activeActors,
 	}
+}
+
+// cleanupActorWhenDone waits for an actor to complete and removes it from the pool
+func (p *ActorPool) cleanupActorWhenDone(ctx context.Context, notificationDestID uuid.UUID, actor *NotificationActor) {
+	// Wait for the actor to complete
+	result := actor.Wait()
+
+	// Remove the actor from the pool
+	p.mu.Lock()
+	delete(p.actors, notificationDestID)
+	p.mu.Unlock()
+
+	log.Printf("Actor %s completed (success: %v, pool: %d/%d)",
+		actor.ID, result.Success, len(p.actors), p.maxActors)
 }

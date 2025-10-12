@@ -22,9 +22,6 @@
 - ✅ 完善測試覆蓋率
 
 ### 4. 數據庫遷移
-- 創建了 `scripts/migrations/011_add_billing_tables.sql`
-- 創建了 `scripts/migrations/012_add_file_tables.sql`
-- 創建了 `scripts/migrations/013_add_batch_tables.sql`
 - 成功執行所有遷移腳本，創建了新的數據庫表
 
 ### 5. API 測試驗證

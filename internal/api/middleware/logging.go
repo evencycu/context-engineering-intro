@@ -22,29 +22,36 @@ func NewLoggingMiddleware(logger *logrus.Logger) *LoggingMiddleware {
 	}
 }
 
-// RequestLogger logs HTTP requests
+// RequestLogger logs HTTP requests with enhanced formatting
 func (m *LoggingMiddleware) RequestLogger() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		// Create structured log entry
+		// Create structured log entry with enhanced fields
 		entry := m.logger.WithFields(logrus.Fields{
-			"timestamp":  param.TimeStamp.Format(time.RFC3339),
-			"status":     param.StatusCode,
-			"latency":    param.Latency,
-			"client_ip":  param.ClientIP,
-			"method":     param.Method,
-			"path":       param.Path,
-			"user_agent": param.Request.UserAgent(),
-			"request_id": param.Keys["request_id"],
+			"timestamp":      param.TimeStamp.Format(time.RFC3339),
+			"status":         param.StatusCode,
+			"latency":        param.Latency,
+			"latency_ms":     param.Latency.Milliseconds(),
+			"client_ip":      param.ClientIP,
+			"method":         param.Method,
+			"path":           param.Path,
+			"full_path":      param.Request.URL.String(),
+			"user_agent":     param.Request.UserAgent(),
+			"request_id":     param.Keys["request_id"],
+			"content_type":   param.Request.Header.Get("Content-Type"),
+			"content_length": param.Request.ContentLength,
+			"referer":        param.Request.Header.Get("Referer"),
 		})
 
-		// Set log level based on status code
+		// Set log level based on status code with enhanced messages
 		switch {
 		case param.StatusCode >= 500:
-			entry.Error("HTTP Request")
+			entry.Error("HTTP Request - Server Error")
 		case param.StatusCode >= 400:
-			entry.Warn("HTTP Request")
+			entry.Warn("HTTP Request - Client Error")
+		case param.StatusCode >= 300:
+			entry.Info("HTTP Request - Redirection")
 		default:
-			entry.Info("HTTP Request")
+			entry.Info("HTTP Request - Success")
 		}
 
 		return ""
@@ -196,6 +203,44 @@ func (m *LoggingMiddleware) RateLimitLogger() gin.HandlerFunc {
 				"path":       c.Request.URL.Path,
 				"user_agent": c.Request.UserAgent(),
 			}).Warn("Rate limit exceeded")
+		}
+	}
+}
+
+// BusinessMetricsLogger logs business metrics events
+func (m *LoggingMiddleware) BusinessMetricsLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+
+		// Log business metrics for specific endpoints
+		path := c.Request.URL.Path
+		method := c.Request.Method
+		status := c.Writer.Status()
+
+		// Log notification-related metrics
+		if method == "POST" && (path == "/api/v1/notifications" || path == "/api/v1/provision") {
+			latency := time.Since(start)
+			m.logger.WithFields(logrus.Fields{
+				"request_id":     c.GetString("request_id"),
+				"endpoint":       path,
+				"method":         method,
+				"status":         status,
+				"latency_ms":     latency.Milliseconds(),
+				"business_event": "notification_created",
+			}).Info("Business Event - Notification Created")
+		}
+
+		// Log metrics endpoint access
+		if path == "/api/v1/metrics" {
+			m.logger.WithFields(logrus.Fields{
+				"request_id":     c.GetString("request_id"),
+				"endpoint":       path,
+				"method":         method,
+				"status":         status,
+				"latency_ms":     time.Since(start).Milliseconds(),
+				"business_event": "metrics_accessed",
+			}).Info("Business Event - Metrics Accessed")
 		}
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/monitoring"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
@@ -99,7 +100,10 @@ func main() {
 
 	notificationRepo := repositories.NewNotificationRepository(db)
 	notificationDestRepo := repositories.NewNotificationDestinationRepository(db)
-	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo)
+	// Initialize metrics service
+	metricsService := services.NewMetricsService(redisClient)
+
+	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo, metricsService)
 
 	// Initialize Token Manager for Teams API token caching
 	tokenManager := services.NewTokenManager(redisClient)
@@ -107,7 +111,7 @@ func main() {
 
 	// Initialize Redis Queue
 	redisQueue := actor.NewRedisQueue(redisClient)
-	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, redisQueue)
+	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, metricsService)
 
 	// Initialize notification processor (unified ActorPool + QueueConsumer + EnqueueWorker)
 	notificationProcessor := actor.NewNotificationProcessor(
@@ -138,8 +142,15 @@ func main() {
 	fileService := services.NewFileService(fileRepo, localStorage)
 
 	// System services
-	metricsService := services.NewMetricsService(redisClient)
 	configService := services.NewConfigService()
+
+	// Monitoring service
+	monitoringService := services.NewMonitoringService(
+		metricsService,
+		projectRepo,
+		notificationRepo,
+		destinationRepo,
+	)
 
 	// Queue system replaced by Actor Pool V2
 
@@ -159,6 +170,9 @@ func main() {
 	queueHandler := qhandler.NewHandler(redisClient)
 	// System handler
 	systemHandler := system.NewHandler(metricsService, configService)
+
+	// Monitoring handler
+	monitoringHandler := monitoring.NewMonitoringHandler(monitoringService)
 
 	// Create server
 	server := api.NewServer(api.Config{
@@ -199,7 +213,7 @@ func main() {
 	}
 
 	// Register API routes
-	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, systemHandler, billingHandler, fileHandler, queueHandler)
+	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, systemHandler, billingHandler, fileHandler, queueHandler, monitoringHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)
