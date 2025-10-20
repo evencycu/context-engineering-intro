@@ -47,9 +47,9 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample billing plans
 INSERT INTO billing_plans (id, name, description, price_per_notification, price_per_month, max_notifications_per_month, max_projects, max_users, features, is_active, created_at, updated_at) VALUES
-('a50e8400-e29b-41d4-a716-446655440001', 'Basic Plan', 'Basic notification plan', 0.01, 0.00, 1000, 2, 5, '{"notifications": true}', true, NOW(), NOW()),
-('a50e8400-e29b-41d4-a716-446655440002', 'Pro Plan', 'Professional notification plan', 0.005, 25.00, 5000, 10, 25, '{"notifications": true, "files": true}', true, NOW(), NOW()),
-('a50e8400-e29b-41d4-a716-446655440003', 'Enterprise Plan', 'Enterprise notification plan', 0.001, 100.00, 50000, 50, 100, '{"notifications": true, "files": true, "analytics": true, "priority_support": true}', true, NOW(), NOW())
+('a50e8400-e29b-41d4-a716-446655440001', 'Basic Plan', 'Basic notification plan', 0.001, 0.00, 1000000, 2, 5, '{"notifications": true}', true, NOW(), NOW()),
+('a50e8400-e29b-41d4-a716-446655440002', 'Pro Plan', 'Professional notification plan', 0.0005, 25.00, 5000000, 10, 25, '{"notifications": true, "files": true}', true, NOW(), NOW()),
+('a50e8400-e29b-41d4-a716-446655440003', 'Enterprise Plan', 'Enterprise notification plan', 0.0001, 100.00, 50000000, 50, 100, '{"notifications": true, "files": true, "analytics": true, "priority_support": true}', true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert company billing
