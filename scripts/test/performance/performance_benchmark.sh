@@ -280,7 +280,7 @@ main() {
     test_endpoint_performance "/api/v1/users" $USERS_THRESHOLD "用戶 API"
     
     # Test external notification with error handling
-    test_endpoint_performance "/api/v1/external/notify" $EXTERNAL_NOTIFY_THRESHOLD \
+    test_endpoint_performance "/api/v1/notify" $EXTERNAL_NOTIFY_THRESHOLD \
         "外部通知" "POST" '{"notify_key":"test","message":"test","targets":["test"]}'
     
     # Concurrent performance tests

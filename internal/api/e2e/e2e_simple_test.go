@@ -21,7 +21,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 	router := gin.New()
 
 	// 模擬外部 API 端點
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -45,7 +45,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 		})
 	})
 
-	router.GET("/api/v1/external/destinations/:notifyKey", func(c *gin.Context) {
+	router.GET("/api/v1/destinations/:notifyKey", func(c *gin.Context) {
 		notifyKey := c.Param("notifyKey")
 		if notifyKey == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing notify key"})
@@ -71,7 +71,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 		})
 	})
 
-	router.GET("/api/v1/external/health", func(c *gin.Context) {
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",
 			"timestamp": time.Now(),
@@ -93,7 +93,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 		}
 
 		jsonBody, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+		req, _ := http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -110,7 +110,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 
 	// 測試獲取專案目的地
 	t.Run("Get Project Destinations", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/external/destinations/test-notify-key", nil)
+		req, _ := http.NewRequest("GET", "/api/v1/destinations/test-notify-key", nil)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -125,7 +125,7 @@ func TestE2E_ExternalAPI_BasicFlow(t *testing.T) {
 
 	// 測試健康檢查
 	t.Run("Health Check", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/external/health", nil)
+		req, _ := http.NewRequest("GET", "/health", nil)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -144,7 +144,7 @@ func TestE2E_ExternalAPI_InvalidRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -165,7 +165,7 @@ func TestE2E_ExternalAPI_InvalidRequest(t *testing.T) {
 	}
 
 	jsonBody, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestE2E_ExternalAPI_ConcurrentRequests(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -204,7 +204,7 @@ func TestE2E_ExternalAPI_ConcurrentRequests(t *testing.T) {
 			}
 
 			jsonBody, _ := json.Marshal(requestBody)
-			req, _ := http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+			req, _ := http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
@@ -226,7 +226,7 @@ func TestE2E_ExternalAPI_Performance(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -251,7 +251,7 @@ func TestE2E_ExternalAPI_Performance(t *testing.T) {
 		}
 
 		jsonBody, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+		req, _ := http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -270,7 +270,7 @@ func TestE2E_ExternalAPI_DataValidation(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -317,7 +317,7 @@ func TestE2E_ExternalAPI_DataValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonBody, _ := json.Marshal(tt.requestBody)
-			req, _ := http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+			req, _ := http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
@@ -335,7 +335,7 @@ func TestE2E_ExternalAPI_Integration(t *testing.T) {
 	router := gin.New()
 
 	// 設置所有端點
-	router.POST("/api/v1/external/notify", func(c *gin.Context) {
+	router.POST("/api/v1/notify", func(c *gin.Context) {
 		var req map[string]interface{}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -350,7 +350,7 @@ func TestE2E_ExternalAPI_Integration(t *testing.T) {
 		c.JSON(http.StatusOK, gin.H{"success": true})
 	})
 
-	router.GET("/api/v1/external/destinations/:notifyKey", func(c *gin.Context) {
+	router.GET("/api/v1/destinations/:notifyKey", func(c *gin.Context) {
 		notifyKey := c.Param("notifyKey")
 		if notifyKey == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing notify key"})
@@ -371,7 +371,7 @@ func TestE2E_ExternalAPI_Integration(t *testing.T) {
 		})
 	})
 
-	router.GET("/api/v1/external/health", func(c *gin.Context) {
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",
 			"timestamp": time.Now(),
@@ -381,13 +381,13 @@ func TestE2E_ExternalAPI_Integration(t *testing.T) {
 	// 測試完整的 API 流程
 	t.Run("Complete API Flow", func(t *testing.T) {
 		// 1. 健康檢查
-		req, _ := http.NewRequest("GET", "/api/v1/external/health", nil)
+		req, _ := http.NewRequest("GET", "/health", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// 2. 獲取專案目的地
-		req, _ = http.NewRequest("GET", "/api/v1/external/destinations/test-notify-key", nil)
+		req, _ = http.NewRequest("GET", "/api/v1/destinations/test-notify-key", nil)
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -398,7 +398,7 @@ func TestE2E_ExternalAPI_Integration(t *testing.T) {
 			"message":    "Test notification",
 		}
 		jsonBody, _ := json.Marshal(requestBody)
-		req, _ = http.NewRequest("POST", "/api/v1/external/notify", bytes.NewBuffer(jsonBody))
+		req, _ = http.NewRequest("POST", "/api/v1/notify", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)

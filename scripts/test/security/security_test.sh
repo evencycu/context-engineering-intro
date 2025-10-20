@@ -101,7 +101,7 @@ test_xss_protection() {
     
     local failed=0
     for payload in "${xss_payloads[@]}"; do
-        local response=$(curl -s -X POST "$API_BASE_URL/api/v1/external/notify" \
+        local response=$(curl -s -X POST "$API_BASE_URL/api/v1/notify" \
             -H "Content-Type: application/json" \
             -d "{\"notify_key\":\"$payload\",\"message\":\"test\",\"targets\":[\"test\"]}")
         
@@ -184,7 +184,7 @@ test_input_validation() {
     
     local failed=0
     for input in "${invalid_inputs[@]}"; do
-        local response=$(curl -s -X POST "$API_BASE_URL/api/v1/external/notify" \
+        local response=$(curl -s -X POST "$API_BASE_URL/api/v1/notify" \
             -H "Content-Type: application/json" \
             -d "$input")
         
@@ -229,7 +229,7 @@ test_cors_configuration() {
     
     local response=$(curl -s -H "Origin: https://malicious.com" \
         -H "Access-Control-Request-Method: POST" \
-        -X OPTIONS "$API_BASE_URL/api/v1/external/notify")
+        -X OPTIONS "$API_BASE_URL/api/v1/notify")
     
     if echo "$response" | grep -qi "access-control-allow-origin"; then
         success "CORS 配置存在"
@@ -246,7 +246,7 @@ test_error_information_disclosure() {
     # Test various error conditions
     local error_tests=(
         "GET /api/v1/nonexistent"
-        "POST /api/v1/external/notify -d '{}'"
+        "POST /api/v1/notify -d '{}'"
         "GET /api/v1/companies/999999"
     )
     

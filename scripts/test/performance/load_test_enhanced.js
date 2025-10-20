@@ -90,7 +90,7 @@ export default function () {
         targets: ['test@example.com']
     });
 
-    response = http.post(`${BASE_URL}/api/v1/external/notify`, payload, {
+    response = http.post(`${BASE_URL}/api/v1/notify`, payload, {
         headers: { 'Content-Type': 'application/json' },
     });
 

@@ -23,7 +23,7 @@ func NewHandler(externalService services.ExternalService) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// External API routes (no authentication required)
 	// Routes are registered directly under /api/v1
-	
+
 	// Send notification
 	rg.POST("/notify", h.SendNotification)
 

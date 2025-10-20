@@ -93,7 +93,7 @@ export TEAMS_BOT_APP_PASSWORD="your-app-password"
 ### API 測試
 - **健康檢查**: `/health`
 - **指標端點**: `/metrics`
-- **外部 API**: `/api/v1/external/notify`
+- **外部 API**: `/api/v1/notify`
 - **配置端點**: `/config`
 
 ### 資料庫測試

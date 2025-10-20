@@ -15,14 +15,13 @@
 
 ```
 ✅ /api/v1/provision              - 資源配置
-✅ /api/v1/provision/{notify_key}
-✅ /api/v1/notify        - 外部通知
-✅ /api/v1/destinations/{notifyKey}
-✅ /api/v1/external/health
+✅ /api/v1/provision/{notify_key} - 刪除資源配置
+✅ /api/v1/notify                 - 發送通知（外部）
+✅ /api/v1/destinations/{notifyKey} - 獲取目的地
 ✅ /api/v1/messages               - 訊息服務
-✅ /api/v1/messages/proactive/test
+✅ /api/v1/messages/proactive/test - 測試主動訊息
 
-共計: 10 個外部 API 端點
+共計: 8 個外部 API 端點
 ```
 
 ### 內部 API - `/internal/v1/*`

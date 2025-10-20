@@ -33,7 +33,7 @@ echo "🚀 測試 API 端點..."
 
 # 測試外部 API
 echo "📡 測試外部 API..."
-curl -s -X POST "$API_URL/api/v1/external/notify" \
+curl -s -X POST "$API_URL/api/v1/notify" \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "test-key",
