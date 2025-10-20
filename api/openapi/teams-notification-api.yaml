@@ -957,9 +957,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notify_key}:
+  /api/v1/provision/{notifyKey}:
     parameters:
-      - name: notify_key
+      - name: notifyKey
         in: path
         required: true
         schema:
@@ -1005,13 +1005,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notify_key}/enable:
+  /api/v1/provision/{notifyKey}/enable:
     post:
       summary: Enable provisioned project
       description: Enable the provisioned project to start accepting notifications
       tags: [Provision]
       parameters:
-        - name: notify_key
+        - name: notifyKey
           in: path
           required: true
           schema:
@@ -1037,13 +1037,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notify_key}/disable:
+  /api/v1/provision/{notifyKey}/disable:
     post:
       summary: Disable provisioned project
       description: Disable the provisioned project to stop accepting notifications
       tags: [Provision]
       parameters:
-        - name: notify_key
+        - name: notifyKey
           in: path
           required: true
           schema:

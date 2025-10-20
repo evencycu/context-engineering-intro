@@ -17,10 +17,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	g := rg.Group("/provision")
 	{
 		g.POST("", h.Create)
-		g.GET("/:notify_key", h.Read)
-		g.PUT("/:notify_key", h.Update)
-		g.POST("/:notify_key/enable", h.Enable)
-		g.POST("/:notify_key/disable", h.Disable)
+		g.GET("/:notifyKey", h.Read)
+		g.PUT("/:notifyKey", h.Update)
+		g.POST("/:notifyKey/enable", h.Enable)
+		g.POST("/:notifyKey/disable", h.Disable)
 	}
 }
 
@@ -39,7 +39,7 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) Read(c *gin.Context) {
-	key := c.Param("notify_key")
+	key := c.Param("notifyKey")
 	resp, err := h.svc.Read(c.Request.Context(), key)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -49,7 +49,7 @@ func (h *Handler) Read(c *gin.Context) {
 }
 
 func (h *Handler) Update(c *gin.Context) {
-	key := c.Param("notify_key")
+	key := c.Param("notifyKey")
 	var req services.ProvisionUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request", "details": err.Error()})
@@ -64,7 +64,7 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) Enable(c *gin.Context) {
-	key := c.Param("notify_key")
+	key := c.Param("notifyKey")
 	if err := h.svc.SetStatus(c.Request.Context(), key, true); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -73,7 +73,7 @@ func (h *Handler) Enable(c *gin.Context) {
 }
 
 func (h *Handler) Disable(c *gin.Context) {
-	key := c.Param("notify_key")
+	key := c.Param("notifyKey")
 	if err := h.svc.SetStatus(c.Request.Context(), key, false); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
