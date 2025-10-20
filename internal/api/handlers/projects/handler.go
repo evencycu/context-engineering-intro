@@ -40,7 +40,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // CreateProjectRequest represents a create project request
 type CreateProjectRequest struct {
 	CompanyID    uuid.UUID `json:"company_id" validate:"required"`
-	NotifyKey    string    `json:"notify_key" validate:"required,min=3,max=50,alphanum"`
+	NotifyKey    string    `json:"notify_key" validate:"required,min=3,max=255"`
 	Description  string    `json:"description" validate:"required,min=10,max=500"`
 	DailyLimit   int       `json:"daily_limit" validate:"min=1,max=10000"`
 	MonthlyLimit int       `json:"monthly_limit" validate:"min=1,max=300000"`

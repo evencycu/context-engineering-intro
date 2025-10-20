@@ -87,13 +87,16 @@ echo -e "${YELLOW}創建測試專案...${NC}"
 echo -e "${BLUE}curl -X POST \"$BASE_URL/projects\" \\${NC}"
 echo -e "${BLUE}  -H \"Content-Type: application/json\" \\${NC}"
 echo -e "${BLUE}  -d '{...}'${NC}"
+NOTIFY_KEY="dest-test-$(date +%s)"
 RESPONSE=$(curl -s -X POST "$BASE_URL/projects" \
   -H "Content-Type: application/json" \
   -d '{
     "company_id": "'"$COMPANY_ID"'",
-    "name": "Destination Test Project '"$(date +%s)"'",
+    "notify_key": "'"$NOTIFY_KEY"'",
     "description": "Test project for destination API testing",
-    "status": "active",
+    "daily_limit": 1000,
+    "monthly_limit": 30000,
+    "priority": "normal",
     "created_by": "'"$USER_ID"'"
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
