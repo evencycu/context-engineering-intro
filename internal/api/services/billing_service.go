@@ -327,6 +327,41 @@ func (s *billingService) GetCompanyAnalytics(ctx context.Context, companyID uuid
 }
 
 func (s *billingService) RecordUsage(ctx context.Context, req *RecordUsageRequest) error {
-	// Implementation will be added when repository methods are available
-	return fmt.Errorf("not implemented")
+	// Validate required fields
+	if req.CompanyID == uuid.Nil {
+		return fmt.Errorf("company_id is required")
+	}
+	if req.ProjectID == nil || *req.ProjectID == uuid.Nil {
+		return fmt.Errorf("project_id is required for billing")
+	}
+	if req.RecordType == "" {
+		return fmt.Errorf("record_type is required")
+	}
+
+	// Create usage record
+	usageRecord := &database.UsageRecord{
+		BaseModel: database.BaseModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		CompanyID:      req.CompanyID,
+		ProjectID:      req.ProjectID,
+		UserID:         req.UserID,
+		NotificationID: req.NotificationID,
+		BotID:          req.BotID,
+		BotType:        req.BotType,
+		RecordType:     req.RecordType,
+		Quantity:       req.Quantity,
+		UnitPrice:      req.UnitPrice,
+		TotalCost:      req.TotalCost,
+		BillingPeriod:  req.BillingPeriod,
+	}
+
+	// Save to database
+	if err := s.usageRepo.Create(ctx, usageRecord); err != nil {
+		return fmt.Errorf("failed to create usage record: %w", err)
+	}
+
+	return nil
 }
