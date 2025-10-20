@@ -12,26 +12,28 @@ import (
 
 // ActorPool manages multiple notification actors for the async architecture
 type ActorPool struct {
-	redis        *redis.Client
-	db           ActorDB
-	tokenManager TokenManager // New field for token management
-	actors       map[uuid.UUID]*NotificationActor
-	mu           sync.RWMutex
-	maxActors    int
-	stopChan     chan struct{}
-	wg           sync.WaitGroup
+	redis          *redis.Client
+	db             ActorDB
+	tokenManager   TokenManager   // New field for token management
+	billingService BillingService // New field for billing
+	actors         map[uuid.UUID]*NotificationActor
+	mu             sync.RWMutex
+	maxActors      int
+	stopChan       chan struct{}
+	wg             sync.WaitGroup
 }
 
 // NewActorPool creates a new actor pool for the async architecture
 // Tasks are now provided by QueueConsumer instead of polling DB
-func NewActorPool(redis *redis.Client, db ActorDB, tokenManager TokenManager, maxActors int) *ActorPool {
+func NewActorPool(redis *redis.Client, db ActorDB, tokenManager TokenManager, billingService BillingService, maxActors int) *ActorPool {
 	return &ActorPool{
-		redis:        redis,
-		db:           db,
-		tokenManager: tokenManager,
-		actors:       make(map[uuid.UUID]*NotificationActor),
-		maxActors:    maxActors,
-		stopChan:     make(chan struct{}),
+		redis:          redis,
+		db:             db,
+		tokenManager:   tokenManager,
+		billingService: billingService,
+		actors:         make(map[uuid.UUID]*NotificationActor),
+		maxActors:      maxActors,
+		stopChan:       make(chan struct{}),
 	}
 }
 
@@ -108,11 +110,12 @@ func (p *ActorPool) spawnActor(ctx context.Context, notificationDestID uuid.UUID
 		*nd.ConversationID,
 		"", // Message will be fetched by actor
 		installation,
-		teamsBot.AppID, // Get from TeamsBot
-		appPassword,    // Get from environment
+		teamsBot.AppID,     // Get from TeamsBot
+		appPassword,        // Get from environment
 		p.redis,
 		p.db,
-		p.tokenManager, // Pass Token Manager
+		p.tokenManager,   // Pass Token Manager
+		p.billingService, // Pass Billing Service
 	)
 
 	// Override tenant ID from TeamsBot if available

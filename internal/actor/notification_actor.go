@@ -20,6 +20,26 @@ import (
 
 const half_open_tests = 3
 
+// BillingService interface for recording usage
+type BillingService interface {
+	RecordUsage(ctx context.Context, req *RecordUsageRequest) error
+}
+
+// RecordUsageRequest represents a usage record request
+type RecordUsageRequest struct {
+	CompanyID      uuid.UUID
+	ProjectID      *uuid.UUID
+	UserID         *uuid.UUID
+	NotificationID *uuid.UUID
+	BotID          *uuid.UUID
+	BotType        *database.BotType
+	RecordType     string
+	Quantity       int
+	UnitPrice      float64
+	TotalCost      float64
+	BillingPeriod  time.Time
+}
+
 // NotificationActor handles sending a single notification with retry logic
 // Each actor is responsible for one notification_destination
 type NotificationActor struct {
@@ -35,7 +55,8 @@ type NotificationActor struct {
 	Installation       *database.BotInstallation
 	Redis              *redis.Client
 	DB                 ActorDB
-	TokenManager       TokenManager // New field for token management
+	TokenManager       TokenManager   // New field for token management
+	BillingService     BillingService // New field for billing
 	MaxRetries         int
 	CurrentRetry       int
 	Status             string
@@ -92,6 +113,7 @@ func NewNotificationActor(
 	redis *redis.Client,
 	db ActorDB,
 	tokenManager TokenManager,
+	billingService BillingService,
 ) *NotificationActor {
 	return &NotificationActor{
 		ID:                 fmt.Sprintf("actor-%s", notificationDestID.String()[:8]),
@@ -107,6 +129,7 @@ func NewNotificationActor(
 		Redis:              redis,
 		DB:                 db,
 		TokenManager:       tokenManager,
+		BillingService:     billingService,
 		MaxRetries:         5,
 		CurrentRetry:       0,
 		Status:             "pending",
@@ -205,6 +228,14 @@ func (a *NotificationActor) run(ctx context.Context) {
 				SentAt:         &sentAt,
 				ErrorMessage:   nil,
 			})
+
+			// Record usage for billing (best effort, don't fail on billing errors)
+			if a.BillingService != nil {
+				if err := a.recordUsage(ctx); err != nil {
+					log.Printf("[%s] Warning: Failed to record usage: %v", a.ID, err)
+					// Don't fail the notification on billing errors
+				}
+			}
 
 			// Update Redis circuit breaker
 			a.Redis.Incr(ctx, "cb:success_count")
@@ -559,4 +590,64 @@ func (a *NotificationActor) getNextRetryTime(retryCount int, retryAfter *int) *t
 
 	nextRetry := time.Now().Add(backoff)
 	return &nextRetry
+}
+
+// recordUsage records billing usage for a successfully sent notification
+func (a *NotificationActor) recordUsage(ctx context.Context) error {
+	// Get notification to get project_id
+	notification, err := a.DB.GetNotificationByID(ctx, a.NotificationID)
+	if err != nil {
+		return fmt.Errorf("failed to get notification: %w", err)
+	}
+
+	// Get project to get company_id and billing info
+	project, err := a.DB.GetProjectByID(ctx, notification.ProjectID)
+	if err != nil {
+		return fmt.Errorf("failed to get project: %w", err)
+	}
+
+	// Get bot to record bot_id and bot_type
+	var botID *uuid.UUID
+	var botType *database.BotType
+	if a.Installation != nil && a.Installation.BotID != uuid.Nil {
+		botID = &a.Installation.BotID
+		bot, err := a.DB.GetTeamsBot(ctx, a.Installation.BotID)
+		if err == nil && bot != nil {
+			// Convert string Type to BotType
+			bt := database.BotType(bot.Type)
+			botType = &bt
+		}
+	}
+
+	// Calculate billing period (start of current month)
+	now := time.Now()
+	billingPeriod := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	// TODO: Get unit price from company's billing plan
+	// For now, use a default price (should be fetched from billing_plans)
+	unitPrice := 0.001 // Default to Basic plan price
+	quantity := 1      // One notification
+	totalCost := float64(quantity) * unitPrice
+
+	// Record usage
+	err = a.BillingService.RecordUsage(ctx, &RecordUsageRequest{
+		CompanyID:      project.CompanyID,
+		ProjectID:      &notification.ProjectID,
+		UserID:         notification.SenderID,
+		NotificationID: &a.NotificationID,
+		BotID:          botID,
+		BotType:        botType,
+		RecordType:     "notification",
+		Quantity:       quantity,
+		UnitPrice:      unitPrice,
+		TotalCost:      totalCost,
+		BillingPeriod:  billingPeriod,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to record usage: %w", err)
+	}
+
+	log.Printf("[%s] Recorded usage: project=%s, cost=$%.4f", a.ID, notification.ProjectID, totalCost)
+	return nil
 }

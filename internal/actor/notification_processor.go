@@ -23,11 +23,12 @@ func NewNotificationProcessor(
 	queue RedisQueue,
 	db ActorDB,
 	tokenManager TokenManager,
+	billingService BillingService,
 	maxActors int,
 	ndRepo NotificationDestinationRepository,
 ) *NotificationProcessor {
 	// Create actor pool first
-	pool := NewActorPool(redis, db, tokenManager, maxActors)
+	pool := NewActorPool(redis, db, tokenManager, billingService, maxActors)
 
 	// Create queue consumer with the pool
 	consumer := NewQueueConsumer(queue, pool)

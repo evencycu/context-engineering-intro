@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -379,4 +380,32 @@ func (a *TokenManagerAdapter) RefreshToken(ctx context.Context, botID, tenantID 
 // GetBotConfig implements actor.TokenManager interface
 func (a *TokenManagerAdapter) GetBotConfig(ctx context.Context, botID string) (interface{}, error) {
 	return a.tm.GetBotConfig(ctx, botID)
+}
+
+// BillingServiceAdapter adapts services.BillingService to actor.BillingService interface
+type BillingServiceAdapter struct {
+	bs BillingService
+}
+
+// NewBillingServiceAdapter creates a new adapter
+func NewBillingServiceAdapter(bs BillingService) *BillingServiceAdapter {
+	return &BillingServiceAdapter{bs: bs}
+}
+
+// RecordUsage implements actor.BillingService interface
+func (a *BillingServiceAdapter) RecordUsage(ctx context.Context, req *actor.RecordUsageRequest) error {
+	// Convert actor.RecordUsageRequest to services.RecordUsageRequest
+	return a.bs.RecordUsage(ctx, &RecordUsageRequest{
+		CompanyID:      req.CompanyID,
+		ProjectID:      req.ProjectID,
+		UserID:         req.UserID,
+		NotificationID: req.NotificationID,
+		BotID:          req.BotID,
+		BotType:        req.BotType,
+		RecordType:     req.RecordType,
+		Quantity:       req.Quantity,
+		UnitPrice:      req.UnitPrice,
+		TotalCost:      req.TotalCost,
+		BillingPeriod:  req.BillingPeriod,
+	})
 }

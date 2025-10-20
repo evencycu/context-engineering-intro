@@ -17,6 +17,7 @@ type ActorDB interface {
 	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
 	GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.TeamsBot, error)
 	GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error)
+	GetProjectByID(ctx context.Context, id uuid.UUID) (*database.Project, error)
 }
 
 // actorDB implements ActorDB interface for actors
@@ -25,15 +26,17 @@ type actorDB struct {
 	botInstallationRepo  repositories.BotInstallationRepository
 	teamsBotRepo         repositories.TeamsBotRepository
 	notificationRepo     repositories.NotificationRepository
+	projectRepo          repositories.ProjectRepository
 }
 
 // NewActorDB creates a new actor DB implementation
-func NewActorDB(notificationDestRepo repositories.NotificationDestinationRepository, botInstallationRepo repositories.BotInstallationRepository, teamsBotRepo repositories.TeamsBotRepository, notificationRepo repositories.NotificationRepository) ActorDB {
+func NewActorDB(notificationDestRepo repositories.NotificationDestinationRepository, botInstallationRepo repositories.BotInstallationRepository, teamsBotRepo repositories.TeamsBotRepository, notificationRepo repositories.NotificationRepository, projectRepo repositories.ProjectRepository) ActorDB {
 	return &actorDB{
 		notificationDestRepo: notificationDestRepo,
 		botInstallationRepo:  botInstallationRepo,
 		teamsBotRepo:         teamsBotRepo,
 		notificationRepo:     notificationRepo,
+		projectRepo:          projectRepo,
 	}
 }
 
@@ -114,4 +117,9 @@ func (db *actorDB) GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.
 // GetNotificationByID gets a notification by ID
 func (db *actorDB) GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
 	return db.notificationRepo.GetByID(ctx, id)
+}
+
+// GetProjectByID gets a project by ID
+func (db *actorDB) GetProjectByID(ctx context.Context, id uuid.UUID) (*database.Project, error) {
+	return db.projectRepo.GetByID(ctx, id)
 }

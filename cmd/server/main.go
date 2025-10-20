@@ -109,6 +109,13 @@ func main() {
 	tokenManager := services.NewTokenManager(redisClient)
 	logger.Info("Token Manager initialized successfully")
 
+	// Billing service (must be initialized before notificationProcessor)
+	billingPlanRepo := repositories.NewBillingPlanRepository(db)
+	usageRecordRepo := repositories.NewUsageRecordRepository(db)
+	companyBillingRepo := repositories.NewCompanyBillingRepository(db)
+	billingService := services.NewBillingService(usageRecordRepo, billingPlanRepo, companyRepo, projectRepo, userRepo)
+	_ = companyBillingRepo // Will be used when implementing company billing features
+
 	// Initialize Redis Queue
 	redisQueue := actor.NewRedisQueue(redisClient)
 	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, metricsService)
@@ -117,8 +124,9 @@ func main() {
 	notificationProcessor := actor.NewNotificationProcessor(
 		redisClient,
 		redisQueue,
-		actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo),
+		actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo, projectRepo),
 		services.NewTokenManagerAdapter(tokenManager),
+		services.NewBillingServiceAdapter(billingService),
 		10,                   // Max 10 actors
 		notificationDestRepo, // For enqueue worker to move ND pending->enqueued
 	)
@@ -128,13 +136,6 @@ func main() {
 
 	// External service
 	externalService := services.NewExternalService(projectRepo, destinationRepo, notificationService)
-
-	// Billing service
-	billingPlanRepo := repositories.NewBillingPlanRepository(db)
-	usageRecordRepo := repositories.NewUsageRecordRepository(db)
-	companyBillingRepo := repositories.NewCompanyBillingRepository(db)
-	billingService := services.NewBillingService(usageRecordRepo, billingPlanRepo, companyRepo, projectRepo, userRepo)
-	_ = companyBillingRepo // Will be used when implementing company billing features
 
 	// File service
 	localStorage := storage.NewLocalStorage("uploads") // Assuming "uploads" directory
