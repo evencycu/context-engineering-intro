@@ -34,7 +34,7 @@
 - **批次 API**: ✅ `/api/v1/batch/templates` 正常
 
 #### 4. 通知發送功能
-- **External API**: ✅ `/api/v1/external/notify` 正常
+- **External API**: ✅ `/api/v1/notify` 正常
 - **通知創建**: ✅ 成功創建通知記錄
 - **隊列處理**: ✅ 通知成功排隊處理
 - **目標狀態**: ✅ 通知目標狀態正常更新

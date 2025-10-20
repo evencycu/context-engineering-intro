@@ -73,7 +73,7 @@ curl -X GET http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '.'
 
 ```bash
 # 發送通知（使用有效的 notify_key）
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "your-notify-key",
@@ -89,7 +89,7 @@ curl http://localhost:8080/api/v1/queue/status | jq '.total_pending'
 
 ```bash
 # 使用不存在的 target 發送（預期失敗）
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "your-notify-key",

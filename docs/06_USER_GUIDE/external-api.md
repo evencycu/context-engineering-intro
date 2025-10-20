@@ -20,7 +20,7 @@ External API 使用 `notify_key` 進行認證，無需額外的 API Key 或 JWT 
 
 ### 發送通知
 
-**POST** `/api/v1/external/notify`
+**POST** `/api/v1/notify`
 
 發送通知到預先配置的 Teams 目的地。
 
@@ -40,7 +40,7 @@ External API 使用 `notify_key` 進行認證，無需額外的 API Key 或 JWT 
 
 **基本通知**
 ```bash
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
@@ -50,7 +50,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 
 **完整參數通知**
 ```bash
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
@@ -69,7 +69,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 
 **發送到特定目標**
 ```bash
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
@@ -123,7 +123,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 
 ```bash
 # 發送 CPU 使用率警報
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "monitoring-alerts",
@@ -142,7 +142,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 
 ```bash
 # 發送部署完成通知
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "deployment-notifications",
@@ -161,7 +161,7 @@ curl -X POST http://localhost:8080/api/v1/external/notify \
 
 ```bash
 # 發送訂單通知
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "order-notifications",
@@ -265,7 +265,7 @@ send_notification() {
   local notify_key="$1"
   local message="$2"
   
-  response=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+  response=$(curl -s -X POST http://localhost:8080/api/v1/notify \
     -H "Content-Type: application/json" \
     -d "{
       \"notify_key\": \"$notify_key\",
@@ -301,7 +301,7 @@ messages=(
 )
 
 for message in "${messages[@]}"; do
-  curl -X POST http://localhost:8080/api/v1/external/notify \
+  curl -X POST http://localhost:8080/api/v1/notify \
     -H "Content-Type: application/json" \
     -d "{
       \"notify_key\": \"system-status\",
@@ -324,7 +324,7 @@ notify_key="monitoring-alerts"
 message="系統警報測試"
 
 # 發送通知
-response=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+response=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d "{
     \"notify_key\": \"$notify_key\",

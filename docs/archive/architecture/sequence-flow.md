@@ -32,7 +32,7 @@ sequenceDiagram
     participant Teams as Teams API
     participant DB as Database
 
-    Client->>API: POST /api/v1/external/notify
+    Client->>API: POST /api/v1/notify
     Note over Client,API: {notify_key, message, targets}
     
     API->>API: 驗證請求
@@ -84,7 +84,7 @@ sequenceDiagram
     participant Queue as Queue Manager
     participant DB as Database
 
-    Client->>API: POST /api/v1/external/notify
+    Client->>API: POST /api/v1/notify
     
     API->>Service: SendNotification()
     Service->>Broadcast: SendToTargets()
@@ -856,7 +856,7 @@ sequenceDiagram
     participant DLQ as Dead Letter
 
     Note over C,DLQ: 階段 1: 初始請求 (任一節點)
-    C->>Node1: POST /api/v1/external/notify
+    C->>Node1: POST /api/v1/notify
     Node1->>Node1: Broadcast Service
     Node1->>T: 嘗試發送
     

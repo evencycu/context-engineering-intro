@@ -427,7 +427,7 @@ az postgres flexible-server restore \
 curl -s http://api.company.com/health | jq '.status'
 
 # 2. 發送測試通知
-curl -X POST http://api.company.com/api/v1/external/notify \
+curl -X POST http://api.company.com/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "test-key",

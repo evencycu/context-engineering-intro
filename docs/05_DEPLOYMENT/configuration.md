@@ -408,7 +408,7 @@ docker exec teamsnotify-redis redis-cli ping
 ### 配置測試
 ```bash
 # 測試 API 端點
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "test-key",

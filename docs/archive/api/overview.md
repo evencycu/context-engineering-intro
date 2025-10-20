@@ -67,7 +67,7 @@ curl -X POST http://localhost:8080/api/v1/provision \
 使用 [External API](external-api.md) 發送通知：
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",

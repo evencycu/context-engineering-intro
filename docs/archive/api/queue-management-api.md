@@ -109,7 +109,7 @@ curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset | jq '.'
 ### 5. 發送正常通知
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "your-notify-key",
@@ -220,7 +220,7 @@ curl -s http://localhost:8080/api/v1/queue/status | jq '.total_pending'
 
 # 2. 發送通知
 echo "2. Sending notification..."
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "your-notify-key",
@@ -245,7 +245,7 @@ echo "=== Test 2: Failure & Retry Flow ==="
 
 # 1. 發送會失敗的通知（使用無效 target）
 echo "1. Sending notification (expected to fail)..."
-curl -s -X POST http://localhost:8080/api/v1/external/notify \
+curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "your-notify-key",
@@ -283,7 +283,7 @@ curl -s http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '{state,
 # 2. 模擬多次失敗（根據實際情況調整）
 echo "2. Simulating failures..."
 for i in {1..6}; do
-  curl -s -X POST http://localhost:8080/api/v1/external/notify \
+  curl -s -X POST http://localhost:8080/api/v1/notify \
     -H "Content-Type: application/json" \
     -d "{
       \"notify_key\": \"your-notify-key\",

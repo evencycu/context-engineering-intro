@@ -22,17 +22,16 @@ func NewHandler(externalService services.ExternalService) *Handler {
 // RegisterRoutes registers external API routes
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// External API routes (no authentication required)
-	external := rg.Group("/external")
-	{
-		// Send notification
-		external.POST("/notify", h.SendNotification)
+	// Routes are registered directly under /api/v1
+	
+	// Send notification
+	rg.POST("/notify", h.SendNotification)
 
-		// Get project destinations
-		external.GET("/destinations/:notifyKey", h.GetProjectDestinations)
+	// Get project destinations
+	rg.GET("/destinations/:notifyKey", h.GetProjectDestinations)
 
-		// Health check for external API
-		external.GET("/health", h.HealthCheck)
-	}
+	// Health check for external API
+	rg.GET("/external/health", h.HealthCheck)
 }
 
 // SendNotificationRequest represents the request to send notification

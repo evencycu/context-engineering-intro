@@ -103,7 +103,7 @@ bash scripts/comprehensive_api_test.sh
 curl http://localhost:8080/health
 
 # API 測試
-curl -X POST http://localhost:8080/api/v1/external/notify \
+curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",

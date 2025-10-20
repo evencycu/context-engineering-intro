@@ -64,7 +64,7 @@
 1. **主 API 服務**: http://localhost:8080
    - 健康檢查: `GET /health`
    - Provision API: `POST /api/v1/provision`
-   - External API: `POST /api/v1/external/notify`
+   - External API: `POST /api/v1/notify`
 
 2. **OpenAPI 文檔服務**: http://localhost:8082
    - Swagger UI 界面

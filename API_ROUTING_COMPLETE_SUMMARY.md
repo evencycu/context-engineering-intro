@@ -16,8 +16,8 @@
 ```
 ✅ /api/v1/provision              - 資源配置
 ✅ /api/v1/provision/{notify_key}
-✅ /api/v1/external/notify        - 外部通知
-✅ /api/v1/external/destinations/{notifyKey}
+✅ /api/v1/notify        - 外部通知
+✅ /api/v1/destinations/{notifyKey}
 ✅ /api/v1/external/health
 ✅ /api/v1/messages               - 訊息服務
 ✅ /api/v1/messages/proactive/test

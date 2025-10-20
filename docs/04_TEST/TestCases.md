@@ -77,9 +77,9 @@
 ### 4.1 External Notify API
 | 測試編號 | 測試項目 | 請求方法 | 端點 | 預期結果 |
 |-----------|-----------|----------|------|-----------|
-| **TC-701** | 外部系統通知 | POST | `/api/v1/external/notify` | 回傳 202 + 處理狀態 |
-| **TC-702** | 無效 notify_key | POST | `/api/v1/external/notify` | 回傳 400 + 錯誤訊息 |
-| **TC-703** | 缺少必填欄位 | POST | `/api/v1/external/notify` | 回傳 422 + 驗證錯誤 |
+| **TC-701** | 外部系統通知 | POST | `/api/v1/notify` | 回傳 202 + 處理狀態 |
+| **TC-702** | 無效 notify_key | POST | `/api/v1/notify` | 回傳 400 + 錯誤訊息 |
+| **TC-703** | 缺少必填欄位 | POST | `/api/v1/notify` | 回傳 422 + 驗證錯誤 |
 
 ### 4.2 Provision API
 | 測試編號 | 測試項目 | 請求方法 | 端點 | 預期結果 |

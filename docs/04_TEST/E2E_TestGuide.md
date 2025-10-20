@@ -39,7 +39,7 @@ sequenceDiagram
     participant Teams as Teams API
     participant DB as PostgreSQL
 
-    Client->>API: POST /api/v1/external/notify
+    Client->>API: POST /api/v1/notify
     API->>DB: 儲存通知記錄
     API->>Queue: 加入佇列
     API->>Client: 回傳 202 + notification_id
@@ -61,7 +61,7 @@ sequenceDiagram
     participant Teams as Teams API
     participant DB as PostgreSQL
 
-    Client->>API: POST /api/v1/external/notify
+    Client->>API: POST /api/v1/notify
     API->>DB: 儲存通知記錄
     API->>Queue: 加入佇列
     API->>Client: 回傳 202 + notification_id
@@ -156,7 +156,7 @@ echo "✅ 服務健康檢查通過"
 NOTIFY_KEY="test-project-key"
 MESSAGE="E2E 測試通知 - $(date)"
 
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d "{
     \"notify_key\": \"$NOTIFY_KEY\",
@@ -198,7 +198,7 @@ export default function() {
     headers: { 'Content-Type': 'application/json' },
   };
 
-  const response = http.post('http://localhost:8080/api/v1/external/notify', payload, params);
+  const response = http.post('http://localhost:8080/api/v1/notify', payload, params);
   
   check(response, {
     'status is 200': (r) => r.status === 200,
@@ -225,7 +225,7 @@ k6 run --out json=results.json scripts/testing/load_test.js
 ```bash
 #!/bin/bash
 # 測試無效的 notify_key
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/external/notify \
+RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
     "notify_key": "invalid-key",
