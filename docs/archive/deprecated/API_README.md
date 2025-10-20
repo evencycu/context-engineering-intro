@@ -43,8 +43,8 @@ Content-Type: application/json
 
 {
   "name": "示例公司",
-  "contact_email": "contact@example.com",
-  "contact_phone": "+886-2-1234-5678",
+  "contactEmail": "contact@example.com",
+  "contactPhone": "+886-2-1234-5678",
   "address": "台北市信義區信義路五段7號",
   "billing_enabled": true
 }
@@ -67,7 +67,7 @@ Content-Type: application/json
 
 {
   "name": "更新後的公司名稱",
-  "contact_email": "new@example.com"
+  "contactEmail": "new@example.com"
 }
 ```
 
@@ -84,7 +84,7 @@ POST /api/v1/users
 Content-Type: application/json
 
 {
-  "company_id": "uuid",
+  "companyId": "uuid",
   "email": "user@example.com",
   "name": "張三",
   "role": "admin",
@@ -115,11 +115,11 @@ POST /api/v1/projects
 Content-Type: application/json
 
 {
-  "company_id": "uuid",
-  "notify_key": "project_alpha",
+  "companyId": "uuid",
+  "notifyKey": "project_alpha",
   "description": "Alpha 專案通知",
-  "daily_limit": 1000,
-  "monthly_limit": 30000,
+  "dailyLimit": 1000,
+  "monthlyLimit": 30000,
   "priority": "normal"
 }
 ```
@@ -130,8 +130,8 @@ PATCH /api/v1/projects/{id}/limits
 Content-Type: application/json
 
 {
-  "daily_limit": 2000,
-  "monthly_limit": 60000
+  "dailyLimit": 2000,
+  "monthlyLimit": 60000
 }
 ```
 
@@ -145,10 +145,10 @@ Content-Type: application/json
 {
   "name": "主要通知 Bot",
   "description": "負責所有通知的主要 Bot",
-  "app_id": "bot-app-id",
-  "app_password": "bot-password",
-  "tenant_id": "tenant-id",
-  "webhook_url": "https://webhook.example.com",
+  "appId": "bot-app-id",
+  "appPassword": "bot-password",
+  "tenantId": "tenant-id",
+  "webhookUrl": "https://webhook.example.com",
   "capabilities": {
     "send_message": true,
     "send_file": true,
@@ -174,10 +174,10 @@ POST /api/v1/destinations
 Content-Type: application/json
 
 {
-  "project_id": "uuid",
+  "projectId": "uuid",
   "name": "開發團隊通知群組",
   "description": "包含所有開發相關的 Teams 目標",
-  "teams_tenant_id": "tenant-123",
+  "teamsTenantId": "tenant-123",
   "targets": [
     {
       "type": "channel",
@@ -199,7 +199,7 @@ Content-Type: application/json
       "description": "值班人員群組"
     }
   ],
-  "bot_id": "bot-uuid",
+  "botId": "bot-uuid",
   "bot_type": "platform"
 }
 ```
@@ -253,8 +253,8 @@ POST /api/v1/notifications
 Content-Type: application/json
 
 {
-  "project_id": "uuid",
-  "message_type": "text",
+  "projectId": "uuid",
+  "messageType": "text",
   "content": "系統維護通知：將於今晚 10:00-11:00 進行系統維護",
   "mentions": ["@張經理", "@李組長"],
   "priority": "high",
@@ -272,8 +272,8 @@ POST /api/v1/notifications
 Content-Type: application/json
 
 {
-  "project_id": "uuid",
-  "message_type": "file",
+  "projectId": "uuid",
+  "messageType": "file",
   "content": "請查看附件中的報告",
   "attachment": {
     "file_name": "monthly_report.pdf",
@@ -292,8 +292,8 @@ POST /api/v1/notifications
 Content-Type: application/json
 
 {
-  "project_id": "uuid",
-  "message_type": "adaptive_card",
+  "projectId": "uuid",
+  "messageType": "adaptive_card",
   "content": "系統警報",
   "adaptive_card": {
     "type": "AdaptiveCard",

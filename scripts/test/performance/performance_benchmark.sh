@@ -281,7 +281,7 @@ main() {
     
     # Test external notification with error handling
     test_endpoint_performance "/api/v1/notify" $EXTERNAL_NOTIFY_THRESHOLD \
-        "外部通知" "POST" '{"notify_key":"test","message":"test","targets":["test"]}'
+        "外部通知" "POST" '{"notifyKey":"test","message":"test","targets":["test"]}'
     
     # Concurrent performance tests
     test_concurrent_performance "/health" 10 "健康檢查併發"

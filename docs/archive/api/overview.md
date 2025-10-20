@@ -47,15 +47,15 @@ http://localhost:8080/api/v1
 curl -X POST http://localhost:8080/api/v1/provision \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "e4f160f4-4917-443d-86e9-29071967b768",
-    "created_by": "11111111-1111-1111-1111-111111111111",
+    "companyId": "e4f160f4-4917-443d-86e9-29071967b768",
+    "createdBy": "11111111-1111-1111-1111-111111111111",
     "project_name": "我的通知專案",
     "project_description": "用於發送系統通知",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "channel",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
         "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
       }
     ]
@@ -70,9 +70,9 @@ curl -X POST http://localhost:8080/api/v1/provision \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "Hello World!",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "normal",
     "targets": ["all"]
   }'

@@ -41,13 +41,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
-	ProjectID    uuid.UUID              `json:"project_id" validate:"required"`
-	SenderID     *uuid.UUID             `json:"sender_id"`
-	MessageType  string                 `json:"message_type" validate:"required,oneof=text file adaptive_card"`
+	ProjectID    uuid.UUID              `json:"projectId" validate:"required"`
+	SenderID     *uuid.UUID             `json:"senderId"`
+	MessageType  string                 `json:"messageType" validate:"required,oneof=text file adaptive_card"`
 	Content      string                 `json:"content" validate:"required,max=4000"`
 	Mentions     []string               `json:"mentions"`
 	Attachment   *database.Attachment   `json:"attachment"`
-	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
+	AdaptiveCard *database.AdaptiveCard `json:"adaptiveCard"`
 	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
 	Metadata     map[string]interface{} `json:"metadata"`
 	Targets      []string               `json:"targets" validate:"omitempty,min=1"`
@@ -55,10 +55,10 @@ type SendNotificationRequest struct {
 
 // SendNotificationResponse represents a send notification response
 type SendNotificationResponse struct {
-	NotificationID uuid.UUID `json:"notification_id"`
+	NotificationID uuid.UUID `json:"notificationId"`
 	Status         string    `json:"status"`
 	Message        string    `json:"message"`
-	Destinations   int       `json:"destinations_count"`
+	Destinations   int       `json:"destinationsCount"`
 	EstimatedTime  string    `json:"estimated_delivery_time,omitempty"`
 }
 
@@ -67,13 +67,13 @@ type NotificationStatusResponse struct {
 	ID                 uuid.UUID  `json:"id"`
 	Status             string     `json:"status"`
 	Message            string     `json:"message"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
+	CreatedAt          time.Time  `json:"createdAt"`
+	UpdatedAt          time.Time  `json:"updatedAt"`
 	SentAt             *time.Time `json:"sent_at,omitempty"`
 	ErrorMessage       string     `json:"error_message,omitempty"`
-	DestinationsSent   int        `json:"destinations_sent"`
-	DestinationsFailed int        `json:"destinations_failed"`
-	TotalDestinations  int        `json:"total_destinations"`
+	DestinationsSent   int        `json:"destinationsSent"`
+	DestinationsFailed int        `json:"destinationsFailed"`
+	TotalDestinations  int        `json:"totalDestinations"`
 }
 
 // DateRangeRequest represents a date range request

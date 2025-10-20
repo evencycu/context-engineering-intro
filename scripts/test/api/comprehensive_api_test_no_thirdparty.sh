@@ -78,13 +78,13 @@ PLATFORM_BOT_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/bots/platform" \
     -d '{
         "name": "Test Platform Bot",
         "description": "A test platform bot for automated testing",
-        "app_id": "test-platform-bot-'$(date +%s)'",
-        "app_password": "test-password-123",
-        "tenant_id": "test-tenant-123",
-        "webhook_url": "https://example.com/webhook",
+        "appId": "test-platform-bot-'$(date +%s)'",
+        "appPassword": "test-password-123",
+        "tenantId": "test-tenant-123",
+        "webhookUrl": "https://example.com/webhook",
         "capabilities": {"messaging": true, "notifications": true},
-        "rate_limit_per_minute": 60,
-        "max_concurrent_requests": 10
+        "rateLimitPerMinute": 60,
+        "maxConcurrentRequests": 10
     }')
 
 if echo "$PLATFORM_BOT_RESPONSE" | jq -e '.data.id' > /dev/null; then

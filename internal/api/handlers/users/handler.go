@@ -39,7 +39,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // CreateUserRequest represents a create user request
 type CreateUserRequest struct {
-	CompanyID uuid.UUID `json:"company_id" validate:"required"`
+	CompanyID uuid.UUID `json:"companyId" validate:"required"`
 	Email     string    `json:"email" validate:"required,email"`
 	Name      string    `json:"name" validate:"required,min=2,max=255"`
 	Role      string    `json:"role" validate:"required,oneof=admin manager user"`
@@ -55,8 +55,8 @@ type UpdateUserRequest struct {
 
 // ChangePasswordRequest represents a change password request
 type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password" validate:"required"`
-	NewPassword string `json:"new_password" validate:"required,min=8"`
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required,min=8"`
 }
 
 // CreateUser creates a new user

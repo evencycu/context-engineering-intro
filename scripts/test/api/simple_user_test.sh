@@ -74,7 +74,7 @@ echo -e "${BLUE}[6/10]${NC} 修改用戶密碼..."
 echo -e "${BLUE}curl -X PATCH ${BASE_URL}/users/$USER_ID/password -H \"Content-Type: application/json\" -d '{...}'${NC}"
 PWD_RESPONSE=$(curl -s -X PATCH ${BASE_URL}/users/$USER_ID/password \
   -H "Content-Type: application/json" \
-  -d '{"old_password":"password123","new_password":"newpassword123"}')
+  -d '{"oldPassword":"password123","newPassword":"newpassword123"}')
 echo "$PWD_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$PWD_RESPONSE"
 PWD_MESSAGE=$(echo "$PWD_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('message',''))" 2>/dev/null || echo "")
 echo -e "${GREEN}✓ $PWD_MESSAGE${NC}\n"

@@ -73,7 +73,7 @@ curl -X GET http://localhost:8080/health | jq '.'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-project-notify-key",
+    "notifyKey": "your-project-notify-key",
     "message": "Hello Teams! 這是一個測試通知",
     "priority": "normal",
     "targets": ["all"]
@@ -95,7 +95,7 @@ External API 是供外部系統使用的通知發送介面，透過 `notify_key`
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "系統維護通知：將於今晚 10:00-11:00 進行系統維護",
     "priority": "high",
     "targets": ["all"],
@@ -129,15 +129,15 @@ Provision API 提供一次性建立公司、專案和目的地的功能，簡化
 curl -X POST http://localhost:8080/api/v1/provision \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "e4f160f4-4917-443d-86e9-29071967b768",
-    "created_by": "11111111-1111-1111-1111-111111111111",
+    "companyId": "e4f160f4-4917-443d-86e9-29071967b768",
+    "createdBy": "11111111-1111-1111-1111-111111111111",
     "project_name": "測試專案",
     "project_description": "這是一個使用 provision API 建立的測試專案",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "channel",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
         "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
       }
     ]
@@ -257,7 +257,7 @@ curl -X GET http://localhost:8080/api/v1/queue/stats | jq '.'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "monitoring-alerts",
+    "notifyKey": "monitoring-alerts",
     "message": "🚨 CPU 使用率過高：95%",
     "priority": "high",
     "metadata": {
@@ -276,7 +276,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "deployment-notifications",
+    "notifyKey": "deployment-notifications",
     "message": "✅ 部署完成：v2.1.0 已成功部署到生產環境",
     "priority": "normal",
     "metadata": {
@@ -294,7 +294,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "order-notifications",
+    "notifyKey": "order-notifications",
     "message": "🛒 新訂單：訂單 #12345 已建立，金額：$299.99",
     "priority": "normal",
     "mentions": ["@sales-team"],
@@ -380,7 +380,7 @@ export TEAMS_BOT_APP_PASSWORD='your-password'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "valid-key",
+    "notifyKey": "valid-key",
     "message": "Test message"
   }' | jq '.'
 ```

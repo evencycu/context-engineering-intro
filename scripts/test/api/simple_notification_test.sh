@@ -66,7 +66,7 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/users" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "'"$COMPANY_ID"'",
+    "companyId": "'"$COMPANY_ID"'",
     "username": "notif_test_user_'"$(date +%s)"'",
     "email": "notif_test_'"$(date +%s)"'@example.com",
     "display_name": "Notification Test User",
@@ -91,13 +91,13 @@ NOTIFY_KEY="notif-test-$(date +%s)"
 RESPONSE=$(curl -s -X POST "$BASE_URL/projects" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "'"$COMPANY_ID"'",
-    "notify_key": "'"$NOTIFY_KEY"'",
+    "companyId": "'"$COMPANY_ID"'",
+    "notifyKey": "'"$NOTIFY_KEY"'",
     "description": "Test project for notification API testing",
-    "daily_limit": 1000,
-    "monthly_limit": 30000,
+    "dailyLimit": 1000,
+    "monthlyLimit": 30000,
     "priority": "normal",
-    "created_by": "'"$USER_ID"'"
+    "createdBy": "'"$USER_ID"'"
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
@@ -117,19 +117,19 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/destinations" \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "'"$PROJECT_ID"'",
+    "projectId": "'"$PROJECT_ID"'",
     "name": "Notification Test Destination",
     "description": "Test destination for notification API testing",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "personal",
         "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
         "display_name": "Test User",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       }
     ],
-    "created_by": "'"$USER_ID"'"
+    "createdBy": "'"$USER_ID"'"
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
@@ -148,9 +148,9 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "'"$PROJECT_ID"'",
-    "sender_id": "'"$USER_ID"'",
-    "message_type": "text",
+    "projectId": "'"$PROJECT_ID"'",
+    "senderId": "'"$USER_ID"'",
+    "messageType": "text",
     "content": "這是一條測試通知訊息",
     "priority": "normal",
     "metadata": {
@@ -176,9 +176,9 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "'"$PROJECT_ID"'",
-    "sender_id": "'"$USER_ID"'",
-    "message_type": "text",
+    "projectId": "'"$PROJECT_ID"'",
+    "senderId": "'"$USER_ID"'",
+    "messageType": "text",
     "content": "🚨 這是一條高優先級測試通知",
     "priority": "high",
     "metadata": {
@@ -203,9 +203,9 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "'"$PROJECT_ID"'",
-    "sender_id": "'"$USER_ID"'",
-    "message_type": "text",
+    "projectId": "'"$PROJECT_ID"'",
+    "senderId": "'"$USER_ID"'",
+    "messageType": "text",
     "content": "Hi @TestUser, 請查看這條重要訊息",
     "mentions": ["TestUser"],
     "priority": "normal"

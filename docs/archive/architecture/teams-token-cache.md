@@ -52,8 +52,8 @@ teams:token:{bot_id}:{tenant_id}:{token_type}
   "expires_in": 3600,
   "expires_at": 1699123456,
   "scope": "https://api.botframework.com/.default",
-  "bot_id": "844146d7-4ac9-4e4d-a463-d6e027714e81",
-  "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+  "botId": "844146d7-4ac9-4e4d-a463-d6e027714e81",
+  "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
 }
 ```
 
@@ -85,10 +85,10 @@ type TokenManager interface {
 #### 4.1 Bot 配置管理
 ```go
 type BotConfig struct {
-    BotID       string `json:"bot_id"`
-    AppPassword string `json:"app_password"`
-    TenantID    string `json:"tenant_id"`
-    CompanyID   string `json:"company_id"`
+    BotID       string `json:"botId"`
+    AppPassword string `json:"appPassword"`
+    TenantID    string `json:"tenantId"`
+    CompanyID   string `json:"companyId"`
 }
 ```
 
@@ -182,8 +182,8 @@ teams:token:refresh:{bot_id}:{tenant_id}   # 刷新鎖定鍵
 {
   "level": "info",
   "msg": "Token refreshed successfully",
-  "bot_id": "844146d7-4ac9-4e4d-a463-d6e027714e81",
-  "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+  "botId": "844146d7-4ac9-4e4d-a463-d6e027714e81",
+  "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
   "token_type": "connector",
   "expires_in": 3600,
   "duration_ms": 1250

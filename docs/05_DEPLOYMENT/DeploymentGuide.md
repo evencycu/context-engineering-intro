@@ -430,9 +430,9 @@ curl -s http://api.company.com/health | jq '.status'
 curl -X POST http://api.company.com/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "test-key",
+    "notifyKey": "test-key",
     "message": "Deployment test",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "normal",
     "targets": ["all"]
   }'

@@ -63,7 +63,7 @@ paths:
                         url: "postgresql://user:pass@localhost:5432/db?sslmode=disable",
                       }
                     redis: { url: "redis://localhost:6379" }
-                    teams: { appId: "<id>", tenantId: "<tenant>" }
+                    teams: { app_id: "<id>", tenant_id: "<tenant>" }
                     actor: { max_actors: 10 }
                     logger: { level: "info", format: "json" }
         "401":
@@ -101,7 +101,7 @@ paths:
                     warnings: []
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /internal/v1/companies:
+  /api/v1/companies:
     get:
       summary: List companies
       tags: [Companies]
@@ -141,7 +141,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /internal/v1/companies/{id}:
+  /api/v1/companies/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -176,7 +176,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /internal/v1/companies/{id}/status:
+  /api/v1/companies/{id}/status:
     patch:
       summary: Update company status
       tags: [Companies]
@@ -200,7 +200,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /internal/v1/companies/{id}/billing:
+  /api/v1/companies/{id}/billing:
     patch:
       summary: Update company billing enabled flag
       tags: [Companies]
@@ -223,7 +223,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /internal/v1/users:
+  /api/v1/users:
     get:
       summary: List users
       tags: [Users]
@@ -263,7 +263,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
-  /internal/v1/users/{id}:
+  /api/v1/users/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -298,7 +298,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /internal/v1/users/{id}/password:
+  /api/v1/users/{id}/password:
     patch:
       summary: Change user password
       tags: [Users]
@@ -312,14 +312,14 @@ paths:
               type: object
               required: [old_password, new_password]
               properties:
-                oldPassword:
+                old_password:
                   type: string
-                newPassword:
+                new_password:
                   type: string
       responses:
         "200":
           description: Password updated
-  /internal/v1/users/company/{companyId}:
+  /api/v1/users/company/{companyId}:
     get:
       summary: List users by company
       tags: [Users]
@@ -333,7 +333,7 @@ paths:
       responses:
         "200":
           description: User list
-  /internal/v1/users/role/{role}:
+  /api/v1/users/role/{role}:
     get:
       summary: List users by role
       tags: [Users]
@@ -346,7 +346,7 @@ paths:
       responses:
         "200":
           description: User list
-  /internal/v1/projects:
+  /api/v1/projects:
     get:
       summary: List projects
       tags: [Projects]
@@ -378,7 +378,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
-  /internal/v1/projects/{id}:
+  /api/v1/projects/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -413,7 +413,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /internal/v1/projects/{id}/limits:
+  /api/v1/projects/{id}/limits:
     patch:
       summary: Update project limits
       tags: [Projects]
@@ -426,14 +426,14 @@ paths:
             schema:
               type: object
               properties:
-                dailyLimit:
+                daily_limit:
                   type: integer
-                monthlyLimit:
+                monthly_limit:
                   type: integer
       responses:
         "200":
           description: Updated project
-  /internal/v1/projects/company/{companyId}:
+  /api/v1/projects/company/{companyId}:
     get:
       summary: List projects by company
       tags: [Projects]
@@ -447,7 +447,7 @@ paths:
       responses:
         "200":
           description: Project list
-  /internal/v1/projects/key/{keyName}:
+  /api/v1/projects/key/{keyName}:
     get:
       summary: Get project by notify key
       tags: [Projects]
@@ -464,7 +464,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
-  /internal/v1/bots/platform:
+  /api/v1/bots/platform:
     get:
       summary: List platform bots
       tags: [Bots]
@@ -491,7 +491,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BotResponse"
-  /internal/v1/bots/platform/{id}:
+  /api/v1/bots/platform/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -526,7 +526,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /internal/v1/bots/platform/{id}/status:
+  /api/v1/bots/platform/{id}/status:
     patch:
       summary: Update bot status
       tags: [Bots]
@@ -546,7 +546,7 @@ paths:
       responses:
         "200":
           description: Updated bot
-  /internal/v1/bots/platform/{id}/capabilities:
+  /api/v1/bots/platform/{id}/capabilities:
     patch:
       summary: Update bot capabilities
       tags: [Bots]
@@ -562,7 +562,7 @@ paths:
       responses:
         "200":
           description: Updated bot
-  /internal/v1/bots/platform/{id}/test:
+  /api/v1/bots/platform/{id}/test:
     post:
       summary: Test bot connection
       tags: [Bots]
@@ -571,7 +571,7 @@ paths:
       responses:
         "200":
           description: Test result
-  /internal/v1/bots/status/{status}:
+  /api/v1/bots/status/{status}:
     get:
       summary: List bots by status
       tags: [Bots]
@@ -585,7 +585,7 @@ paths:
       responses:
         "200":
           description: Bot list
-  /internal/v1/destinations:
+  /api/v1/destinations:
     get:
       summary: List destinations
       tags: [Destinations]
@@ -625,7 +625,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DestinationResponse"
-  /internal/v1/destinations/{id}:
+  /api/v1/destinations/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -660,7 +660,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /internal/v1/destinations/{id}/targets:
+  /api/v1/destinations/{id}/targets:
     patch:
       summary: Update destination targets
       tags: [Destinations]
@@ -675,7 +675,7 @@ paths:
       responses:
         "200":
           description: Updated destination
-  /internal/v1/destinations/{id}/validate:
+  /api/v1/destinations/{id}/validate:
     post:
       summary: Validate destination targets
       tags: [Destinations]
@@ -684,7 +684,7 @@ paths:
       responses:
         "200":
           description: Validation result
-  /internal/v1/destinations/project/{projectId}:
+  /api/v1/destinations/project/{projectId}:
     get:
       summary: List destinations by project
       tags: [Destinations]
@@ -698,7 +698,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /internal/v1/destinations/bot/{botId}:
+  /api/v1/destinations/bot/{botId}:
     get:
       summary: List destinations by bot
       tags: [Destinations]
@@ -712,7 +712,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /internal/v1/destinations/search:
+  /api/v1/destinations/search:
     get:
       summary: Search destinations
       tags: [Destinations]
@@ -745,7 +745,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /internal/v1/notifications:
+  /api/v1/notifications:
     get:
       summary: List notifications
       tags: [Notifications]
@@ -785,7 +785,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationEnqueueResponse"
-  /internal/v1/notifications/{id}:
+  /api/v1/notifications/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -804,7 +804,7 @@ paths:
       responses:
         "204":
           description: Cancelled
-  /internal/v1/notifications/{id}/retry:
+  /api/v1/notifications/{id}/retry:
     post:
       summary: Retry notification
       tags: [Notifications]
@@ -813,7 +813,7 @@ paths:
       responses:
         "200":
           description: Retry accepted
-  /internal/v1/notifications/project/{projectId}:
+  /api/v1/notifications/project/{projectId}:
     get:
       summary: List notifications by project
       tags: [Notifications]
@@ -827,7 +827,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /internal/v1/notifications/sender/{senderId}:
+  /api/v1/notifications/sender/{senderId}:
     get:
       summary: List notifications by sender
       tags: [Notifications]
@@ -841,7 +841,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /internal/v1/notifications/status/{status}:
+  /api/v1/notifications/status/{status}:
     get:
       summary: List notifications by status
       tags: [Notifications]
@@ -854,7 +854,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /internal/v1/notifications/date-range:
+  /api/v1/notifications/date-range:
     get:
       summary: List notifications in date range
       tags: [Notifications]
@@ -905,17 +905,17 @@ paths:
               basic:
                 summary: Basic provision setup
                 value:
-                  companyId: "e4f160f4-4917-443d-86e9-29071967b768"
-                  createdBy: "11111111-1111-1111-1111-111111111111"
+                  company_id: "e4f160f4-4917-443d-86e9-29071967b768"
+                  created_by: "11111111-1111-1111-1111-111111111111"
                   project_name: "My Notification Project"
                   project_description: "A project for sending notifications"
-                  teams_tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                  teams_tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                   targets:
                     - type: "channel"
-                      tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                      tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                       conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
                     - type: "personal"
-                      tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                      tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                       conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
       responses:
         "201":
@@ -926,29 +926,29 @@ paths:
                 $ref: "#/components/schemas/ProvisionCreateResponse"
               example:
                 data:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   project:
                     id: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
-                    companyId: "e4f160f4-4917-443d-86e9-29071967b768"
-                    notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                    company_id: "e4f160f4-4917-443d-86e9-29071967b768"
+                    notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                     description: "A project for sending notifications"
                     status: "active"
-                    dailyLimit: 10000
-                    monthlyLimit: 300000
+                    daily_limit: 10000
+                    monthly_limit: 300000
                     priority: "normal"
                   destination:
                     id: "cf867660-26ae-4437-828c-6fb2c2e3eb19"
-                    projectId: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
+                    project_id: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
                     name: "My Notification Project-default"
                     description: "Auto-provisioned default destination"
-                    teams_tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                    teams_tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                     targets:
                       - type: "channel"
                         conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
-                        tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                        tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                       - type: "personal"
                         conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
-                        tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+                        tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
                     status: "active"
                     validation_status: "pending"
         "400":
@@ -1070,7 +1070,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   # External API endpoints
-  /api/v1/notify:
+  /api/v1/external/notify:
     post:
       summary: Send notification to external users
       description: |
@@ -1079,12 +1079,12 @@ paths:
         **Usage Examples:**
         ```bash
         # Basic notification
-        curl -X POST http://localhost:8080/api/v1/notify \
+        curl -X POST http://localhost:8080/api/v1/external/notify \
           -H "Content-Type: application/json" \
           -d '{"notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38", "message": "Hello World"}'
 
         # Advanced notification with all options
-        curl -X POST http://localhost:8080/api/v1/notify \
+        curl -X POST http://localhost:8080/api/v1/external/notify \
           -H "Content-Type: application/json" \
           -d '{
             "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
@@ -1097,7 +1097,7 @@ paths:
           }'
 
         # Send to specific targets only
-        curl -X POST http://localhost:8080/api/v1/notify \
+        curl -X POST http://localhost:8080/api/v1/external/notify \
           -H "Content-Type: application/json" \
           -d '{
             "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
@@ -1116,14 +1116,14 @@ paths:
               basic:
                 summary: Basic notification
                 value:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   message: "Hello World"
               advanced:
                 summary: Advanced notification with all options
                 value:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
+                  notify_key: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
                   message: "Urgent: System maintenance in 1 hour"
-                  messageType: "text"
+                  message_type: "text"
                   priority: "high"
                   targets: ["all"]
                   mentions: ["@everyone"]
@@ -1143,12 +1143,12 @@ paths:
                   value:
                     success: true
                     data:
-                      notificationId: "123e4567-e89b-12d3-a456-426614174000"
+                      notification_id: "123e4567-e89b-12d3-a456-426614174000"
                       status: "sent"
                       message: "Notification processed successfully"
-                      projectId: "123e4567-e89b-12d3-a456-426614174000"
+                      project_id: "123e4567-e89b-12d3-a456-426614174000"
                       project_name: "my-project"
-                      destinationsCount: 3
+                      destinations_count: 3
                       results:
                         - destination_id: "19:abc123@thread.v2"
                           destination_name: "Marketing Team"
@@ -1173,7 +1173,7 @@ paths:
                     details:
                       field: "notify_key"
                       message: "is required"
-                invalid_notifyKey:
+                invalid_notify_key:
                   summary: Invalid notify key
                   value:
                     success: false
@@ -1206,7 +1206,7 @@ paths:
                     error: "Internal server error"
                     code: "INTERNAL_ERROR"
 
-  /api/v1/destinations/{notifyKey}:
+  /api/v1/external/destinations/{notifyKey}:
     get:
       summary: Get project destinations
       description: Get available destinations for a project
@@ -1226,7 +1226,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExternalDestinationsResponse"
 
-  /internal/v1/queue/stats:
+  /api/v1/external/health:
+    get:
+      summary: External API health check
+      description: Health check for external API
+      tags: [External API]
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalHealthResponse"
+
+  /api/v1/queue/stats:
     get:
       summary: Get queue lengths
       description: Returns lengths of high/normal/low priority Redis queues
@@ -1253,7 +1266,7 @@ paths:
                         example: 3
 
   # Billing API endpoints
-  /internal/v1/billing/usage:
+  /api/v1/billing/usage:
     get:
       summary: Get usage records
       description: Retrieve usage records with filtering and pagination
@@ -1302,7 +1315,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsageRecordsResponse"
 
-  /internal/v1/billing/usage/summary:
+  /api/v1/billing/usage/summary:
     get:
       summary: Get usage summary
       description: Get usage summary statistics
@@ -1331,7 +1344,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsageSummaryResponse"
 
-  /internal/v1/billing/plans:
+  /api/v1/billing/plans:
     get:
       summary: Get billing plans
       description: Retrieve all billing plans
@@ -1361,7 +1374,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
 
-  /internal/v1/billing/plans/{id}:
+  /api/v1/billing/plans/{id}:
     parameters:
       - name: id
         in: path
@@ -1398,7 +1411,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
 
-  /internal/v1/billing/company/{companyId}:
+  /api/v1/billing/company/{companyId}:
     parameters:
       - name: companyId
         in: path
@@ -1418,7 +1431,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CompanyBillingResponse"
 
-  /internal/v1/billing/analytics/overview:
+  /api/v1/billing/analytics/overview:
     get:
       summary: Get analytics overview
       description: Get billing analytics overview
@@ -1443,7 +1456,7 @@ paths:
                 $ref: "#/components/schemas/AnalyticsOverviewResponse"
 
   # File Management API endpoints
-  /internal/v1/files:
+  /api/v1/files:
     get:
       summary: List files
       description: List files with filtering and pagination
@@ -1499,7 +1512,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileUploadResponse"
 
-  /internal/v1/files/upload/multiple:
+  /api/v1/files/upload/multiple:
     post:
       summary: Upload multiple files
       description: Upload multiple files at once
@@ -1518,7 +1531,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileUploadMultipleResponse"
 
-  /internal/v1/files/{id}:
+  /api/v1/files/{id}:
     parameters:
       - name: id
         in: path
@@ -1549,7 +1562,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileDeleteResponse"
 
-  /internal/v1/files/{id}/download:
+  /api/v1/files/{id}/download:
     parameters:
       - name: id
         in: path
@@ -1570,7 +1583,7 @@ paths:
                 type: string
                 format: binary
 
-  /internal/v1/files/validate:
+  /api/v1/files/validate:
     post:
       summary: Validate file
       description: Validate file before upload
@@ -1785,9 +1798,9 @@ components:
     TeamsConfig:
       type: object
       properties:
-        appId:
+        app_id:
           type: string
-        tenantId:
+        tenant_id:
           type: string
         base_url:
           type: string
@@ -1861,20 +1874,20 @@ components:
           format: uuid
         name:
           type: string
-        contactEmail:
+        contact_email:
           type: string
-        contactPhone:
+        contact_phone:
           type: string
         address:
           type: string
         status:
           type: string
-        billingEnabled:
+        billing_enabled:
           type: boolean
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
     CompanyCreateRequest:
@@ -1883,26 +1896,26 @@ components:
       properties:
         name:
           type: string
-        contactEmail:
+        contact_email:
           type: string
-        contactPhone:
+        contact_phone:
           type: string
         address:
           type: string
-        billingEnabled:
+        billing_enabled:
           type: boolean
     CompanyUpdateRequest:
       type: object
       properties:
         name:
           type: string
-        contactEmail:
+        contact_email:
           type: string
-        contactPhone:
+        contact_phone:
           type: string
         address:
           type: string
-        billingEnabled:
+        billing_enabled:
           type: boolean
     CompanyResponse:
       type: object
@@ -1937,7 +1950,7 @@ components:
         id:
           type: string
           format: uuid
-        companyId:
+        company_id:
           type: string
           format: uuid
         email:
@@ -1955,7 +1968,7 @@ components:
       type: object
       required: [company_id, email, name]
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
         email:
@@ -1969,7 +1982,7 @@ components:
     UserUpdateRequest:
       type: object
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
         email:
@@ -2002,42 +2015,42 @@ components:
         id:
           type: string
           format: uuid
-        companyId:
+        company_id:
           type: string
           format: uuid
-        notifyKey:
+        notify_key:
           type: string
         description:
           type: string
         status:
           type: string
-        dailyLimit:
+        daily_limit:
           type: integer
-        monthlyLimit:
+        monthly_limit:
           type: integer
         priority:
           type: string
-        createdBy:
+        created_by:
           type: string
           format: uuid
     ProjectCreateRequest:
       type: object
       required: [company_id, notify_key, description, created_by]
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
-        notifyKey:
+        notify_key:
           type: string
         description:
           type: string
-        dailyLimit:
+        daily_limit:
           type: integer
-        monthlyLimit:
+        monthly_limit:
           type: integer
         priority:
           type: string
-        createdBy:
+        created_by:
           type: string
           format: uuid
     ProjectUpdateRequest:
@@ -2047,9 +2060,9 @@ components:
           type: string
         status:
           type: string
-        dailyLimit:
+        daily_limit:
           type: integer
-        monthlyLimit:
+        monthly_limit:
           type: integer
         priority:
           type: string
@@ -2077,19 +2090,19 @@ components:
           type: string
         description:
           type: string
-        appId:
+        app_id:
           type: string
-        tenantId:
+        tenant_id:
           type: string
         status:
           type: string
-        webhookUrl:
+        webhook_url:
           type: string
         capabilities:
           type: object
-        rateLimitPerMinute:
+        rate_limit_per_minute:
           type: integer
-        maxConcurrentRequests:
+        max_concurrent_requests:
           type: integer
     BotCreateRequest:
       type: object
@@ -2099,19 +2112,19 @@ components:
           type: string
         description:
           type: string
-        appId:
+        app_id:
           type: string
-        appPassword:
+        app_password:
           type: string
-        tenantId:
+        tenant_id:
           type: string
-        webhookUrl:
+        webhook_url:
           type: string
         capabilities:
           type: object
-        rateLimitPerMinute:
+        rate_limit_per_minute:
           type: integer
-        maxConcurrentRequests:
+        max_concurrent_requests:
           type: integer
     BotUpdateRequest:
       type: object
@@ -2120,15 +2133,15 @@ components:
           type: string
         description:
           type: string
-        tenantId:
+        tenant_id:
           type: string
-        webhookUrl:
+        webhook_url:
           type: string
         capabilities:
           type: object
-        rateLimitPerMinute:
+        rate_limit_per_minute:
           type: integer
-        maxConcurrentRequests:
+        max_concurrent_requests:
           type: integer
     BotResponse:
       type: object
@@ -2148,20 +2161,20 @@ components:
         id:
           type: string
           format: uuid
-        projectId:
+        project_id:
           type: string
           format: uuid
         name:
           type: string
         description:
           type: string
-        teams_tenantId:
+        teams_tenant_id:
           type: string
         targets:
           type: array
           items:
             $ref: "#/components/schemas/TeamsTarget"
-        botId:
+        bot_id:
           type: string
           format: uuid
         status:
@@ -2171,7 +2184,7 @@ components:
         last_validated_at:
           type: string
           format: date-time
-        createdBy:
+        created_by:
           type: string
           format: uuid
     TeamsTarget:
@@ -2186,30 +2199,30 @@ components:
           type: string
         display_name:
           type: string
-        tenantId:
+        tenant_id:
           type: string
     DestinationCreateRequest:
       type: object
       required:
         [project_id, name, description, teams_tenant_id, targets, created_by]
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         name:
           type: string
         description:
           type: string
-        teams_tenantId:
+        teams_tenant_id:
           type: string
         targets:
           type: array
           items:
             $ref: "#/components/schemas/TeamsTarget"
-        botId:
+        bot_id:
           type: string
           format: uuid
-        createdBy:
+        created_by:
           type: string
           format: uuid
     DestinationUpdateRequest:
@@ -2219,7 +2232,7 @@ components:
           type: string
         description:
           type: string
-        botId:
+        bot_id:
           type: string
           format: uuid
     DestinationTargetsRequest:
@@ -2250,13 +2263,13 @@ components:
         id:
           type: string
           format: uuid
-        projectId:
+        project_id:
           type: string
           format: uuid
-        senderId:
+        sender_id:
           type: string
           format: uuid
-        messageType:
+        message_type:
           type: string
         content:
           type: string
@@ -2266,36 +2279,36 @@ components:
             type: string
         attachment:
           type: object
-        adaptiveCard:
+        adaptive_card:
           type: object
         priority:
           type: string
         status:
           type: string
-        errorMessage:
+        error_message:
           type: string
         metadata:
           type: object
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
-        sentAt:
+        sent_at:
           type: string
           format: date-time
     NotificationSendRequest:
       type: object
       required: [project_id, message_type, content, destinations]
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
-        senderId:
+        sender_id:
           type: string
           format: uuid
-        messageType:
+        message_type:
           type: string
           enum: [text, file, adaptive_card]
         content:
@@ -2306,7 +2319,7 @@ components:
             type: string
         attachment:
           type: object
-        adaptiveCard:
+        adaptive_card:
           type: object
         priority:
           type: string
@@ -2324,16 +2337,16 @@ components:
         data:
           type: object
           properties:
-            notificationId:
+            notification_id:
               type: string
               format: uuid
             status:
               type: string
             message:
               type: string
-            destinationsCount:
+            destinations_count:
               type: integer
-            estimatedDeliveryTime:
+            estimated_delivery_time:
               type: string
     NotificationResponse:
       type: object
@@ -2357,7 +2370,7 @@ components:
         - notify_key
         - message
       properties:
-        notifyKey:
+        notify_key:
           type: string
           description: Project notification key
           example: "my-project-key"
@@ -2369,7 +2382,7 @@ components:
           example: "Hello from external API"
           minLength: 1
           maxLength: 4000
-        messageType:
+        message_type:
           type: string
           description: Type of message
           enum: [text, file, adaptive_card]
@@ -2407,7 +2420,7 @@ components:
         data:
           type: object
           properties:
-            notificationId:
+            notification_id:
               type: string
               example: "123e4567-e89b-12d3-a456-426614174000"
             status:
@@ -2417,13 +2430,13 @@ components:
             message:
               type: string
               example: "Notification processed successfully"
-            projectId:
+            project_id:
               type: string
               example: "123e4567-e89b-12d3-a456-426614174000"
             project_name:
               type: string
               example: "my-project-key"
-            destinationsCount:
+            destinations_count:
               type: integer
               example: 3
             results:
@@ -2512,12 +2525,12 @@ components:
         - teams_tenant_id
         - targets
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
           description: ID of the company
           example: "e4f160f4-4917-443d-86e9-29071967b768"
-        createdBy:
+        created_by:
           type: string
           format: uuid
           description: ID of the user creating the project
@@ -2530,7 +2543,7 @@ components:
           type: string
           description: Description of the project
           example: "A project for sending notifications"
-        teams_tenantId:
+        teams_tenant_id:
           type: string
           description: Microsoft Teams tenant ID
           example: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
@@ -2541,16 +2554,16 @@ components:
             $ref: "#/components/schemas/TeamsTarget"
           example:
             - type: "channel"
-              tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+              tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
               conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
             - type: "personal"
-              tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+              tenant_id: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
               conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
 
     ProvisionCreateResponse:
       type: object
       properties:
-        notifyKey:
+        notify_key:
           type: string
           description: Generated notify key for external API usage
           example: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
@@ -2684,10 +2697,10 @@ components:
       properties:
         curl_example:
           type: string
-          example: 'curl -X POST http://localhost:8080/api/v1/notify -H ''Content-Type: application/json'' -d ''{"notify_key": "my-project", "message": "Hello World"}'''
+          example: 'curl -X POST http://localhost:8080/api/v1/external/notify -H ''Content-Type: application/json'' -d ''{"notify_key": "my-project", "message": "Hello World"}'''
         javascript_example:
           type: string
-          example: "fetch('http://localhost:8080/api/v1/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notifyKey: 'my-project', message: 'Hello World'}) })"
+          example: "fetch('http://localhost:8080/api/v1/external/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notify_key: 'my-project', message: 'Hello World'}) })"
 
     # Queue Management Schemas
     QueueStatus:
@@ -2788,13 +2801,13 @@ components:
         id:
           type: string
           format: uuid
-        companyId:
+        company_id:
           type: string
           format: uuid
-        projectId:
+        project_id:
           type: string
           format: uuid
-        userId:
+        user_id:
           type: string
           format: uuid
         record_type:
@@ -2810,7 +2823,7 @@ components:
           format: decimal
         metadata:
           type: object
-        createdAt:
+        created_at:
           type: string
           format: date-time
 
@@ -2875,7 +2888,7 @@ components:
           type: string
         description:
           type: string
-        pricePerNotification:
+        price_per_notification:
           type: number
           format: decimal
         price_per_month:
@@ -2891,10 +2904,10 @@ components:
           type: object
         is_active:
           type: boolean
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
 
@@ -2910,7 +2923,7 @@ components:
           type: string
           minLength: 10
           maxLength: 500
-        pricePerNotification:
+        price_per_notification:
           type: number
           format: decimal
           minimum: 0
@@ -2947,7 +2960,7 @@ components:
           type: string
           minLength: 10
           maxLength: 500
-        pricePerNotification:
+        price_per_notification:
           type: number
           format: decimal
           minimum: 0
@@ -3002,16 +3015,16 @@ components:
         id:
           type: string
           format: uuid
-        companyId:
+        company_id:
           type: string
           format: uuid
-        billingPlanId:
+        billing_plan_id:
           type: string
           format: uuid
         billing_status:
           type: string
           enum: [active, suspended, cancelled]
-        paymentMethod:
+        payment_method:
           type: string
         billing_cycle:
           type: string
@@ -3022,10 +3035,10 @@ components:
         total_usage_cost:
           type: number
           format: decimal
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
 
@@ -3099,14 +3112,14 @@ components:
         id:
           type: string
           format: uuid
-        projectId:
+        project_id:
           type: string
           format: uuid
-        fileName:
+        file_name:
           type: string
-        fileSize:
+        file_size:
           type: integer
-        contentType:
+        content_type:
           type: string
         file_key:
           type: string
@@ -3124,10 +3137,10 @@ components:
           type: string
           format: date-time
           nullable: true
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
 
@@ -3135,7 +3148,7 @@ components:
       type: object
       required: [project_id, file]
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         file:
@@ -3158,7 +3171,7 @@ components:
       type: object
       required: [project_id, files]
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         files:
@@ -3235,12 +3248,12 @@ components:
       type: object
       required: [file_name, file_size, content_type]
       properties:
-        fileName:
+        file_name:
           type: string
-        fileSize:
+        file_size:
           type: integer
           minimum: 1
-        contentType:
+        content_type:
           type: string
 
     ValidateFileResponse:
@@ -3260,7 +3273,7 @@ components:
           example: ""
 
   # ===== 監控端點 =====
-  /internal/v1/monitoring/health:
+  /api/v1/monitoring/health:
     get:
       summary: 系統健康監控
       tags: [Monitoring]
@@ -3293,7 +3306,7 @@ components:
                       grade: "A"
                       message: "System is healthy"
 
-  /internal/v1/monitoring/performance:
+  /api/v1/monitoring/performance:
     get:
       summary: 性能指標監控
       tags: [Monitoring]
@@ -3306,7 +3319,7 @@ components:
               schema:
                 $ref: "#/components/schemas/PerformanceMetricsResponse"
 
-  /internal/v1/monitoring/business:
+  /api/v1/monitoring/business:
     get:
       summary: 業務指標監控
       tags: [Monitoring]
@@ -3319,7 +3332,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BusinessMetricsResponse"
 
-  /internal/v1/monitoring/alerts:
+  /api/v1/monitoring/alerts:
     get:
       summary: 告警狀態監控
       tags: [Monitoring]
@@ -3332,7 +3345,7 @@ components:
               schema:
                 $ref: "#/components/schemas/AlertsResponse"
 
-  /internal/v1/monitoring/dashboard:
+  /api/v1/monitoring/dashboard:
     get:
       summary: 儀表板數據
       tags: [Monitoring]
@@ -3346,7 +3359,7 @@ components:
                 $ref: "#/components/schemas/DashboardResponse"
 
   # ===== 計費管理端點 =====
-  /internal/v1/billing/usage/company/{companyId}:
+  /api/v1/billing/usage/company/{companyId}:
     get:
       summary: 獲取公司使用量
       tags: [Billing]
@@ -3366,7 +3379,7 @@ components:
               schema:
                 $ref: "#/components/schemas/CompanyUsageResponse"
 
-  /internal/v1/billing/usage/project/{projectId}:
+  /api/v1/billing/usage/project/{projectId}:
     get:
       summary: 獲取專案使用量
       tags: [Billing]
@@ -3387,7 +3400,7 @@ components:
                 $ref: "#/components/schemas/ProjectUsageResponse"
 
   # ===== 文件管理端點 =====
-  /internal/v1/files/upload:
+  /api/v1/files/upload:
     post:
       summary: 上傳文件
       tags: [Files]
@@ -3402,7 +3415,7 @@ components:
                 file:
                   type: string
                   format: binary
-                projectId:
+                project_id:
                   type: string
                   format: uuid
                 description:
@@ -3595,10 +3608,10 @@ components:
               id:
                 type: string
                 format: uuid
-              projectId:
+              project_id:
                 type: string
                 format: uuid
-              companyId:
+              company_id:
                 type: string
                 format: uuid
               notification_count:
@@ -3639,7 +3652,7 @@ components:
     CompanyUsageResponse:
       type: object
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
         company_name:
@@ -3666,7 +3679,7 @@ components:
     ProjectUsageResponse:
       type: object
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         project_name:
@@ -3730,9 +3743,9 @@ components:
         file_id:
           type: string
           format: uuid
-        fileName:
+        file_name:
           type: string
-        fileSize:
+        file_size:
           type: integer
         file_url:
           type: string
@@ -3754,9 +3767,9 @@ components:
               file_id:
                 type: string
                 format: uuid
-              fileName:
+              file_name:
                 type: string
-              fileSize:
+              file_size:
                 type: integer
               file_url:
                 type: string
@@ -3770,14 +3783,14 @@ components:
         id:
           type: string
           format: uuid
-        projectId:
+        project_id:
           type: string
           format: uuid
-        fileName:
+        file_name:
           type: string
-        fileSize:
+        file_size:
           type: integer
-        contentType:
+        content_type:
           type: string
         file_url:
           type: string
@@ -3792,10 +3805,10 @@ components:
         expires_at:
           type: string
           format: date-time
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
 
@@ -3872,7 +3885,7 @@ components:
                 $ref: "#/components/schemas/ErrorResponse"
 
   # ===== 缺失的核心業務端點變體 =====
-  /internal/v1/companies/{id}/status:
+  /api/v1/companies/{id}/status:
     patch:
       summary: 更新公司狀態
       tags: [Companies]
@@ -3904,7 +3917,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/companies/{id}/billing:
+  /api/v1/companies/{id}/billing:
     patch:
       summary: 更新公司計費狀態
       tags: [Companies]
@@ -3936,7 +3949,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/projects/{id}/limits:
+  /api/v1/projects/{id}/limits:
     get:
       summary: 獲取專案限制
       tags: [Projects]
@@ -3994,7 +4007,7 @@ components:
                 $ref: "#/components/schemas/ErrorResponse"
 
   # ===== 缺失的錯誤處理和狀態端點 =====
-  /internal/v1/queue/status:
+  /api/v1/queue/status:
     get:
       summary: 獲取隊列狀態
       tags: [Queue]
@@ -4007,7 +4020,7 @@ components:
               schema:
                 $ref: "#/components/schemas/QueueStatusResponse"
 
-  /internal/v1/queue/clear:
+  /api/v1/queue/clear:
     post:
       summary: 清空隊列
       tags: [Queue]
@@ -4028,7 +4041,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/notifications/{id}/status:
+  /api/v1/notifications/{id}/status:
     get:
       summary: 獲取通知狀態
       tags: [Notifications]
@@ -4054,7 +4067,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/notifications/{id}/retry:
+  /api/v1/notifications/{id}/retry:
     post:
       summary: 重試通知
       tags: [Notifications]
@@ -4134,14 +4147,14 @@ components:
     UpdateCompanyBillingRequest:
       type: object
       properties:
-        billingEnabled:
+        billing_enabled:
           type: boolean
           example: true
 
     ProjectLimitsResponse:
       type: object
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         limits:
@@ -4164,7 +4177,7 @@ components:
               type: integer
             storage_used_mb:
               type: number
-            destinationsCount:
+            destinations_count:
               type: integer
 
     UpdateProjectLimitsRequest:
@@ -4203,16 +4216,16 @@ components:
     NotificationStatusResponse:
       type: object
       properties:
-        notificationId:
+        notification_id:
           type: string
           format: uuid
         status:
           type: string
           enum: [pending, enqueued, processing, sent, failed, cancelled]
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
         destinations:
@@ -4225,10 +4238,10 @@ components:
                 format: uuid
               status:
                 type: string
-              sentAt:
+              sent_at:
                 type: string
                 format: date-time
-              errorMessage:
+              error_message:
                 type: string
 
     ConfigValidationRequest:
@@ -4241,11 +4254,11 @@ components:
               type: string
             redis_url:
               type: string
-            teams_appId:
+            teams_app_id:
               type: string
-            teams_tenantId:
+            teams_tenant_id:
               type: string
-            teams_appPassword:
+            teams_app_password:
               type: string
 
     ConfigValidationResponse:
@@ -4263,7 +4276,7 @@ components:
             type: string
 
   # ===== 剩餘端點以達到 100% 同步 =====
-  /internal/v1/users/{id}/password:
+  /api/v1/users/{id}/password:
     patch:
       summary: 更新用戶密碼
       tags: [Users]
@@ -4295,7 +4308,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/users/company/{companyId}:
+  /api/v1/users/company/{companyId}:
     get:
       summary: 獲取公司用戶列表
       tags: [Users]
@@ -4323,7 +4336,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/users/role/{role}:
+  /api/v1/users/role/{role}:
     get:
       summary: 獲取角色用戶列表
       tags: [Users]
@@ -4345,7 +4358,7 @@ components:
               schema:
                 $ref: "#/components/schemas/UsersResponse"
 
-  /internal/v1/projects/company/{companyId}:
+  /api/v1/projects/company/{companyId}:
     get:
       summary: 獲取公司專案列表
       tags: [Projects]
@@ -4373,7 +4386,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /internal/v1/projects/key/{keyName}:
+  /api/v1/projects/key/{keyName}:
     get:
       summary: 根據密鑰名稱獲取專案
       tags: [Projects]
@@ -4405,7 +4418,7 @@ components:
         current_password:
           type: string
           minLength: 8
-        newPassword:
+        new_password:
           type: string
           minLength: 8
         confirm_password:
@@ -4419,10 +4432,10 @@ components:
     ApiKeyResponse:
       type: object
       properties:
-        apiKey:
+        api_key:
           type: string
           example: "ak_1234567890abcdef"
-        createdAt:
+        created_at:
           type: string
           format: date-time
         expires_at:
@@ -4461,7 +4474,7 @@ components:
           type: integer
 
   # ===== 最後的端點以達到 100% 同步 =====
-  /internal/v1/bots/platform:
+  /api/v1/bots/platform:
     get:
       summary: 獲取平台 Bot 列表
       tags: [Bots]
@@ -4474,7 +4487,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BotsResponse"
 
-  /internal/v1/bots/status/{status}:
+  /api/v1/bots/status/{status}:
     get:
       summary: 根據狀態獲取 Bot
       tags: [Bots]
@@ -4494,7 +4507,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BotsResponse"
 
-  /internal/v1/notifications/test:
+  /api/v1/notifications/test:
     post:
       summary: 測試通知
       tags: [Notifications]
@@ -4513,7 +4526,7 @@ components:
               schema:
                 $ref: "#/components/schemas/TestNotificationResponse"
 
-  /internal/v1/destinations/{id}/test:
+  /api/v1/destinations/{id}/test:
     post:
       summary: 測試目標
       tags: [Destinations]
@@ -4579,12 +4592,12 @@ components:
     TestNotificationRequest:
       type: object
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         content:
           type: string
-        messageType:
+        message_type:
           type: string
           enum: [text, html, markdown]
         priority:
@@ -4616,16 +4629,16 @@ components:
           type: string
         response_time_ms:
           type: integer
-        errorMessage:
+        error_message:
           type: string
 
     ProvisionRequest:
       type: object
       properties:
-        companyId:
+        company_id:
           type: string
           format: uuid
-        createdBy:
+        created_by:
           type: string
           format: uuid
         project_name:
@@ -4647,7 +4660,7 @@ components:
           $ref: "#/components/schemas/ProjectResponse"
         destination:
           $ref: "#/components/schemas/DestinationResponse"
-        notifyKey:
+        notify_key:
           type: string
 
     ApiHealthResponse:

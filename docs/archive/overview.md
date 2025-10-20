@@ -106,9 +106,9 @@ curl http://localhost:8080/health
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "測試訊息",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "normal",
     "targets": ["all"]
   }'

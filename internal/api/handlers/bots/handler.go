@@ -48,26 +48,26 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 type CreateteamsBotServiceRequest struct {
 	Name                  string                 `json:"name" validate:"required,min=2,max=255"`
 	Description           string                 `json:"description" validate:"required,min=10,max=500"`
-	AppID                 string                 `json:"app_id" validate:"required"`
-	AppPassword           string                 `json:"app_password" validate:"required"`
-	TenantID              string                 `json:"tenant_id" validate:"required"`
-	WebhookURL            string                 `json:"webhook_url" validate:"required,url"`
+	AppID                 string                 `json:"appId" validate:"required"`
+	AppPassword           string                 `json:"appPassword" validate:"required"`
+	TenantID              string                 `json:"tenantId" validate:"required"`
+	WebhookURL            string                 `json:"webhookUrl" validate:"required,url"`
 	Capabilities          map[string]interface{} `json:"capabilities"`
-	RateLimitPerMinute    int                    `json:"rate_limit_per_minute" validate:"min=1,max=1000"`
-	MaxConcurrentRequests int                    `json:"max_concurrent_requests" validate:"min=1,max=100"`
+	RateLimitPerMinute    int                    `json:"rateLimitPerMinute" validate:"min=1,max=1000"`
+	MaxConcurrentRequests int                    `json:"maxConcurrentRequests" validate:"min=1,max=100"`
 }
 
 // UpdateBotRequest represents an update bot request
 type UpdateBotRequest struct {
 	Name                  string                 `json:"name" validate:"omitempty,min=2,max=255"`
 	Description           string                 `json:"description" validate:"omitempty,min=10,max=500"`
-	WebhookURL            string                 `json:"webhook_url" validate:"omitempty,url"`
-	APIEndpoint           string                 `json:"api_endpoint" validate:"omitempty,url"`
+	WebhookURL            string                 `json:"webhookUrl" validate:"omitempty,url"`
+	APIEndpoint           string                 `json:"apiEndpoint" validate:"omitempty,url"`
 	Capabilities          map[string]interface{} `json:"capabilities"`
-	RateLimitPerMinute    int                    `json:"rate_limit_per_minute" validate:"omitempty,min=1,max=1000"`
-	MaxConcurrentRequests int                    `json:"max_concurrent_requests" validate:"omitempty,min=1,max=100"`
-	ContactEmail          string                 `json:"contact_email" validate:"omitempty,email"`
-	ContactPhone          string                 `json:"contact_phone" validate:"omitempty,min=10,max=20"`
+	RateLimitPerMinute    int                    `json:"rateLimitPerMinute" validate:"omitempty,min=1,max=1000"`
+	MaxConcurrentRequests int                    `json:"maxConcurrentRequests" validate:"omitempty,min=1,max=100"`
+	ContactEmail          string                 `json:"contactEmail" validate:"omitempty,email"`
+	ContactPhone          string                 `json:"contactPhone" validate:"omitempty,min=10,max=20"`
 }
 
 // UpdateStatusRequest represents an update status request
@@ -82,7 +82,7 @@ type UpdateCapabilitiesRequest struct {
 
 // UpdateAPIKeyRequest represents an update API key request
 type UpdateAPIKeyRequest struct {
-	APIKey string `json:"api_key" validate:"required"`
+	APIKey string `json:"apiKey" validate:"required"`
 }
 
 // TestConnectionResponse represents a test connection response

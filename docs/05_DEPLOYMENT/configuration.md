@@ -411,9 +411,9 @@ docker exec teamsnotify-redis redis-cli ping
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "test-key",
+    "notifyKey": "test-key",
     "message": "Configuration test",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "normal",
     "targets": ["all"]
   }'

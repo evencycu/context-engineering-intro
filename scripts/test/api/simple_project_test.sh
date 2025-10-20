@@ -89,7 +89,7 @@ echo -e "${BLUE}[6/9]${NC} 更新專案限制..."
 echo -e "${BLUE}curl -X PATCH ${BASE_URL}/projects/$PROJECT_ID/limits -H \"Content-Type: application/json\" -d '{\"daily_limit\":2000,\"monthly_limit\":60000}'${NC}"
 LIMITS_RESPONSE=$(curl -s -X PATCH ${BASE_URL}/projects/$PROJECT_ID/limits \
   -H "Content-Type: application/json" \
-  -d '{"daily_limit":2000,"monthly_limit":60000}')
+  -d '{"dailyLimit":2000,"monthlyLimit":60000}')
 echo "$LIMITS_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$LIMITS_RESPONSE"
 LIMITS_MESSAGE=$(echo "$LIMITS_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('message',''))" 2>/dev/null || echo "")
 echo -e "${GREEN}✓ $LIMITS_MESSAGE${NC}\n"

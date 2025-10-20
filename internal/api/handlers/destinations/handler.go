@@ -41,13 +41,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // CreateDestinationRequest represents a create destination request
 type CreateDestinationRequest struct {
-	ProjectID     uuid.UUID             `json:"project_id" validate:"required"`
+	ProjectID     uuid.UUID             `json:"projectId" validate:"required"`
 	Name          string                `json:"name" validate:"required,min=2,max=255"`
 	Description   string                `json:"description" validate:"required,min=10,max=500"`
-	TeamsTenantID string                `json:"teams_tenant_id" validate:"required"`
+	TeamsTenantID string                `json:"teamsTenantId" validate:"required"`
 	Targets       database.JSONBTargets `json:"targets" validate:"required,min=1"`
 	BotID         *uuid.UUID            `json:"bot_id,omitempty"`
-	CreatedBy     uuid.UUID             `json:"created_by" validate:"required"`
+	CreatedBy     uuid.UUID             `json:"createdBy" validate:"required"`
 }
 
 // UpdateDestinationRequest represents an update destination request

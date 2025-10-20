@@ -228,7 +228,7 @@ k6 run --out json=results.json scripts/testing/load_test.js
 RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "invalid-key",
+    "notifyKey": "invalid-key",
     "message": "Test message"
   }')
 

@@ -39,26 +39,26 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // CreateProjectRequest represents a create project request
 type CreateProjectRequest struct {
-	CompanyID    uuid.UUID `json:"company_id" validate:"required"`
-	NotifyKey    string    `json:"notify_key" validate:"required,min=3,max=255"`
+	CompanyID    uuid.UUID `json:"companyId" validate:"required"`
+	NotifyKey    string    `json:"notifyKey" validate:"required,min=3,max=255"`
 	Description  string    `json:"description" validate:"required,min=10,max=500"`
-	DailyLimit   int       `json:"daily_limit" validate:"min=1,max=10000"`
-	MonthlyLimit int       `json:"monthly_limit" validate:"min=1,max=300000"`
+	DailyLimit   int       `json:"dailyLimit" validate:"min=1,max=10000"`
+	MonthlyLimit int       `json:"monthlyLimit" validate:"min=1,max=300000"`
 	Priority     string    `json:"priority" validate:"oneof=low normal high"`
-	CreatedBy    uuid.UUID `json:"created_by" validate:"required"`
+	CreatedBy    uuid.UUID `json:"createdBy" validate:"required"`
 }
 
 // UpdateProjectRequest represents an update project request
 type UpdateProjectRequest struct {
-	NotifyKey   string `json:"notify_key" validate:"omitempty,min=3,max=50,alphanum"`
+	NotifyKey   string `json:"notifyKey" validate:"omitempty,min=3,max=50,alphanum"`
 	Description string `json:"description" validate:"omitempty,min=10,max=500"`
 	Priority    string `json:"priority" validate:"omitempty,oneof=low normal high"`
 }
 
 // UpdateLimitsRequest represents an update limits request
 type UpdateLimitsRequest struct {
-	DailyLimit   int `json:"daily_limit" validate:"required,min=1,max=10000"`
-	MonthlyLimit int `json:"monthly_limit" validate:"required,min=1,max=300000"`
+	DailyLimit   int `json:"dailyLimit" validate:"required,min=1,max=10000"`
+	MonthlyLimit int `json:"monthlyLimit" validate:"required,min=1,max=300000"`
 }
 
 // CreateProject creates a new project

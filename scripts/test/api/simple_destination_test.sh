@@ -66,7 +66,7 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/users" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "'"$COMPANY_ID"'",
+    "companyId": "'"$COMPANY_ID"'",
     "username": "dest_test_user_'"$(date +%s)"'",
     "email": "dest_test_'"$(date +%s)"'@example.com",
     "display_name": "Destination Test User",
@@ -91,13 +91,13 @@ NOTIFY_KEY="dest-test-$(date +%s)"
 RESPONSE=$(curl -s -X POST "$BASE_URL/projects" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "'"$COMPANY_ID"'",
-    "notify_key": "'"$NOTIFY_KEY"'",
+    "companyId": "'"$COMPANY_ID"'",
+    "notifyKey": "'"$NOTIFY_KEY"'",
     "description": "Test project for destination API testing",
-    "daily_limit": 1000,
-    "monthly_limit": 30000,
+    "dailyLimit": 1000,
+    "monthlyLimit": 30000,
     "priority": "normal",
-    "created_by": "'"$USER_ID"'"
+    "createdBy": "'"$USER_ID"'"
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
@@ -118,18 +118,18 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/bots/platform" \
   -H "Content-Type: application/json" \
   -d '{
-    "app_id": "'"$APP_ID"'",
-    "app_password": "test-password-123",
-    "tenant_id": "test-tenant-123",
-    "webhook_url": "https://webhook.example.com/test",
+    "appId": "'"$APP_ID"'",
+    "appPassword": "test-password-123",
+    "tenantId": "test-tenant-123",
+    "webhookUrl": "https://webhook.example.com/test",
     "name": "Destination Test Bot",
     "description": "Test bot for destination API testing",
     "capabilities": {
       "messaging": true,
       "channel": true
     },
-    "rate_limit_per_minute": 60,
-    "max_concurrent_requests": 10
+    "rateLimitPerMinute": 60,
+    "maxConcurrentRequests": 10
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
@@ -148,26 +148,26 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 RESPONSE=$(curl -s -X POST "$BASE_URL/destinations" \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "'"$PROJECT_ID"'",
+    "projectId": "'"$PROJECT_ID"'",
     "name": "Test Destination",
     "description": "This is a test destination for API testing purposes",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "channel",
         "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
         "display_name": "Test Channel",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       },
       {
         "type": "personal",
         "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
         "display_name": "Test User",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       }
     ],
-    "bot_id": "'"$BOT_ID"'",
-    "created_by": "'"$USER_ID"'"
+    "botId": "'"$BOT_ID"'",
+    "createdBy": "'"$USER_ID"'"
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
@@ -251,13 +251,13 @@ if [ -n "$DESTINATION_ID" ]; then
             "type": "channel",
             "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
             "display_name": "Updated Test Channel",
-            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           },
           {
             "type": "groupchat",
             "conversation_id": "19:f26a8d8a235f430db87a404491cd2ffc@thread.v2",
             "display_name": "Test Group Chat",
-            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           }
         ]
       }')
@@ -287,7 +287,7 @@ if [ -n "$DESTINATION_ID" ]; then
             "type": "personal",
             "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
             "display_name": "Validate User",
-            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           }
         ]
       }')

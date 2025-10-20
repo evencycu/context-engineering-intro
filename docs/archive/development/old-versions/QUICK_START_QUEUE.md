@@ -76,7 +76,7 @@ curl -X GET http://localhost:8080/api/v1/queue/circuit-breaker/metrics | jq '.'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
+    "notifyKey": "your-notify-key",
     "message": "Test notification",
     "targets": ["user@example.com"]
   }'
@@ -92,7 +92,7 @@ curl http://localhost:8080/api/v1/queue/status | jq '.total_pending'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
+    "notifyKey": "your-notify-key",
     "message": "Test failed notification",
     "targets": ["nonexistent@example.com"]
   }'

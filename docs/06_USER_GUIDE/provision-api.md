@@ -20,20 +20,20 @@ Provision API 提供一次性建立公司、專案和目的地的功能，簡化
 curl -X POST http://localhost:8080/api/v1/provision \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "e4f160f4-4917-443d-86e9-29071967b768",
-    "created_by": "11111111-1111-1111-1111-111111111111",
+    "companyId": "e4f160f4-4917-443d-86e9-29071967b768",
+    "createdBy": "11111111-1111-1111-1111-111111111111",
     "project_name": "測試專案",
     "project_description": "這是一個使用 provision API 建立的測試專案",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "channel",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
         "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
       },
       {
         "type": "personal",
-        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
         "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
       }
     ]
@@ -44,34 +44,34 @@ curl -X POST http://localhost:8080/api/v1/provision \
 ```json
 {
   "data": {
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "project": {
       "id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
-      "company_id": "e4f160f4-4917-443d-86e9-29071967b768",
-      "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+      "companyId": "e4f160f4-4917-443d-86e9-29071967b768",
+      "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
       "description": "這是一個使用 provision API 建立的測試專案",
       "status": "active",
-      "daily_limit": 10000,
-      "monthly_limit": 300000,
+      "dailyLimit": 10000,
+      "monthlyLimit": 300000,
       "priority": "normal",
-      "created_by": "11111111-1111-1111-1111-111111111111"
+      "createdBy": "11111111-1111-1111-1111-111111111111"
     },
     "destination": {
       "id": "cf867660-26ae-4437-828c-6fb2c2e3eb19",
-      "project_id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
+      "projectId": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
       "name": "測試專案-default",
       "description": "Auto-provisioned default destination",
-      "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
       "targets": [
         {
           "type": "channel",
           "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
-          "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+          "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
         },
         {
           "type": "personal",
           "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
-          "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+          "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
         }
       ],
       "status": "active",
@@ -106,8 +106,8 @@ curl -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer test-token" \
   -d '{
-    "project_id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
-    "message_type": "text",
+    "projectId": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
+    "messageType": "text",
     "content": "這是一個使用 provision API 建立的專案發送的測試通知",
     "priority": "normal",
     "targets": ["cf867660-26ae-4437-828c-6fb2c2e3eb19"]

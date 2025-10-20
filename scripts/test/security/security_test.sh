@@ -176,9 +176,9 @@ test_input_validation() {
     log "測試輸入驗證..."
     
     local invalid_inputs=(
-        '{"notify_key":"","message":"","targets":[]}'
-        '{"notify_key":null,"message":null,"targets":null}'
-        '{"notify_key":123,"message":456,"targets":"invalid"}'
+        '{"notifyKey":"","message":"","targets":[]}'
+        '{"notifyKey":null,"message":null,"targets":null}'
+        '{"notifyKey":123,"message":456,"targets":"invalid"}'
         '{"invalid_field":"test"}'
     )
     

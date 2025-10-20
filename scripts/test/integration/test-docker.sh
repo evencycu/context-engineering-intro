@@ -26,9 +26,9 @@ echo "📡 測試外部 API..."
 curl -s -X POST "$API_URL/api/v1/notify" \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "test-key",
+    "notifyKey": "test-key",
     "message": "Hello from local Docker test",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "normal",
     "targets": ["all"]
   }' | jq '.' || echo "❌ 外部 API 測試失敗"

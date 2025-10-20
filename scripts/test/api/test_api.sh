@@ -99,19 +99,19 @@ test_create_operations() {
     # 創建公司
     test_api "創建公司" "POST" "$API_BASE/companies" '{
         "name": "API測試公司",
-        "contact_email": "test@api-test.com",
-        "contact_phone": "+886-2-1111-2222",
+        "contactEmail": "test@api-test.com",
+        "contactPhone": "+886-2-1111-2222",
         "address": "台北市測試區測試路123號",
         "status": "active",
-        "billing_enabled": true
+        "billingEnabled": true
     }'
     
     # 創建目的地
     test_api "創建目的地" "POST" "$API_BASE/destinations" '{
-        "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+        "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
         "name": "API測試目的地",
         "description": "API測試用目的地",
-        "teams_tenant_id": "api-test-tenant",
+        "teamsTenantId": "api-test-tenant",
         "targets": [
             {
                 "type": "channel",
@@ -122,14 +122,14 @@ test_create_operations() {
         ],
         "status": "active",
         "validation_status": "pending",
-        "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+        "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
     }'
     
     # 發送通知
     test_api "發送通知" "POST" "$API_BASE/notifications" '{
-        "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
-        "sender_id": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
-        "message_type": "text",
+        "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+        "senderId": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
+        "messageType": "text",
         "content": "API測試通知消息",
         "mentions": ["@test"],
         "priority": "normal",
@@ -143,10 +143,10 @@ test_jsonb_fields() {
     
     # 測試複雜的 targets 數組
     test_api "複雜目標配置" "POST" "$API_BASE/destinations" '{
-        "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+        "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
         "name": "JSONB測試目的地",
         "description": "測試複雜的JSONB字段",
-        "teams_tenant_id": "jsonb-test-tenant",
+        "teamsTenantId": "jsonb-test-tenant",
         "targets": [
             {
                 "type": "channel",
@@ -167,7 +167,7 @@ test_jsonb_fields() {
         ],
         "status": "active",
         "validation_status": "pending",
-        "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+        "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
     }'
 }
 
@@ -178,18 +178,18 @@ test_chinese_content() {
     # 測試中文公司名稱
     test_api "中文公司名稱" "POST" "$API_BASE/companies" '{
         "name": "台灣科技股份有限公司",
-        "contact_email": "info@taiwan-tech.com",
-        "contact_phone": "+886-2-2345-6789",
+        "contactEmail": "info@taiwan-tech.com",
+        "contactPhone": "+886-2-2345-6789",
         "address": "台北市信義區信義路五段7號101大樓",
         "status": "active",
-        "billing_enabled": true
+        "billingEnabled": true
     }'
     
     # 測試中文通知內容
     test_api "中文通知內容" "POST" "$API_BASE/notifications" '{
-        "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
-        "sender_id": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
-        "message_type": "text",
+        "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+        "senderId": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
+        "messageType": "text",
         "content": "這是一個包含中文內容的測試通知消息，用於驗證系統對中文字符的處理能力。",
         "mentions": ["@管理員", "@用戶"],
         "priority": "high",

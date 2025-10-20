@@ -203,8 +203,8 @@ load_test_data() {
         -H "Content-Type: application/json" \
         -d '{
             "name": "E2E Test Company",
-            "contact_email": "e2e-test@example.com",
-            "contact_phone": "+886-2-1234-5678",
+            "contactEmail": "e2e-test@example.com",
+            "contactPhone": "+886-2-1234-5678",
             "address": "台北市信義區信義路五段7號"
         }')
     

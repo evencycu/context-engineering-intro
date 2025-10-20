@@ -330,12 +330,12 @@ func (h *Handler) GetBillingPlan(c *gin.Context) {
 type CreateBillingPlanRequest struct {
 	Name                 string  `json:"name" validate:"required,min=3,max=100"`
 	Description          string  `json:"description" validate:"required,min=10,max=500"`
-	PricePerNotification float64 `json:"price_per_notification" validate:"required,min=0"`
-	PricePerAttachment   float64 `json:"price_per_attachment" validate:"required,min=0"`
-	PricePerMention      float64 `json:"price_per_mention" validate:"required,min=0"`
-	PricePerAdaptiveCard float64 `json:"price_per_adaptive_card" validate:"required,min=0"`
-	DailyLimit           *int    `json:"daily_limit" validate:"omitempty,min=1,max=100000"`
-	MonthlyLimit         *int    `json:"monthly_limit" validate:"omitempty,min=1,max=1000000"`
+	PricePerNotification float64 `json:"pricePerNotification" validate:"required,min=0"`
+	PricePerAttachment   float64 `json:"pricePerAttachment" validate:"required,min=0"`
+	PricePerMention      float64 `json:"pricePerMention" validate:"required,min=0"`
+	PricePerAdaptiveCard float64 `json:"pricePerAdaptiveCard" validate:"required,min=0"`
+	DailyLimit           *int    `json:"dailyLimit" validate:"omitempty,min=1,max=100000"`
+	MonthlyLimit         *int    `json:"monthlyLimit" validate:"omitempty,min=1,max=1000000"`
 	Status               string  `json:"status" validate:"required,oneof=active inactive"`
 }
 
@@ -379,12 +379,12 @@ func (h *Handler) CreateBillingPlan(c *gin.Context) {
 type UpdateBillingPlanRequest struct {
 	Name                 *string  `json:"name" validate:"omitempty,min=3,max=100"`
 	Description          *string  `json:"description" validate:"omitempty,min=10,max=500"`
-	PricePerNotification *float64 `json:"price_per_notification" validate:"omitempty,min=0"`
-	PricePerAttachment   *float64 `json:"price_per_attachment" validate:"omitempty,min=0"`
-	PricePerMention      *float64 `json:"price_per_mention" validate:"omitempty,min=0"`
-	PricePerAdaptiveCard *float64 `json:"price_per_adaptive_card" validate:"omitempty,min=0"`
-	DailyLimit           *int     `json:"daily_limit" validate:"omitempty,min=1,max=100000"`
-	MonthlyLimit         *int     `json:"monthly_limit" validate:"omitempty,min=1,max=1000000"`
+	PricePerNotification *float64 `json:"pricePerNotification" validate:"omitempty,min=0"`
+	PricePerAttachment   *float64 `json:"pricePerAttachment" validate:"omitempty,min=0"`
+	PricePerMention      *float64 `json:"pricePerMention" validate:"omitempty,min=0"`
+	PricePerAdaptiveCard *float64 `json:"pricePerAdaptiveCard" validate:"omitempty,min=0"`
+	DailyLimit           *int     `json:"dailyLimit" validate:"omitempty,min=1,max=100000"`
+	MonthlyLimit         *int     `json:"monthlyLimit" validate:"omitempty,min=1,max=1000000"`
 	Status               *string  `json:"status" validate:"omitempty,oneof=active inactive"`
 }
 
@@ -463,8 +463,8 @@ func (h *Handler) GetCompanyBilling(c *gin.Context) {
 
 // UpdateCompanyBillingRequest represents an update company billing request
 type UpdateCompanyBillingRequest struct {
-	BillingEmail  *string `json:"billing_email" validate:"omitempty,email"`
-	PaymentMethod *string `json:"payment_method" validate:"omitempty,oneof=credit_card bank_transfer paypal"`
+	BillingEmail  *string `json:"billingEmail" validate:"omitempty,email"`
+	PaymentMethod *string `json:"paymentMethod" validate:"omitempty,oneof=credit_card bank_transfer paypal"`
 	Currency      *string `json:"currency" validate:"omitempty,len=3"`
 	Status        *string `json:"status" validate:"omitempty,oneof=active suspended cancelled"`
 }
@@ -512,7 +512,7 @@ func (h *Handler) UpdateCompanyBilling(c *gin.Context) {
 
 // SetCompanyBillingPlanRequest represents a set company billing plan request
 type SetCompanyBillingPlanRequest struct {
-	BillingPlanID uuid.UUID `json:"billing_plan_id" validate:"required"`
+	BillingPlanID uuid.UUID `json:"billingPlanId" validate:"required"`
 }
 
 // SetCompanyBillingPlan sets the billing plan for a company

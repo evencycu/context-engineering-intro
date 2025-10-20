@@ -78,13 +78,13 @@ PLATFORM_BOT_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/bots/platform" \
     -d '{
         "name": "Test Platform Bot",
         "description": "A test platform bot for automated testing",
-        "app_id": "test-platform-bot-'$(date +%s)'",
-        "app_password": "test-password-123",
-        "tenant_id": "test-tenant-123",
-        "webhook_url": "https://example.com/webhook",
+        "appId": "test-platform-bot-'$(date +%s)'",
+        "appPassword": "test-password-123",
+        "tenantId": "test-tenant-123",
+        "webhookUrl": "https://example.com/webhook",
         "capabilities": {"messaging": true, "notifications": true},
-        "rate_limit_per_minute": 60,
-        "max_concurrent_requests": 10
+        "rateLimitPerMinute": 60,
+        "maxConcurrentRequests": 10
     }')
 
 if echo "$PLATFORM_BOT_RESPONSE" | jq -e '.data.id' > /dev/null; then
@@ -124,21 +124,21 @@ echo "  📝 創建Third-Party Bot..."
 THIRD_PARTY_BOT_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/bots/third-party" \
     -H "Content-Type: application/json" \
     -d '{
-        "company_id": "550e8400-e29b-41d4-a716-446655440000",
+        "companyId": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Test Third-Party Bot",
         "description": "A test third-party bot for automated testing",
-        "app_id": "test-third-party-bot-'$(date +%s)'",
-        "app_password": "test-password-123",
-        "tenant_id": "test-tenant-123",
-        "webhook_url": "https://example.com/webhook",
+        "appId": "test-third-party-bot-'$(date +%s)'",
+        "appPassword": "test-password-123",
+        "tenantId": "test-tenant-123",
+        "webhookUrl": "https://example.com/webhook",
         "api_endpoint": "https://api.example.com/bot",
         "api_key": "test-api-key-123",
-        "contact_email": "test@example.com",
-        "contact_phone": "+1234567890",
+        "contactEmail": "test@example.com",
+        "contactPhone": "+1234567890",
         "capabilities": {"messaging": true, "notifications": true},
-        "rate_limit_per_minute": 60,
-        "max_concurrent_requests": 10,
-        "created_by": "550e8400-e29b-41d4-a716-446655440000"
+        "rateLimitPerMinute": 60,
+        "maxConcurrentRequests": 10,
+        "createdBy": "550e8400-e29b-41d4-a716-446655440000"
     }')
 
 if echo "$THIRD_PARTY_BOT_RESPONSE" | jq -e '.data.id' > /dev/null; then
@@ -163,10 +163,10 @@ if [ -n "$THIRD_PARTY_BOT_ID" ]; then
     API_KEY_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/bots/third-party/$THIRD_PARTY_BOT_ID/api-key" \
         -H "Content-Type: application/json" \
         -d '{
-            "notify_key": "test-notify-key",
+            "notifyKey": "test-notify-key",
             "permissions": {"send_message": true, "read_status": true},
-            "rate_limit_per_minute": 60,
-            "created_by": "550e8400-e29b-41d4-a716-446655440000"
+            "rateLimitPerMinute": 60,
+            "createdBy": "550e8400-e29b-41d4-a716-446655440000"
         }')
     
     if echo "$API_KEY_RESPONSE" | jq -e '.data.api_key' > /dev/null; then

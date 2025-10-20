@@ -39,19 +39,19 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // CreateCompanyRequest represents a create company request
 type CreateCompanyRequest struct {
 	Name           string `json:"name" validate:"required,min=2,max=255"`
-	ContactEmail   string `json:"contact_email" validate:"required,email"`
-	ContactPhone   string `json:"contact_phone" validate:"required,min=10,max=20"`
+	ContactEmail   string `json:"contactEmail" validate:"required,email"`
+	ContactPhone   string `json:"contactPhone" validate:"required,min=10,max=20"`
 	Address        string `json:"address" validate:"required,min=10,max=500"`
-	BillingEnabled bool   `json:"billing_enabled"`
+	BillingEnabled bool   `json:"billingEnabled"`
 }
 
 // UpdateCompanyRequest represents an update company request
 type UpdateCompanyRequest struct {
 	Name           string `json:"name" validate:"omitempty,min=2,max=255"`
-	ContactEmail   string `json:"contact_email" validate:"omitempty,email"`
-	ContactPhone   string `json:"contact_phone" validate:"omitempty,min=10,max=20"`
+	ContactEmail   string `json:"contactEmail" validate:"omitempty,email"`
+	ContactPhone   string `json:"contactPhone" validate:"omitempty,min=10,max=20"`
 	Address        string `json:"address" validate:"omitempty,min=10,max=500"`
-	BillingEnabled *bool  `json:"billing_enabled"`
+	BillingEnabled *bool  `json:"billingEnabled"`
 }
 
 // UpdateStatusRequest represents an update status request

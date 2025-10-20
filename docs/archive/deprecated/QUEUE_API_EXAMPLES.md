@@ -110,7 +110,7 @@ curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset | jq '.'
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
+    "notifyKey": "your-notify-key",
     "message": "Test notification from Queue API - '$(date +%Y%m%d-%H%M%S)'",
     "targets": ["all"]
   }' | jq '.'
@@ -221,7 +221,7 @@ echo "2. Sending notification..."
 RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
+    "notifyKey": "your-notify-key",
     "message": "Test notification",
     "targets": ["all"]
   }')
@@ -246,7 +246,7 @@ echo "1. Sending notification (expected to fail)..."
 curl -s -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "your-notify-key",
+    "notifyKey": "your-notify-key",
     "message": "Test failed notification",
     "targets": ["nonexistent@example.com"]
   }' | jq '{notification_id, failed_count}'

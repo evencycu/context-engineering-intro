@@ -33,9 +33,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // SendNotificationRequest represents the request to send notification
 type SendNotificationRequest struct {
-	NotifyKey   string         `json:"notify_key" binding:"required" example:"my-project-key"`
+	NotifyKey   string         `json:"notifyKey" binding:"required" example:"my-project-key"`
 	Message     string         `json:"message" binding:"required" example:"Hello from external API"`
-	MessageType string         `json:"message_type" example:"text" enums:"text,file,adaptive_card"`
+	MessageType string         `json:"messageType" example:"text" enums:"text,file,adaptive_card"`
 	Priority    string         `json:"priority" example:"normal" enums:"low,normal,high"`
 	Targets     []string       `json:"targets" example:"all" description:"List of target Emails or Conversation IDs or 'all'"`
 	Mentions    []string       `json:"mentions" example:"@user1,@user2"`

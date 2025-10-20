@@ -283,7 +283,7 @@ type NotificationDestination struct {
     NotificationID uuid.UUID  `json:"notification_id" db:"notification_id"`
     DestinationID  uuid.UUID  `json:"destination_id" db:"destination_id"`
     ConversationID *string    `json:"conversation_id" db:"conversation_id"`
-    BotID          *uuid.UUID `json:"bot_id" db:"bot_id"`
+    BotID          *uuid.UUID `json:"botId" db:"botId"`
     BotType        *BotType   `json:"bot_type" db:"bot_type"`
     Status         string     `json:"status" db:"status"` // pending, processing, sent, failed, cancelled
     ErrorMessage   *string    `json:"error_message" db:"error_message"`

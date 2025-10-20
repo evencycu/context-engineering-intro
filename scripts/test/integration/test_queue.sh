@@ -133,7 +133,7 @@ print_info "This test sends a notification that might fail and enter the queue"
 TEST_NOTIFY_KEY="${TEST_NOTIFY_KEY:-}"
 if [ -n "$TEST_NOTIFY_KEY" ]; then
     test_notification='{
-        "notify_key": "'"$TEST_NOTIFY_KEY"'",
+        "notifyKey": "'"$TEST_NOTIFY_KEY"'",
         "message": "Queue test notification - '"$(date +%s)"'",
         "targets": ["test@example.com"]
     }'

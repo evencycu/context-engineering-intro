@@ -393,9 +393,9 @@ func (h *Handler) ListFiles(c *gin.Context) {
 
 // ValidateFileRequest represents a file validation request
 type ValidateFileRequest struct {
-	FileName    string `json:"file_name" binding:"required"`
-	FileSize    int64  `json:"file_size" binding:"required"`
-	ContentType string `json:"content_type" binding:"required"`
+	FileName    string `json:"fileName" binding:"required"`
+	FileSize    int64  `json:"fileSize" binding:"required"`
+	ContentType string `json:"contentType" binding:"required"`
 }
 
 // ValidateFileResponse represents the response for file validation

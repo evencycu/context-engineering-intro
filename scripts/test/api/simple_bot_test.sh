@@ -82,8 +82,8 @@ UPDATE_RESPONSE=$(curl -s -X PUT ${BASE_URL}/bots/platform/$BOT_ID \
   -d '{
     "name": "Updated Test Teams Bot",
     "description": "Updated description for testing",
-    "rate_limit_per_minute": 120,
-    "max_concurrent_requests": 20
+    "rateLimitPerMinute": 120,
+    "maxConcurrentRequests": 20
   }')
 echo "$UPDATE_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$UPDATE_RESPONSE"
 echo -e "${GREEN}✓ 更新成功${NC}\n"

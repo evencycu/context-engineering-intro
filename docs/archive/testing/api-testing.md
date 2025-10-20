@@ -215,8 +215,8 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
   -H "Content-Type: application/json" \
   -d '{
     "name": "測試公司",
-    "contact_email": "test@company.com",
-    "contact_phone": "+886-2-1234-5678",
+    "contactEmail": "test@company.com",
+    "contactPhone": "+886-2-1234-5678",
     "address": "台北市信義區信義路五段7號",
     "status": "active",
     "billing_enabled": true
@@ -231,8 +231,8 @@ curl -X POST http://localhost:8080/api/v1/companies \
   -H "Content-Type: application/json" \
   -d '{
     "name": "國泰投信",
-    "contact_email": "admin@cathaysite.com.tw",
-    "contact_phone": "+1-555-0104",
+    "contactEmail": "admin@cathaysite.com.tw",
+    "contactPhone": "+1-555-0104",
     "address": "777 Enterprise Cathay, Taipei City, Taiwan",
     "billing_enabled": true
   }'
@@ -247,8 +247,8 @@ curl -X POST http://localhost:8080/api/v1/companies \
     "created_at": "2025-09-22T03:42:20.425588Z",
     "updated_at": "2025-09-22T03:42:20.425589Z",
     "name": "國泰投信",
-    "contact_email": "admin@cathaysite.com.tw",
-    "contact_phone": "+1-555-0104",
+    "contactEmail": "admin@cathaysite.com.tw",
+    "contactPhone": "+1-555-0104",
     "address": "777 Enterprise Cathay, Taipei City, Taiwan",
     "status": "active",
     "billing_enabled": true
@@ -270,7 +270,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/companies/{company_id} \
   -H "Content-Type: application/json" \
   -d '{
     "name": "更新後的公司名稱",
-    "contact_email": "updated@company.com",
+    "contactEmail": "updated@company.com",
     "status": "active"
   }' | jq .
 ```
@@ -303,7 +303,7 @@ curl -sS http://localhost:8080/api/v1/users | jq .
 curl -sS -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
+    "companyId": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
     "email": "user@example.com",
     "name": "測試用戶",
     "password": "password123",
@@ -319,7 +319,7 @@ curl -sS -X POST http://localhost:8080/api/v1/users \
 curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
+    "companyId": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
     "email": "admin@cathaysite.com.tw",
     "name": "DoDoMan",
     "role": "user",
@@ -335,7 +335,7 @@ curl -X POST http://localhost:8080/api/v1/users \
     "id": "438bad46-a020-4ed7-a64a-7a3ce0432f7a",
     "created_at": "2025-09-22T03:44:34.834365Z",
     "updated_at": "2025-09-22T03:44:34.834365Z",
-    "company_id": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
+    "companyId": "df842fd5-dfd0-44f0-b7a6-ceae9a62af3b",
     "email": "admin@cathaysite.com.tw",
     "name": "DoDoMan",
     "role": "user",
@@ -402,14 +402,14 @@ curl -sS http://localhost:8080/api/v1/projects | jq .
 curl -sS -X POST http://localhost:8080/api/v1/projects \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
-    "notify_key": "test-project-2",
+    "companyId": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
+    "notifyKey": "test-project-2",
     "description": "第二個測試項目",
     "status": "active",
-    "daily_limit": 2000,
-    "monthly_limit": 60000,
+    "dailyLimit": 2000,
+    "monthlyLimit": 60000,
     "priority": "high",
-    "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+    "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
   }' | jq .
 ```
 
@@ -426,8 +426,8 @@ curl -sS -X PUT http://localhost:8080/api/v1/projects/{project_id} \
   -H "Content-Type: application/json" \
   -d '{
     "description": "更新後的項目描述",
-    "daily_limit": 3000,
-    "monthly_limit": 90000
+    "dailyLimit": 3000,
+    "monthlyLimit": 90000
   }' | jq .
 ```
 
@@ -437,8 +437,8 @@ curl -sS -X PUT http://localhost:8080/api/v1/projects/{project_id} \
 curl -sS -X PATCH http://localhost:8080/api/v1/projects/{project_id}/limits \
   -H "Content-Type: application/json" \
   -d '{
-    "daily_limit": 5000,
-    "monthly_limit": 150000
+    "dailyLimit": 5000,
+    "monthlyLimit": 150000
   }' | jq .
 ```
 
@@ -472,11 +472,11 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/platform \
   -d '{
     "name": "新平台機器人",
     "description": "新的平台機器人描述",
-    "app_id": "new-app-456",
-    "app_password": "password123",
-    "tenant_id": "new-tenant-456",
+    "appId": "new-app-456",
+    "appPassword": "password123",
+    "tenantId": "new-tenant-456",
     "status": "active",
-    "webhook_url": "https://new-bot.com/webhook",
+    "webhookUrl": "https://new-bot.com/webhook",
     "capabilities": {
       "receive_message": true,
       "send_message": true,
@@ -538,14 +538,14 @@ curl -sS http://localhost:8080/api/v1/bots/third-party | jq .
 curl -sS -X POST http://localhost:8080/api/v1/bots/third-party \
   -H "Content-Type: application/json" \
   -d '{
-    "company_id": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
+    "companyId": "9589aad2-f5ec-4d25-8ef7-b818b1933c32",
     "name": "新第三方機器人",
     "description": "新的第三方機器人描述",
-    "app_id": "third-party-app-456",
-    "app_password": "password123",
-    "tenant_id": "third-party-tenant-456",
+    "appId": "third-party-app-456",
+    "appPassword": "password123",
+    "tenantId": "third-party-tenant-456",
     "status": "active",
-    "webhook_url": "https://third-party-bot.com/webhook",
+    "webhookUrl": "https://third-party-bot.com/webhook",
     "api_endpoint": "https://third-party-bot.com/api",
     "api_key": "api-key-123",
     "capabilities": {
@@ -556,9 +556,9 @@ curl -sS -X POST http://localhost:8080/api/v1/bots/third-party \
     },
     "rate_limit_per_minute": 300,
     "max_concurrent_requests": 30,
-    "contact_email": "contact@third-party-bot.com",
-    "contact_phone": "+886-2-9876-5432",
-    "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+    "contactEmail": "contact@third-party-bot.com",
+    "contactPhone": "+886-2-9876-5432",
+    "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
   }' | jq .
 ```
 
@@ -576,7 +576,7 @@ curl -sS -X PUT http://localhost:8080/api/v1/bots/third-party/{bot_id} \
   -d '{
     "name": "更新後的第三方機器人",
     "description": "更新後的描述",
-    "contact_email": "updated@third-party-bot.com"
+    "contactEmail": "updated@third-party-bot.com"
   }' | jq .
 ```
 
@@ -622,10 +622,10 @@ curl -sS http://localhost:8080/api/v1/destinations | jq .
 curl -sS -X POST http://localhost:8080/api/v1/destinations \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+    "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
     "name": "測試目的地",
     "description": "測試目的地描述",
-    "teams_tenant_id": "test-tenant-789",
+    "teamsTenantId": "test-tenant-789",
     "targets": [
       {
         "type": "channel",
@@ -641,7 +641,7 @@ curl -sS -X POST http://localhost:8080/api/v1/destinations \
     ],
     "status": "active",
     "validation_status": "pending",
-    "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+    "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
   }' | jq .
 ```
 
@@ -652,10 +652,10 @@ curl -sS -X POST http://localhost:8080/api/v1/destinations \
 curl -X POST http://localhost:8080/api/v1/destinations \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "750e8400-e29b-41d4-a716-446655440001",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
     "name": "Personal Conversation Target",
     "description": "Personal conversation destination for proactive messaging",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "person",
@@ -666,9 +666,9 @@ curl -X POST http://localhost:8080/api/v1/destinations \
         "description": "Personal conversation target for proactive messaging"
       }
     ],
-    "bot_id": "850e8400-e29b-41d4-a716-446655440001",
+    "botId": "850e8400-e29b-41d4-a716-446655440001",
     "bot_type": "platform",
-    "created_by": "650e8400-e29b-41d4-a716-446655440001"
+    "createdBy": "650e8400-e29b-41d4-a716-446655440001"
   }'
 ```
 
@@ -680,10 +680,10 @@ curl -X POST http://localhost:8080/api/v1/destinations \
     "id": "922c78f0-382c-4893-bae3-dc4bd38d7a0b",
     "created_at": "2025-09-22T05:17:24.270033Z",
     "updated_at": "2025-09-22T05:17:24.270033Z",
-    "project_id": "750e8400-e29b-41d4-a716-446655440001",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
     "name": "Personal Conversation Target",
     "description": "Personal conversation destination for proactive messaging",
-    "teams_tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
     "targets": [
       {
         "type": "person",
@@ -694,12 +694,12 @@ curl -X POST http://localhost:8080/api/v1/destinations \
         "description": "Personal conversation target for proactive messaging"
       }
     ],
-    "bot_id": "850e8400-e29b-41d4-a716-446655440001",
+    "botId": "850e8400-e29b-41d4-a716-446655440001",
     "bot_type": "platform",
     "status": "active",
     "validation_status": "pending",
     "last_validated_at": null,
-    "created_by": "650e8400-e29b-41d4-a716-446655440001"
+    "createdBy": "650e8400-e29b-41d4-a716-446655440001"
   },
   "message": "Destination created successfully"
 }
@@ -784,9 +784,9 @@ curl -sS http://localhost:8080/api/v1/notifications | jq .
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+    "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
     "sender_id": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
-    "message_type": "text",
+    "messageType": "text",
     "content": "這是一個測試通知消息 - 包含中文內容",
     "mentions": ["@admin", "@user", "@manager"],
     "priority": "high",
@@ -800,9 +800,9 @@ curl -sS -X POST http://localhost:8080/api/v1/notifications \
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+    "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
     "sender_id": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
-    "message_type": "file",
+    "messageType": "file",
     "content": "請查看附件",
     "attachment": {
       "type": "image",
@@ -821,9 +821,9 @@ curl -sS -X POST http://localhost:8080/api/v1/notifications \
 curl -sS -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+    "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
     "sender_id": "643c4d7a-a18f-4caa-aff2-5a0d4439b367",
-    "message_type": "adaptive_card",
+    "messageType": "adaptive_card",
     "content": "自適應卡片通知",
     "adaptive_card": {
       "type": "AdaptiveCard",
@@ -1070,10 +1070,10 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
 curl -sS -X POST http://localhost:8080/api/v1/destinations \
   -H "Content-Type: application/json" \
   -d '{
-    "project_id": "198f1130-20a9-4c7c-a504-6a055d27e8db",
+    "projectId": "198f1130-20a9-4c7c-a504-6a055d27e8db",
     "name": "複雜目標測試",
     "description": "測試複雜的目標配置",
-    "teams_tenant_id": "complex-tenant",
+    "teamsTenantId": "complex-tenant",
     "targets": [
       {
         "type": "channel",
@@ -1094,7 +1094,7 @@ curl -sS -X POST http://localhost:8080/api/v1/destinations \
     ],
     "status": "active",
     "validation_status": "pending",
-    "created_by": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
+    "createdBy": "643c4d7a-a18f-4caa-aff2-5a0d4439b367"
   }' | jq .
 ```
 
@@ -1106,8 +1106,8 @@ curl -sS -X POST http://localhost:8080/api/v1/companies \
   -H "Content-Type: application/json" \
   -d '{
     "name": "台灣科技股份有限公司",
-    "contact_email": "info@taiwan-tech.com",
-    "contact_phone": "+886-2-2345-6789",
+    "contactEmail": "info@taiwan-tech.com",
+    "contactPhone": "+886-2-2345-6789",
     "address": "台北市信義區信義路五段7號101大樓",
     "status": "active",
     "billing_enabled": true

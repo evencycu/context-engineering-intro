@@ -43,7 +43,7 @@ External API 使用 `notify_key` 進行認證，無需額外的 API Key 或 JWT 
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "Hello World!"
   }'
 ```
@@ -53,9 +53,9 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "系統維護通知：將於今晚 10:00-11:00 進行系統維護",
-    "message_type": "text",
+    "messageType": "text",
     "priority": "high",
     "targets": ["all"],
     "mentions": ["@everyone"],
@@ -72,7 +72,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "message": "頻道專用訊息",
     "targets": ["19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"]
   }'
@@ -88,7 +88,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
     "notification_id": "3f364043-eb50-49a6-988e-79a5be8f5ea0",
     "status": "sent",
     "message": "Notification processed successfully",
-    "project_id": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
+    "projectId": "f6a110f8-27f9-477e-a651-6f8cdbc6dca5",
     "project_name": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
     "destinations_count": 2,
     "results": [
@@ -126,7 +126,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "monitoring-alerts",
+    "notifyKey": "monitoring-alerts",
     "message": "🚨 CPU 使用率過高：95%",
     "priority": "high",
     "metadata": {
@@ -145,7 +145,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "deployment-notifications",
+    "notifyKey": "deployment-notifications",
     "message": "✅ 部署完成：v2.1.0 已成功部署到生產環境",
     "priority": "normal",
     "metadata": {
@@ -164,7 +164,7 @@ curl -X POST http://localhost:8080/api/v1/notify \
 curl -X POST http://localhost:8080/api/v1/notify \
   -H "Content-Type: application/json" \
   -d '{
-    "notify_key": "order-notifications",
+    "notifyKey": "order-notifications",
     "message": "🛒 新訂單：訂單 #12345 已建立，金額：$299.99",
     "priority": "normal",
     "mentions": ["@sales-team"],
