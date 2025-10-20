@@ -101,7 +101,7 @@ paths:
                     warnings: []
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /api/v1/companies:
+  /internal/v1/companies:
     get:
       summary: List companies
       tags: [Companies]
@@ -141,7 +141,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /api/v1/companies/{id}:
+  /internal/v1/companies/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -176,7 +176,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /api/v1/companies/{id}/status:
+  /internal/v1/companies/{id}/status:
     patch:
       summary: Update company status
       tags: [Companies]
@@ -200,7 +200,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /api/v1/companies/{id}/billing:
+  /internal/v1/companies/{id}/billing:
     patch:
       summary: Update company billing enabled flag
       tags: [Companies]
@@ -223,7 +223,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
-  /api/v1/users:
+  /internal/v1/users:
     get:
       summary: List users
       tags: [Users]
@@ -263,7 +263,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
-  /api/v1/users/{id}:
+  /internal/v1/users/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -298,7 +298,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /api/v1/users/{id}/password:
+  /internal/v1/users/{id}/password:
     patch:
       summary: Change user password
       tags: [Users]
@@ -319,7 +319,7 @@ paths:
       responses:
         "200":
           description: Password updated
-  /api/v1/users/company/{companyId}:
+  /internal/v1/users/company/{companyId}:
     get:
       summary: List users by company
       tags: [Users]
@@ -333,7 +333,7 @@ paths:
       responses:
         "200":
           description: User list
-  /api/v1/users/role/{role}:
+  /internal/v1/users/role/{role}:
     get:
       summary: List users by role
       tags: [Users]
@@ -346,7 +346,7 @@ paths:
       responses:
         "200":
           description: User list
-  /api/v1/projects:
+  /internal/v1/projects:
     get:
       summary: List projects
       tags: [Projects]
@@ -378,7 +378,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
-  /api/v1/projects/{id}:
+  /internal/v1/projects/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -413,7 +413,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /api/v1/projects/{id}/limits:
+  /internal/v1/projects/{id}/limits:
     patch:
       summary: Update project limits
       tags: [Projects]
@@ -433,7 +433,7 @@ paths:
       responses:
         "200":
           description: Updated project
-  /api/v1/projects/company/{companyId}:
+  /internal/v1/projects/company/{companyId}:
     get:
       summary: List projects by company
       tags: [Projects]
@@ -447,7 +447,7 @@ paths:
       responses:
         "200":
           description: Project list
-  /api/v1/projects/key/{keyName}:
+  /internal/v1/projects/key/{keyName}:
     get:
       summary: Get project by notify key
       tags: [Projects]
@@ -464,7 +464,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
-  /api/v1/bots/platform:
+  /internal/v1/bots/platform:
     get:
       summary: List platform bots
       tags: [Bots]
@@ -491,7 +491,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BotResponse"
-  /api/v1/bots/platform/{id}:
+  /internal/v1/bots/platform/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -526,7 +526,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /api/v1/bots/platform/{id}/status:
+  /internal/v1/bots/platform/{id}/status:
     patch:
       summary: Update bot status
       tags: [Bots]
@@ -546,7 +546,7 @@ paths:
       responses:
         "200":
           description: Updated bot
-  /api/v1/bots/platform/{id}/capabilities:
+  /internal/v1/bots/platform/{id}/capabilities:
     patch:
       summary: Update bot capabilities
       tags: [Bots]
@@ -562,7 +562,7 @@ paths:
       responses:
         "200":
           description: Updated bot
-  /api/v1/bots/platform/{id}/test:
+  /internal/v1/bots/platform/{id}/test:
     post:
       summary: Test bot connection
       tags: [Bots]
@@ -571,7 +571,7 @@ paths:
       responses:
         "200":
           description: Test result
-  /api/v1/bots/status/{status}:
+  /internal/v1/bots/status/{status}:
     get:
       summary: List bots by status
       tags: [Bots]
@@ -585,7 +585,7 @@ paths:
       responses:
         "200":
           description: Bot list
-  /api/v1/destinations:
+  /internal/v1/destinations:
     get:
       summary: List destinations
       tags: [Destinations]
@@ -625,7 +625,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DestinationResponse"
-  /api/v1/destinations/{id}:
+  /internal/v1/destinations/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -660,7 +660,7 @@ paths:
       responses:
         "204":
           description: Deleted
-  /api/v1/destinations/{id}/targets:
+  /internal/v1/destinations/{id}/targets:
     patch:
       summary: Update destination targets
       tags: [Destinations]
@@ -675,7 +675,7 @@ paths:
       responses:
         "200":
           description: Updated destination
-  /api/v1/destinations/{id}/validate:
+  /internal/v1/destinations/{id}/validate:
     post:
       summary: Validate destination targets
       tags: [Destinations]
@@ -684,7 +684,7 @@ paths:
       responses:
         "200":
           description: Validation result
-  /api/v1/destinations/project/{projectId}:
+  /internal/v1/destinations/project/{projectId}:
     get:
       summary: List destinations by project
       tags: [Destinations]
@@ -698,7 +698,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /api/v1/destinations/bot/{botId}:
+  /internal/v1/destinations/bot/{botId}:
     get:
       summary: List destinations by bot
       tags: [Destinations]
@@ -712,7 +712,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /api/v1/destinations/search:
+  /internal/v1/destinations/search:
     get:
       summary: Search destinations
       tags: [Destinations]
@@ -745,7 +745,7 @@ paths:
       responses:
         "200":
           description: Destination list
-  /api/v1/notifications:
+  /internal/v1/notifications:
     get:
       summary: List notifications
       tags: [Notifications]
@@ -785,7 +785,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationEnqueueResponse"
-  /api/v1/notifications/{id}:
+  /internal/v1/notifications/{id}:
     parameters:
       - $ref: "#/components/parameters/ID"
     get:
@@ -804,7 +804,7 @@ paths:
       responses:
         "204":
           description: Cancelled
-  /api/v1/notifications/{id}/retry:
+  /internal/v1/notifications/{id}/retry:
     post:
       summary: Retry notification
       tags: [Notifications]
@@ -813,7 +813,7 @@ paths:
       responses:
         "200":
           description: Retry accepted
-  /api/v1/notifications/project/{projectId}:
+  /internal/v1/notifications/project/{projectId}:
     get:
       summary: List notifications by project
       tags: [Notifications]
@@ -827,7 +827,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /api/v1/notifications/sender/{senderId}:
+  /internal/v1/notifications/sender/{senderId}:
     get:
       summary: List notifications by sender
       tags: [Notifications]
@@ -841,7 +841,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /api/v1/notifications/status/{status}:
+  /internal/v1/notifications/status/{status}:
     get:
       summary: List notifications by status
       tags: [Notifications]
@@ -854,7 +854,7 @@ paths:
       responses:
         "200":
           description: Notification list
-  /api/v1/notifications/date-range:
+  /internal/v1/notifications/date-range:
     get:
       summary: List notifications in date range
       tags: [Notifications]
@@ -1239,7 +1239,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExternalHealthResponse"
 
-  /api/v1/queue/stats:
+  /internal/v1/queue/stats:
     get:
       summary: Get queue lengths
       description: Returns lengths of high/normal/low priority Redis queues
@@ -1266,7 +1266,7 @@ paths:
                         example: 3
 
   # Billing API endpoints
-  /api/v1/billing/usage:
+  /internal/v1/billing/usage:
     get:
       summary: Get usage records
       description: Retrieve usage records with filtering and pagination
@@ -1315,7 +1315,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsageRecordsResponse"
 
-  /api/v1/billing/usage/summary:
+  /internal/v1/billing/usage/summary:
     get:
       summary: Get usage summary
       description: Get usage summary statistics
@@ -1344,7 +1344,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsageSummaryResponse"
 
-  /api/v1/billing/plans:
+  /internal/v1/billing/plans:
     get:
       summary: Get billing plans
       description: Retrieve all billing plans
@@ -1374,7 +1374,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
 
-  /api/v1/billing/plans/{id}:
+  /internal/v1/billing/plans/{id}:
     parameters:
       - name: id
         in: path
@@ -1411,7 +1411,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
 
-  /api/v1/billing/company/{companyId}:
+  /internal/v1/billing/company/{companyId}:
     parameters:
       - name: companyId
         in: path
@@ -1431,7 +1431,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CompanyBillingResponse"
 
-  /api/v1/billing/analytics/overview:
+  /internal/v1/billing/analytics/overview:
     get:
       summary: Get analytics overview
       description: Get billing analytics overview
@@ -1456,7 +1456,7 @@ paths:
                 $ref: "#/components/schemas/AnalyticsOverviewResponse"
 
   # File Management API endpoints
-  /api/v1/files:
+  /internal/v1/files:
     get:
       summary: List files
       description: List files with filtering and pagination
@@ -1512,7 +1512,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileUploadResponse"
 
-  /api/v1/files/upload/multiple:
+  /internal/v1/files/upload/multiple:
     post:
       summary: Upload multiple files
       description: Upload multiple files at once
@@ -1531,7 +1531,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileUploadMultipleResponse"
 
-  /api/v1/files/{id}:
+  /internal/v1/files/{id}:
     parameters:
       - name: id
         in: path
@@ -1562,7 +1562,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileDeleteResponse"
 
-  /api/v1/files/{id}/download:
+  /internal/v1/files/{id}/download:
     parameters:
       - name: id
         in: path
@@ -1583,7 +1583,7 @@ paths:
                 type: string
                 format: binary
 
-  /api/v1/files/validate:
+  /internal/v1/files/validate:
     post:
       summary: Validate file
       description: Validate file before upload
@@ -3273,7 +3273,7 @@ components:
           example: ""
 
   # ===== 監控端點 =====
-  /api/v1/monitoring/health:
+  /internal/v1/monitoring/health:
     get:
       summary: 系統健康監控
       tags: [Monitoring]
@@ -3306,7 +3306,7 @@ components:
                       grade: "A"
                       message: "System is healthy"
 
-  /api/v1/monitoring/performance:
+  /internal/v1/monitoring/performance:
     get:
       summary: 性能指標監控
       tags: [Monitoring]
@@ -3319,7 +3319,7 @@ components:
               schema:
                 $ref: "#/components/schemas/PerformanceMetricsResponse"
 
-  /api/v1/monitoring/business:
+  /internal/v1/monitoring/business:
     get:
       summary: 業務指標監控
       tags: [Monitoring]
@@ -3332,7 +3332,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BusinessMetricsResponse"
 
-  /api/v1/monitoring/alerts:
+  /internal/v1/monitoring/alerts:
     get:
       summary: 告警狀態監控
       tags: [Monitoring]
@@ -3345,7 +3345,7 @@ components:
               schema:
                 $ref: "#/components/schemas/AlertsResponse"
 
-  /api/v1/monitoring/dashboard:
+  /internal/v1/monitoring/dashboard:
     get:
       summary: 儀表板數據
       tags: [Monitoring]
@@ -3359,7 +3359,7 @@ components:
                 $ref: "#/components/schemas/DashboardResponse"
 
   # ===== 計費管理端點 =====
-  /api/v1/billing/usage/company/{companyId}:
+  /internal/v1/billing/usage/company/{companyId}:
     get:
       summary: 獲取公司使用量
       tags: [Billing]
@@ -3379,7 +3379,7 @@ components:
               schema:
                 $ref: "#/components/schemas/CompanyUsageResponse"
 
-  /api/v1/billing/usage/project/{projectId}:
+  /internal/v1/billing/usage/project/{projectId}:
     get:
       summary: 獲取專案使用量
       tags: [Billing]
@@ -3400,7 +3400,7 @@ components:
                 $ref: "#/components/schemas/ProjectUsageResponse"
 
   # ===== 文件管理端點 =====
-  /api/v1/files/upload:
+  /internal/v1/files/upload:
     post:
       summary: 上傳文件
       tags: [Files]
@@ -3885,7 +3885,7 @@ components:
                 $ref: "#/components/schemas/ErrorResponse"
 
   # ===== 缺失的核心業務端點變體 =====
-  /api/v1/companies/{id}/status:
+  /internal/v1/companies/{id}/status:
     patch:
       summary: 更新公司狀態
       tags: [Companies]
@@ -3917,7 +3917,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/companies/{id}/billing:
+  /internal/v1/companies/{id}/billing:
     patch:
       summary: 更新公司計費狀態
       tags: [Companies]
@@ -3949,7 +3949,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/projects/{id}/limits:
+  /internal/v1/projects/{id}/limits:
     get:
       summary: 獲取專案限制
       tags: [Projects]
@@ -4007,7 +4007,7 @@ components:
                 $ref: "#/components/schemas/ErrorResponse"
 
   # ===== 缺失的錯誤處理和狀態端點 =====
-  /api/v1/queue/status:
+  /internal/v1/queue/status:
     get:
       summary: 獲取隊列狀態
       tags: [Queue]
@@ -4020,7 +4020,7 @@ components:
               schema:
                 $ref: "#/components/schemas/QueueStatusResponse"
 
-  /api/v1/queue/clear:
+  /internal/v1/queue/clear:
     post:
       summary: 清空隊列
       tags: [Queue]
@@ -4041,7 +4041,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/notifications/{id}/status:
+  /internal/v1/notifications/{id}/status:
     get:
       summary: 獲取通知狀態
       tags: [Notifications]
@@ -4067,7 +4067,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/notifications/{id}/retry:
+  /internal/v1/notifications/{id}/retry:
     post:
       summary: 重試通知
       tags: [Notifications]
@@ -4276,7 +4276,7 @@ components:
             type: string
 
   # ===== 剩餘端點以達到 100% 同步 =====
-  /api/v1/users/{id}/password:
+  /internal/v1/users/{id}/password:
     patch:
       summary: 更新用戶密碼
       tags: [Users]
@@ -4308,7 +4308,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/users/company/{companyId}:
+  /internal/v1/users/company/{companyId}:
     get:
       summary: 獲取公司用戶列表
       tags: [Users]
@@ -4336,7 +4336,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/users/role/{role}:
+  /internal/v1/users/role/{role}:
     get:
       summary: 獲取角色用戶列表
       tags: [Users]
@@ -4358,7 +4358,7 @@ components:
               schema:
                 $ref: "#/components/schemas/UsersResponse"
 
-  /api/v1/projects/company/{companyId}:
+  /internal/v1/projects/company/{companyId}:
     get:
       summary: 獲取公司專案列表
       tags: [Projects]
@@ -4386,7 +4386,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/projects/key/{keyName}:
+  /internal/v1/projects/key/{keyName}:
     get:
       summary: 根據密鑰名稱獲取專案
       tags: [Projects]
@@ -4474,7 +4474,7 @@ components:
           type: integer
 
   # ===== 最後的端點以達到 100% 同步 =====
-  /api/v1/bots/platform:
+  /internal/v1/bots/platform:
     get:
       summary: 獲取平台 Bot 列表
       tags: [Bots]
@@ -4487,7 +4487,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BotsResponse"
 
-  /api/v1/bots/status/{status}:
+  /internal/v1/bots/status/{status}:
     get:
       summary: 根據狀態獲取 Bot
       tags: [Bots]
@@ -4507,7 +4507,7 @@ components:
               schema:
                 $ref: "#/components/schemas/BotsResponse"
 
-  /api/v1/notifications/test:
+  /internal/v1/notifications/test:
     post:
       summary: 測試通知
       tags: [Notifications]
@@ -4526,7 +4526,7 @@ components:
               schema:
                 $ref: "#/components/schemas/TestNotificationResponse"
 
-  /api/v1/destinations/{id}/test:
+  /internal/v1/destinations/{id}/test:
     post:
       summary: 測試目標
       tags: [Destinations]

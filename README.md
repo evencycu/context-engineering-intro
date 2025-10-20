@@ -285,10 +285,10 @@ make docs-serve
 - `GET /health` - Health check and system status
 - `GET /ping` - Simple connectivity test
 - `GET /docs/` - Interactive API documentation
-- `POST /api/v1/destinations` - Register notification destinations
-- `POST /api/v1/notifications` - Send notifications
-- `GET /api/v1/notifications/{id}` - Get notification status
-- `POST /api/v1/notifications/batch` - Batch notification sending
+- `POST /internal/v1/destinations` - Register notification destinations
+- `POST /internal/v1/notifications` - Send notifications
+- `GET /internal/v1/notifications/{id}` - Get notification status
+- `POST /internal/v1/notifications/batch` - Batch notification sending
 
 ### Authentication
 
@@ -410,13 +410,13 @@ docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center <
 
 ```bash
 # 查看隊列狀態
-curl http://localhost:8080/api/v1/queue/status
+curl http://localhost:8080/internal/v1/queue/status
 
 # 查看熔斷器指標
-curl http://localhost:8080/api/v1/queue/circuit-breaker/metrics
+curl http://localhost:8080/internal/v1/queue/circuit-breaker/metrics
 
 # 重置熔斷器
-curl -X POST http://localhost:8080/api/v1/queue/circuit-breaker/reset
+curl -X POST http://localhost:8080/internal/v1/queue/circuit-breaker/reset
 ```
 
 ### 主要特性

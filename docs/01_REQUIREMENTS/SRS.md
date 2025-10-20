@@ -70,15 +70,15 @@
 
 ### 5.2 內部介面
 - **Notification API**
-  - 端點：`POST /api/v1/notifications`
+  - 端點：`POST /internal/v1/notifications`
   - 用途：接收訊息發送請求
 
 - **Status API**
-  - 端點：`GET /api/v1/notifications/status/{id}`
+  - 端點：`GET /internal/v1/notifications/status/{id}`
   - 用途：查詢訊息發送狀態
 
 - **Billing API**
-  - 端點：`GET /api/v1/billing/summary`
+  - 端點：`GET /internal/v1/billing/summary`
   - 用途：查詢計費資訊
 
 ---
