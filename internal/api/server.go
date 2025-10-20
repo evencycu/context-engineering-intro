@@ -202,8 +202,6 @@ func (s *Server) RegisterRoutes(
 		v1.PUT("/users/:id", userHandler.UpdateUser)
 		v1.DELETE("/users/:id", userHandler.DeleteUser)
 		v1.PATCH("/users/:id/password", userHandler.ChangePassword)
-		v1.PATCH("/users/:id/api-key", userHandler.GenerateAPIKey)
-		v1.DELETE("/users/:id/api-key", userHandler.RevokeAPIKey)
 		v1.GET("/users/company/:companyId", userHandler.GetUsersByCompany)
 		v1.GET("/users/role/:role", userHandler.GetUsersByRole)
 

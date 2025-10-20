@@ -89,13 +89,9 @@ scripts/
 │   ├── gen.sh
 │   └── lint.sh
 ├── deploy/                    # 部署工具
-│   ├── local/                 # 本地部署
-│   │   ├── dev-deploy.sh
-│   │   ├── smart-deploy.sh
-│   │   └── quick-redeploy.sh
 │   ├── docker/                # Docker 部署
-│   │   ├── deploy.sh
-│   │   └── docker.sh
+│   │   ├── deploy.sh         # 統一部署腳本 (整合所有部署模式)
+│   │   └── docker.sh         # Docker 容器管理工具
 │   └── k8s/                   # Kubernetes 部署
 ├── test/                      # 測試工具
 │   ├── e2e/                   # 端到端測試

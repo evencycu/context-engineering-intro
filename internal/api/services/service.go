@@ -84,8 +84,6 @@ type UserService interface {
 	GetByRole(ctx context.Context, role string) ([]*database.User, error)
 	GetByStatus(ctx context.Context, status string) ([]*database.User, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
-	GenerateAPIKey(ctx context.Context, userID uuid.UUID) (string, error)
-	RevokeAPIKey(ctx context.Context, userID uuid.UUID) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -218,43 +216,6 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	// Update password
 	hashedStr := string(hashedPassword)
 	user.PasswordHash = &hashedStr
-	user.UpdatedAt = time.Now()
-
-	return s.repo.Update(ctx, user)
-}
-
-// GenerateAPIKey generates a new API key for a user
-func (s *userService) GenerateAPIKey(ctx context.Context, userID uuid.UUID) (string, error) {
-	user, err := s.repo.GetByID(ctx, userID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get user: %w", err)
-	}
-
-	// Generate new API key
-	apiKey := uuid.New().String()
-	expiresAt := time.Now().Add(365 * 24 * time.Hour) // 1 year
-
-	user.APIKeyHash = &apiKey
-	user.APIKeyExpiresAt = &expiresAt
-	user.UpdatedAt = time.Now()
-
-	err = s.repo.Update(ctx, user)
-	if err != nil {
-		return "", fmt.Errorf("failed to update user: %w", err)
-	}
-
-	return apiKey, nil
-}
-
-// RevokeAPIKey revokes a user's API key
-func (s *userService) RevokeAPIKey(ctx context.Context, userID uuid.UUID) error {
-	user, err := s.repo.GetByID(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
-	}
-
-	user.APIKeyHash = nil
-	user.APIKeyExpiresAt = nil
 	user.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, user)

@@ -319,23 +319,6 @@ paths:
       responses:
         "200":
           description: Password updated
-  /api/v1/users/{id}/api-key:
-    patch:
-      summary: Generate API key
-      tags: [Users]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      responses:
-        "200":
-          description: API key payload
-    delete:
-      summary: Revoke API key
-      tags: [Users]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      responses:
-        "204":
-          description: Revoked
   /api/v1/users/company/{companyId}:
     get:
       summary: List users by company
@@ -4318,57 +4301,6 @@ components:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
-        "404":
-          description: 用戶不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /api/v1/users/{id}/api-key:
-    get:
-      summary: 獲取用戶 API 密鑰
-      tags: [Users]
-      description: 獲取用戶的 API 密鑰
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: API 密鑰
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKeyResponse"
-        "404":
-          description: 用戶不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    post:
-      summary: 生成新的 API 密鑰
-      tags: [Users]
-      description: 為用戶生成新的 API 密鑰
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 新 API 密鑰
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKeyResponse"
         "404":
           description: 用戶不存在
           content:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Teams Notification Service - Deployment Script
-# This script deploys the server and OpenAPI service with proper environment configuration
+# Teams Notification Service - Unified Deployment Script
+# This script supports multiple deployment modes for different scenarios
 
 set -e
 
@@ -10,6 +10,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Configuration
@@ -33,6 +34,10 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_info() {
+    echo -e "${PURPLE}[INFO]${NC} $1"
 }
 
 # Function to check if command exists
@@ -70,7 +75,7 @@ check_database() {
     if ! docker ps --format "table {{.Names}}" | grep -q "teamsnotify-postgres"; then
         print_error "PostgreSQL container 'teamsnotify-postgres' is not running"
         print_status "Please start the database first:"
-        print_status "  docker-compose up -d postgres redis"
+        print_status "  docker-compose -f scripts/docker/docker-compose.yml up -d postgres redis"
         exit 1
     fi
     
@@ -222,6 +227,41 @@ start_openapi() {
     done
 }
 
+# Function to start database services (postgres, redis)
+start_database_services() {
+    print_status "Starting database services (PostgreSQL, Redis)..."
+    
+    # Start docker-compose services
+    docker-compose -f scripts/docker/docker-compose.yml up -d postgres redis
+    
+    # Wait for services to be ready
+    print_status "Waiting for database services to be ready..."
+    sleep 10
+    
+    # Check services status
+    if docker ps | grep -q "teamsnotify-postgres" && docker ps | grep -q "teamsnotify-redis"; then
+        print_success "Database services started successfully"
+    else
+        print_error "Database services failed to start"
+        exit 1
+    fi
+}
+
+# Function to cleanup Docker images
+cleanup_images() {
+    print_status "Cleaning up Docker images..."
+    
+    # Remove unused images
+    docker image prune -f 2>/dev/null || true
+    
+    # Remove specific application images
+    docker rmi teams-notification/api-server:local 2>/dev/null || true
+    docker rmi local-test-api-server 2>/dev/null || true
+    docker rmi teamsnotify-api-server 2>/dev/null || true
+    
+    print_success "Docker images cleanup completed"
+}
+
 # Function to show service status
 show_status() {
     print_status "Service Status:"
@@ -246,47 +286,27 @@ show_status() {
         print_error "OpenAPI: Not running"
     fi
     
+    # Docker services status
+    if docker ps | grep -q "teamsnotify-postgres"; then
+        print_success "PostgreSQL: Running"
+    else
+        print_warning "PostgreSQL: Not running"
+    fi
+    
+    if docker ps | grep -q "teamsnotify-redis"; then
+        print_success "Redis: Running"
+    else
+        print_warning "Redis: Not running"
+    fi
+    
     echo ""
     print_status "Service URLs:"
     print_status "  Server API: http://localhost:$SERVER_PORT"
     print_status "  Server Health: http://localhost:$SERVER_PORT/health"
+    print_status "  Queue Stats: http://localhost:$SERVER_PORT/api/v1/queue/stats"
     print_status "  OpenAPI UI: http://localhost:$OPENAPI_PORT"
     print_status "  OpenAPI Spec: http://localhost:$OPENAPI_PORT/api/teams-notification-api.yaml"
     echo ""
-}
-
-# Function to show help
-show_help() {
-    cat << EOF
-Teams Notification Service - Deployment Script
-
-Usage: $0 [COMMAND]
-
-Commands:
-    deploy      - Deploy both server and OpenAPI service (default)
-    server      - Deploy server only
-    openapi     - Deploy OpenAPI service only
-    stop        - Stop all services
-    restart     - Restart all services
-    status      - Show service status
-    logs        - Show server logs
-    help        - Show this help message
-
-Environment Variables:
-    TEAMS_BOT_APP_ID        - Teams Bot Application ID
-    TEAMS_TENANT_ID         - Teams Tenant ID  
-    TEAMS_BOT_APP_PASSWORD  - Teams Bot Application Password
-    REDIS_URL               - Redis connection URL
-    DATABASE_URL            - PostgreSQL connection URL
-
-Examples:
-    $0                      # Deploy everything
-    $0 server               # Deploy server only
-    $0 openapi              # Deploy OpenAPI only
-    $0 restart              # Restart all services
-    $0 status               # Check status
-
-EOF
 }
 
 # Function to show logs
@@ -299,9 +319,171 @@ show_logs() {
     fi
 }
 
+# Function for development deployment mode
+mode_dev() {
+    print_info "=== Development Deployment Mode ==="
+    echo ""
+    
+    check_prerequisites
+    stop_services
+    cleanup_images
+    build_server
+    start_database_services
+    start_server
+    show_status
+    
+    print_success "Development deployment completed!"
+}
+
+# Function for local process mode
+mode_local() {
+    print_info "=== Local Process Mode ==="
+    echo ""
+    
+    check_prerequisites
+    stop_services
+    build_server
+    start_database_services
+    start_server
+    show_status
+    
+    print_success "Local process mode completed!"
+}
+
+# Function for quick redeploy mode
+mode_quick() {
+    print_info "=== Quick Redeploy Mode ==="
+    echo ""
+    
+    stop_services
+    build_server
+    start_server
+    
+    print_success "Quick redeploy completed!"
+    echo ""
+    echo "🌐 API Server: http://localhost:$SERVER_PORT"
+    echo "📊 Health: http://localhost:$SERVER_PORT/health"
+}
+
+# Function for full Docker deployment mode
+mode_docker_full() {
+    print_info "=== Full Docker Deployment Mode ==="
+    echo ""
+    
+    check_prerequisites
+    stop_services
+    cleanup_images
+    start_database_services
+    
+    # Build and start API server container
+    print_status "Building and starting API server container..."
+    docker-compose -f scripts/docker/docker-compose.yml up -d api-server
+    
+    # Wait for container to be ready
+    sleep 5
+    
+    # Check container status
+    if docker ps | grep -q "teamsnotify-api-server"; then
+        print_success "API server container started"
+    else
+        print_error "API server container failed to start"
+        exit 1
+    fi
+    
+    show_status
+    print_success "Full Docker deployment completed!"
+}
+
+# Function to show help
+show_help() {
+    cat << EOF
+Teams Notification Service - Unified Deployment Script
+
+Usage: $0 [COMMAND] [OPTIONS]
+
+Deployment Modes:
+    dev             - Development deployment (build + docker + migrations + tests)
+    local           - Local process mode (fastest, for development)
+    quick           - Quick redeploy (rebuild and restart only)
+    docker-full     - Full Docker deployment (all services in containers)
+
+Basic Commands:
+    server          - Deploy server only
+    openapi         - Deploy OpenAPI service only
+    stop            - Stop all services
+    restart         - Restart all services
+    status          - Show service status
+    logs            - Show server logs
+    help            - Show this help message
+
+Options:
+    --clean         - Clean Docker images before deployment
+    --test          - Run feature tests after deployment
+
+Environment Variables:
+    TEAMS_BOT_APP_ID        - Teams Bot Application ID
+    TEAMS_TENANT_ID         - Teams Tenant ID
+    TEAMS_BOT_APP_PASSWORD  - Teams Bot Application Password
+    REDIS_URL               - Redis connection URL
+    DATABASE_URL            - PostgreSQL connection URL
+
+Examples:
+    $0 dev              # Full development deployment
+    $0 local            # Local process mode (fastest)
+    $0 quick            # Quick rebuild and restart
+    $0 docker-full      # Full Docker deployment
+    $0 server           # Deploy server only
+    $0 restart          # Restart all services
+    $0 status           # Check status
+
+EOF
+}
+
 # Main function
 main() {
-    case "${1:-deploy}" in
+    local command="${1:-help}"
+    local clean_mode=false
+    local test_mode=false
+    
+    # Parse options
+    shift || true
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --clean)
+                clean_mode=true
+                shift
+                ;;
+            --test)
+                test_mode=true
+                shift
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+    
+    # Handle clean mode
+    if [ "$clean_mode" = true ]; then
+        cleanup_images
+    fi
+    
+    # Execute command
+    case "$command" in
+        dev)
+            mode_dev
+            ;;
+        local)
+            mode_local
+            ;;
+        quick)
+            mode_quick
+            ;;
+        docker-full)
+            mode_docker_full
+            ;;
         deploy)
             check_prerequisites
             check_database
@@ -317,6 +499,7 @@ main() {
             stop_services
             build_server
             start_server
+            [ "$test_mode" = true ] && test_features
             show_status
             ;;
         openapi)
@@ -335,6 +518,7 @@ main() {
             build_server
             start_server
             start_openapi
+            [ "$test_mode" = true ] && test_features
             show_status
             ;;
         status)
@@ -347,7 +531,7 @@ main() {
             show_help
             ;;
         *)
-            print_error "Unknown command: $1"
+            print_error "Unknown command: $command"
             show_help
             exit 1
             ;;

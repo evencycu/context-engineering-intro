@@ -32,8 +32,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		users.PUT("/:id", h.UpdateUser)
 		users.DELETE("/:id", h.DeleteUser)
 		users.PATCH("/:id/password", h.ChangePassword)
-		users.PATCH("/:id/api-key", h.GenerateAPIKey)
-		users.DELETE("/:id/api-key", h.RevokeAPIKey)
 		users.GET("/company/:companyId", h.GetUsersByCompany)
 		users.GET("/role/:role", h.GetUsersByRole)
 	}
@@ -59,12 +57,6 @@ type UpdateUserRequest struct {
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=8"`
-}
-
-// GenerateAPIKeyResponse represents an API key generation response
-type GenerateAPIKeyResponse struct {
-	APIKey    string `json:"api_key"`
-	ExpiresAt string `json:"expires_at"`
 }
 
 // CreateUser creates a new user
@@ -110,7 +102,6 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	// Remove sensitive fields from response
 	createdUser.PasswordHash = nil
-	createdUser.APIKeyHash = nil
 
 	c.JSON(http.StatusCreated, gin.H{
 		"data":    createdUser,
@@ -151,7 +142,6 @@ func (h *Handler) ListUsers(c *gin.Context) {
 	// Remove sensitive fields from response
 	for _, user := range users {
 		user.PasswordHash = nil
-		user.APIKeyHash = nil
 	}
 
 	// Get total count
@@ -210,7 +200,6 @@ func (h *Handler) GetUser(c *gin.Context) {
 
 	// Remove sensitive fields from response
 	user.PasswordHash = nil
-	user.APIKeyHash = nil
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": user,
@@ -365,87 +354,6 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	})
 }
 
-// GenerateAPIKey generates a new API key for user
-func (h *Handler) GenerateAPIKey(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user ID",
-		})
-		return
-	}
-
-	apiKey, err := h.userService.GenerateAPIKey(c.Request.Context(), id)
-	if err != nil {
-		if _, ok := err.(services.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "User not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to generate API key",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Get user to get API key expiration
-	user, err := h.userService.GetByID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get user details",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	response := GenerateAPIKeyResponse{
-		APIKey: apiKey,
-	}
-
-	if user.APIKeyExpiresAt != nil {
-		response.ExpiresAt = user.APIKeyExpiresAt.Format("2006-01-02T15:04:05Z07:00")
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data":    response,
-		"message": "API key generated successfully",
-	})
-}
-
-// RevokeAPIKey revokes user's API key
-func (h *Handler) RevokeAPIKey(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user ID",
-		})
-		return
-	}
-
-	err = h.userService.RevokeAPIKey(c.Request.Context(), id)
-	if err != nil {
-		if _, ok := err.(services.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "User not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to revoke API key",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "API key revoked successfully",
-	})
-}
-
 // GetUsersByCompany gets users by company ID
 func (h *Handler) GetUsersByCompany(c *gin.Context) {
 	companyIDStr := c.Param("companyId")
@@ -469,7 +377,6 @@ func (h *Handler) GetUsersByCompany(c *gin.Context) {
 	// Remove sensitive fields from response
 	for _, user := range users {
 		user.PasswordHash = nil
-		user.APIKeyHash = nil
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -493,7 +400,6 @@ func (h *Handler) GetUsersByRole(c *gin.Context) {
 	// Remove sensitive fields from response
 	for _, user := range users {
 		user.PasswordHash = nil
-		user.APIKeyHash = nil
 	}
 
 	c.JSON(http.StatusOK, gin.H{

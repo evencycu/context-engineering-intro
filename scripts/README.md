@@ -10,13 +10,9 @@
 - `lint.sh` - 代碼檢查腳本
 
 ### 🚀 `deploy/` - 部署工具
-- `local/` - 本地部署腳本
-  - `dev-deploy.sh` - 開發部署
-  - `smart-deploy.sh` - 智能部署
-  - `quick-redeploy.sh` - 快速重構
 - `docker/` - Docker 部署腳本
-  - `deploy.sh` - Docker 部署 (支援 server, openapi, stop, restart 等模式)
-  - `docker.sh` - Docker 工具
+  - `deploy.sh` - 統一部署腳本 (支援 dev, local, quick, docker-full, server, openapi 等多種模式)
+  - `docker.sh` - Docker 容器管理工具
 - `k8s/` - Kubernetes 部署腳本
 
 ### 🧪 `test/` - 測試工具
