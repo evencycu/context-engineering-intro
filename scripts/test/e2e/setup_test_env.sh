@@ -262,6 +262,9 @@ load_test_data() {
     
     # 建立測試目的地
     log "建立測試目的地..."
+    # 從資料庫取得最新且 active 的 conversation_id 以確保正確
+    local conv_id=$(docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -tAc "SELECT conversation_id FROM bot_installations WHERE installation_status='active' ORDER BY installed_at DESC LIMIT 1;")
+    conv_id=$(echo "$conv_id" | tr -d '[:space:]')
     local destination_response=$(curl -s -X POST "$API_BASE/destinations" \
         -H "Content-Type: application/json" \
         -d "{
@@ -272,7 +275,7 @@ load_test_data() {
             \"targets\": [
                 {
                     \"type\": \"personal\",
-                    \"conversation_id\": \"a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR\",
+                    \"conversation_id\": \"$conv_id\",
                     \"tenant_id\": \"051cece0-e4dc-4aed-b471-bf29824e1ee6\"
                 }
             ]

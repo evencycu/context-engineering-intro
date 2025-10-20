@@ -728,3 +728,101 @@ curl http://localhost:8080/api/v1/queue/stats
 **版本**: v1.1
 **最後更新**: 2025-10-11
 **作者**: TeamsNotify DevOps Team
+
+---
+
+## 🔧 故障排除指南
+
+### 常見問題與解決方案
+
+#### 1. Actor Pool 問題
+**症狀**: "Actor pool full" 錯誤，通知處理緩慢
+**原因**: Actor 沒有正確釋放，導致池子飽和
+**解決方案**:
+```bash
+# 檢查 Actor Pool 狀態
+curl http://localhost:8080/api/v1/metrics | jq '.actor_pool'
+
+# 重啟服務
+docker-compose restart api-server
+```
+
+#### 2. Teams API 認證失敗
+**症狀**: "401 Unauthorized" 錯誤
+**原因**: Teams API 憑證配置錯誤
+**解決方案**:
+```bash
+# 檢查環境變數
+docker exec teamsnotify-api-server env | grep TEAMS
+
+# 更新憑證
+docker exec teamsnotify-api-server sh -c 'export TEAMS_BOT_APP_ID="your-app-id"'
+```
+
+#### 3. 數據庫連接問題
+**症狀**: "Failed to connect to database" 錯誤
+**原因**: 數據庫連接字符串或密碼錯誤
+**解決方案**:
+```bash
+# 檢查數據庫狀態
+docker exec teamsnotify-postgres pg_isready
+
+# 檢查連接字符串
+echo $DATABASE_URL
+```
+
+#### 4. Redis 連接問題
+**症狀**: "Redis connection failed" 錯誤
+**原因**: Redis 服務未啟動或連接配置錯誤
+**解決方案**:
+```bash
+# 檢查 Redis 狀態
+docker exec teamsnotify-redis redis-cli ping
+
+# 重啟 Redis
+docker-compose restart redis
+```
+
+### 監控和診斷
+
+#### 系統健康檢查
+```bash
+# 檢查整體健康狀態
+curl http://localhost:8080/api/v1/monitoring/health
+
+# 檢查業務指標
+curl http://localhost:8080/api/v1/monitoring/business
+
+# 檢查性能指標
+curl http://localhost:8080/api/v1/monitoring/performance
+```
+
+#### 日誌分析
+```bash
+# 查看 API 服務日誌
+docker logs teamsnotify-api-server --tail 100
+
+# 查看錯誤日誌
+docker logs teamsnotify-api-server 2>&1 | grep ERROR
+
+# 查看 Actor Pool 日誌
+docker logs teamsnotify-api-server 2>&1 | grep "Actor"
+```
+
+### 性能優化建議
+
+#### 1. Actor Pool 調優
+- 根據負載調整 `max_actors` 參數
+- 監控 Actor 完成率和處理時間
+- 避免 Actor 積壓
+
+#### 2. 數據庫優化
+- 定期清理舊的 notification_destinations
+- 優化數據庫索引
+- 監控連接池使用情況
+
+#### 3. Redis 優化
+- 設置適當的 TTL
+- 監控記憶體使用
+- 配置持久化策略
+

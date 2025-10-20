@@ -312,8 +312,23 @@ func (s *fileService) ListFiles(ctx context.Context, req *ListFilesRequest) ([]*
 }
 
 func (s *fileService) ValidateFile(ctx context.Context, req *ValidateFileRequest) (*ValidateFileResponse, error) {
+	// Check file name
+	if req.FileName == "" {
+		return &ValidateFileResponse{
+			Valid:   false,
+			Message: "File name cannot be empty",
+		}, nil
+	}
+
 	// Check file size (10MB limit)
 	const maxFileSize = 10 * 1024 * 1024 // 10MB
+	if req.FileSize <= 0 {
+		return &ValidateFileResponse{
+			Valid:   false,
+			Message: "File size must be greater than 0",
+		}, nil
+	}
+
 	if req.FileSize > maxFileSize {
 		return &ValidateFileResponse{
 			Valid:   false,

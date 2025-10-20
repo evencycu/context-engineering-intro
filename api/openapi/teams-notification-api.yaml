@@ -3288,3 +3288,1640 @@ components:
         error:
           type: string
           example: ""
+
+  # ===== 監控端點 =====
+  /api/v1/monitoring/health:
+    get:
+      summary: 系統健康監控
+      tags: [Monitoring]
+      description: 獲取系統整體健康狀態
+      responses:
+        "200":
+          description: 系統健康狀態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemHealthResponse"
+              examples:
+                healthy:
+                  summary: 健康狀態
+                  value:
+                    status: "healthy"
+                    timestamp: "2025-10-13T14:22:20Z"
+                    components:
+                      api:
+                        status: "healthy"
+                        message: "API service running"
+                      database:
+                        status: "healthy"
+                        message: "Database connection successful"
+                      redis:
+                        status: "healthy"
+                        message: "Redis connection successful"
+                    overall:
+                      score: 100
+                      grade: "A"
+                      message: "System is healthy"
+
+  /api/v1/monitoring/performance:
+    get:
+      summary: 性能指標監控
+      tags: [Monitoring]
+      description: 獲取系統性能指標
+      responses:
+        "200":
+          description: 性能指標
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceMetricsResponse"
+
+  /api/v1/monitoring/business:
+    get:
+      summary: 業務指標監控
+      tags: [Monitoring]
+      description: 獲取業務相關指標
+      responses:
+        "200":
+          description: 業務指標
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessMetricsResponse"
+
+  /api/v1/monitoring/alerts:
+    get:
+      summary: 告警狀態監控
+      tags: [Monitoring]
+      description: 獲取系統告警狀態
+      responses:
+        "200":
+          description: 告警狀態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertsResponse"
+
+  /api/v1/monitoring/dashboard:
+    get:
+      summary: 儀表板數據
+      tags: [Monitoring]
+      description: 獲取儀表板所需數據
+      responses:
+        "200":
+          description: 儀表板數據
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+
+
+  # ===== 計費管理端點 =====
+  /api/v1/billing/usage:
+    get:
+      summary: 獲取使用量記錄
+      tags: [Billing]
+      description: 獲取系統使用量記錄
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: start_date
+          in: query
+          description: 開始日期
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: 結束日期
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 使用量記錄
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+
+  /api/v1/billing/usage/summary:
+    get:
+      summary: 獲取使用量摘要
+      tags: [Billing]
+      description: 獲取使用量統計摘要
+      responses:
+        "200":
+          description: 使用量摘要
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageSummaryResponse"
+
+  /api/v1/billing/usage/company/{companyId}:
+    get:
+      summary: 獲取公司使用量
+      tags: [Billing]
+      description: 獲取特定公司的使用量記錄
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 公司使用量
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyUsageResponse"
+
+  /api/v1/billing/usage/project/{projectId}:
+    get:
+      summary: 獲取專案使用量
+      tags: [Billing]
+      description: 獲取特定專案的使用量記錄
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 專案使用量
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectUsageResponse"
+
+  /api/v1/billing/plans:
+    get:
+      summary: 獲取計費方案
+      tags: [Billing]
+      description: 獲取可用的計費方案
+      responses:
+        "200":
+          description: 計費方案列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlansResponse"
+
+
+  # ===== 文件管理端點 =====
+  /api/v1/files/upload:
+    post:
+      summary: 上傳文件
+      tags: [Files]
+      description: 上傳單個文件
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                project_id:
+                  type: string
+                  format: uuid
+                description:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                is_public:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: 文件上傳成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        "400":
+          description: 上傳失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/files/upload/multiple:
+    post:
+      summary: 批量上傳文件
+      tags: [Files]
+      description: 批量上傳多個文件
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                project_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: 批量上傳成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultipleFileUploadResponse"
+
+  /api/v1/files/{id}:
+    get:
+      summary: 獲取文件信息
+      tags: [Files]
+      description: 獲取文件詳細信息
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 文件信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInfoResponse"
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: 刪除文件
+      tags: [Files]
+      description: 刪除指定文件
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 文件刪除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/files/{id}/download:
+    get:
+      summary: 下載文件
+      tags: [Files]
+      description: 下載指定文件
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 文件下載
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+# ===== 新增 Schema 定義 =====
+
+    # 監控相關 Schema
+    SystemHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+        components:
+          type: object
+          properties:
+            api:
+              $ref: "#/components/schemas/ComponentStatus"
+            database:
+              $ref: "#/components/schemas/ComponentStatus"
+            redis:
+              $ref: "#/components/schemas/ComponentStatus"
+        overall:
+          type: object
+          properties:
+            score:
+              type: integer
+              example: 100
+            grade:
+              type: string
+              example: "A"
+            message:
+              type: string
+              example: "System is healthy"
+
+    ComponentStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        message:
+          type: string
+          example: "Service running"
+        timestamp:
+          type: string
+          format: date-time
+
+    PerformanceMetricsResponse:
+      type: object
+      properties:
+        system_metrics:
+          type: object
+          properties:
+            uptime_seconds:
+              type: integer
+            memory_usage_mb:
+              type: number
+            cpu_usage_percent:
+              type: number
+        redis_metrics:
+          type: object
+          properties:
+            connected_clients:
+              type: integer
+            used_memory_mb:
+              type: number
+            keys_count:
+              type: integer
+        business_metrics:
+          type: object
+          properties:
+            notifications_sent:
+              type: integer
+            notifications_failed:
+              type: integer
+            success_rate_percent:
+              type: number
+
+    BusinessMetricsResponse:
+      type: object
+      properties:
+        active_projects:
+          type: integer
+        active_destinations:
+          type: integer
+        notifications_today:
+          type: integer
+        success_rate_percent:
+          type: number
+        queue_health:
+          type: object
+          properties:
+            pending_count:
+              type: integer
+            processing_count:
+              type: integer
+            failed_count:
+              type: integer
+            status:
+              type: string
+        teams_api_health:
+          type: object
+          properties:
+            status:
+              type: string
+            response_time_ms:
+              type: number
+            success_rate_percent:
+              type: number
+
+    AlertsResponse:
+      type: object
+      properties:
+        active_alerts:
+          type: integer
+        alert_history:
+          type: array
+          items:
+            type: object
+        alert_rules:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              threshold:
+                type: number
+              status:
+                type: string
+
+    DashboardResponse:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            total_notifications:
+              type: integer
+            success_rate:
+              type: number
+            active_projects:
+              type: integer
+        charts:
+          type: object
+          properties:
+            notifications_timeline:
+              type: array
+              items:
+                type: object
+            error_rate_trend:
+              type: array
+              items:
+                type: object
+
+
+    # 計費相關 Schema
+    UsageRecordsResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              project_id:
+                type: string
+                format: uuid
+              company_id:
+                type: string
+                format: uuid
+              notification_count:
+                type: integer
+              api_calls:
+                type: integer
+              storage_usage_mb:
+                type: number
+              date:
+                type: string
+                format: date
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    UsageSummaryResponse:
+      type: object
+      properties:
+        total_notifications:
+          type: integer
+        total_api_calls:
+          type: integer
+        total_storage_mb:
+          type: number
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+
+    CompanyUsageResponse:
+      type: object
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        usage:
+          type: object
+          properties:
+            notifications:
+              type: integer
+            api_calls:
+              type: integer
+            storage_mb:
+              type: number
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+
+    ProjectUsageResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+        usage:
+          type: object
+          properties:
+            notifications:
+              type: integer
+            api_calls:
+              type: integer
+            storage_mb:
+              type: number
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+
+    BillingPlansResponse:
+      type: object
+      properties:
+        plans:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              price:
+                type: number
+              features:
+                type: array
+                items:
+                  type: string
+              limits:
+                type: object
+                properties:
+                  notifications_per_month:
+                    type: integer
+                  api_calls_per_month:
+                    type: integer
+                  storage_mb:
+                    type: integer
+
+
+    # 文件管理相關 Schema
+    FileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        file_id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        file_size:
+          type: integer
+        file_url:
+          type: string
+        message:
+          type: string
+          example: "File uploaded successfully"
+
+    MultipleFileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              file_id:
+                type: string
+                format: uuid
+              file_name:
+                type: string
+              file_size:
+                type: integer
+              file_url:
+                type: string
+        message:
+          type: string
+          example: "Files uploaded successfully"
+
+    FileInfoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        file_size:
+          type: integer
+        content_type:
+          type: string
+        file_url:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+
+  # ===== 缺失的系統端點 =====
+  /metrics:
+    get:
+      summary: 系統指標
+      tags: [System]
+      description: 獲取系統運行指標
+      responses:
+        "200":
+          description: 系統指標
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemMetricsResponse"
+
+  /config:
+    get:
+      summary: 獲取系統配置
+      tags: [System]
+      description: 獲取當前系統配置
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 系統配置
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+        "401":
+          description: 未授權
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /config/validate:
+    post:
+      summary: 驗證系統配置
+      tags: [System]
+      description: 驗證系統配置是否正確
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigValidationRequest"
+      responses:
+        "200":
+          description: 配置驗證結果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigValidationResponse"
+        "401":
+          description: 未授權
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+  # ===== 缺失的核心業務端點變體 =====
+  /api/v1/companies/{id}/status:
+    patch:
+      summary: 更新公司狀態
+      tags: [Companies]
+      description: 更新公司狀態
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyStatusRequest"
+      responses:
+        "200":
+          description: 狀態更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+        "404":
+          description: 公司不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies/{id}/billing:
+    patch:
+      summary: 更新公司計費狀態
+      tags: [Companies]
+      description: 更新公司計費啟用狀態
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyBillingRequest"
+      responses:
+        "200":
+          description: 計費狀態更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+        "404":
+          description: 公司不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/projects/{id}/limits:
+    get:
+      summary: 獲取專案限制
+      tags: [Projects]
+      description: 獲取專案的使用限制
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 專案限制
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectLimitsResponse"
+        "404":
+          description: 專案不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      summary: 更新專案限制
+      tags: [Projects]
+      description: 更新專案的使用限制
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectLimitsRequest"
+      responses:
+        "200":
+          description: 限制更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectLimitsResponse"
+        "404":
+          description: 專案不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+  # ===== 缺失的錯誤處理和狀態端點 =====
+  /api/v1/queue/status:
+    get:
+      summary: 獲取隊列狀態
+      tags: [Queue]
+      description: 獲取通知隊列狀態
+      responses:
+        "200":
+          description: 隊列狀態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatusResponse"
+
+  /api/v1/queue/clear:
+    post:
+      summary: 清空隊列
+      tags: [Queue]
+      description: 清空所有待處理的通知
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 隊列清空成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: 未授權
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/notifications/{id}/status:
+    get:
+      summary: 獲取通知狀態
+      tags: [Notifications]
+      description: 獲取特定通知的處理狀態
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 通知狀態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStatusResponse"
+        "404":
+          description: 通知不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/notifications/{id}/retry:
+    post:
+      summary: 重試通知
+      tags: [Notifications]
+      description: 重試失敗的通知
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 重試成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: 通知不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+    # 新增缺失的 Schema 定義
+    SystemMetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        system:
+          type: object
+          properties:
+            uptime_seconds:
+              type: integer
+            memory_usage_mb:
+              type: number
+            cpu_usage_percent:
+              type: number
+            goroutines:
+              type: integer
+        redis:
+          type: object
+          properties:
+            connected_clients:
+              type: integer
+            used_memory_mb:
+              type: number
+            keys_count:
+              type: integer
+        business:
+          type: object
+          properties:
+            notifications_sent:
+              type: integer
+            notifications_failed:
+              type: integer
+            notifications_pending:
+              type: integer
+            success_rate_percent:
+              type: number
+            teams_api_calls:
+              type: integer
+            teams_api_errors:
+              type: integer
+
+    UpdateCompanyStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: "active"
+
+    UpdateCompanyBillingRequest:
+      type: object
+      properties:
+        billing_enabled:
+          type: boolean
+          example: true
+
+    ProjectLimitsResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        limits:
+          type: object
+          properties:
+            notifications_per_month:
+              type: integer
+            api_calls_per_month:
+              type: integer
+            storage_mb:
+              type: integer
+            max_destinations:
+              type: integer
+        current_usage:
+          type: object
+          properties:
+            notifications_this_month:
+              type: integer
+            api_calls_this_month:
+              type: integer
+            storage_used_mb:
+              type: number
+            destinations_count:
+              type: integer
+
+    UpdateProjectLimitsRequest:
+      type: object
+      properties:
+        notifications_per_month:
+          type: integer
+          minimum: 0
+        api_calls_per_month:
+          type: integer
+          minimum: 0
+        storage_mb:
+          type: integer
+          minimum: 0
+        max_destinations:
+          type: integer
+          minimum: 0
+
+    QueueStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        pending_count:
+          type: integer
+        processing_count:
+          type: integer
+        failed_count:
+          type: integer
+        total_processed:
+          type: integer
+        processing_rate_per_minute:
+          type: number
+
+    NotificationStatusResponse:
+      type: object
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, enqueued, processing, sent, failed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        destinations:
+          type: array
+          items:
+            type: object
+            properties:
+              destination_id:
+                type: string
+                format: uuid
+              status:
+                type: string
+              sent_at:
+                type: string
+                format: date-time
+              error_message:
+                type: string
+
+    ConfigValidationRequest:
+      type: object
+      properties:
+        config:
+          type: object
+          properties:
+            database_url:
+              type: string
+            redis_url:
+              type: string
+            teams_app_id:
+              type: string
+            teams_tenant_id:
+              type: string
+            teams_app_password:
+              type: string
+
+    ConfigValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+
+  # ===== 剩餘端點以達到 100% 同步 =====
+  /api/v1/users/{id}/password:
+    patch:
+      summary: 更新用戶密碼
+      tags: [Users]
+      description: 更新用戶密碼
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePasswordRequest"
+      responses:
+        "200":
+          description: 密碼更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: 用戶不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/{id}/api-key:
+    get:
+      summary: 獲取用戶 API 密鑰
+      tags: [Users]
+      description: 獲取用戶的 API 密鑰
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: API 密鑰
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+        "404":
+          description: 用戶不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      summary: 生成新的 API 密鑰
+      tags: [Users]
+      description: 為用戶生成新的 API 密鑰
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 新 API 密鑰
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+        "404":
+          description: 用戶不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/company/{companyId}:
+    get:
+      summary: 獲取公司用戶列表
+      tags: [Users]
+      description: 獲取特定公司的所有用戶
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: 公司用戶列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+        "404":
+          description: 公司不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/role/{role}:
+    get:
+      summary: 獲取角色用戶列表
+      tags: [Users]
+      description: 獲取特定角色的所有用戶
+      parameters:
+        - name: role
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [admin, user, viewer]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: 角色用戶列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+
+  /api/v1/projects/company/{companyId}:
+    get:
+      summary: 獲取公司專案列表
+      tags: [Projects]
+      description: 獲取特定公司的所有專案
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: 公司專案列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectsResponse"
+        "404":
+          description: 公司不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/projects/key/{keyName}:
+    get:
+      summary: 根據密鑰名稱獲取專案
+      tags: [Projects]
+      description: 根據 notify_key 獲取專案信息
+      parameters:
+        - name: keyName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 專案信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "404":
+          description: 專案不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+    # 最後的 Schema 定義
+    UpdatePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          minLength: 8
+        new_password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string
+          minLength: 8
+      required:
+        - current_password
+        - new_password
+        - confirm_password
+
+    ApiKeyResponse:
+      type: object
+      properties:
+        api_key:
+          type: string
+          example: "ak_1234567890abcdef"
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_used:
+          type: string
+          format: date-time
+
+    UsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ProjectsResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectResponse"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+
+  # ===== 最後的端點以達到 100% 同步 =====
+  /api/v1/bots/platform:
+    get:
+      summary: 獲取平台 Bot 列表
+      tags: [Bots]
+      description: 獲取所有平台的 Bot 列表
+      responses:
+        "200":
+          description: Bot 列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotsResponse"
+
+  /api/v1/bots/status/{status}:
+    get:
+      summary: 根據狀態獲取 Bot
+      tags: [Bots]
+      description: 根據狀態獲取 Bot 列表
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [active, inactive, error]
+      responses:
+        "200":
+          description: Bot 列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotsResponse"
+
+  /api/v1/notifications/test:
+    post:
+      summary: 測試通知
+      tags: [Notifications]
+      description: 發送測試通知
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestNotificationRequest"
+      responses:
+        "200":
+          description: 測試通知發送成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestNotificationResponse"
+
+  /api/v1/destinations/{id}/test:
+    post:
+      summary: 測試目標
+      tags: [Destinations]
+      description: 測試目標連接
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 目標測試成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestDestinationResponse"
+
+  /api/v1/provision:
+    post:
+      summary: 快速配置
+      tags: [System]
+      description: 快速配置專案和目標
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionRequest"
+      responses:
+        "200":
+          description: 配置成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+
+  /api/v1/health:
+    get:
+      summary: API 健康檢查
+      tags: [System]
+      description: API 服務健康檢查
+      responses:
+        "200":
+          description: API 健康狀態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiHealthResponse"
+
+
+    # 最後的 Schema 定義
+    BotsResponse:
+      type: object
+      properties:
+        bots:
+          type: array
+          items:
+            $ref: "#/components/schemas/BotResponse"
+        total:
+          type: integer
+
+    TestNotificationRequest:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        message_type:
+          type: string
+          enum: [text, html, markdown]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+      required:
+        - project_id
+        - content
+
+    TestNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message_id:
+          type: string
+        delivery_status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    TestDestinationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        connection_status:
+          type: string
+        response_time_ms:
+          type: integer
+        error_message:
+          type: string
+
+    ProvisionRequest:
+      type: object
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+        destination_name:
+          type: string
+        conversation_id:
+          type: string
+      required:
+        - company_id
+        - created_by
+
+    ProvisionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        project:
+          $ref: "#/components/schemas/ProjectResponse"
+        destination:
+          $ref: "#/components/schemas/DestinationResponse"
+        notify_key:
+          type: string
+
+    ApiHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+        memory_usage:
+          type: number
+        cpu_usage:
+          type: number
+

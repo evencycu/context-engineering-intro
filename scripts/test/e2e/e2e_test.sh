@@ -123,6 +123,10 @@ prepare_test_data() {
     log "✅ 建立測試用戶: $USER_ID"
     
     # 建立測試專案
+    # 動態查詢 Conversation ID（使用已安裝且 active 的 bot_installations）
+    CONV_ID=$(docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -tAc "SELECT conversation_id FROM bot_installations WHERE installation_status='active' ORDER BY installed_at DESC LIMIT 1;")
+    CONV_ID=$(echo "$CONV_ID" | tr -d '[:space:]')
+
     PROVISION_RESPONSE=$(curl -s -X POST "$API_BASE/provision" \
         -H "Content-Type: application/json" \
         -d "{
@@ -133,7 +137,7 @@ prepare_test_data() {
             \"teams_tenant_id\": \"051cece0-e4dc-4aed-b471-bf29824e1ee6\",
             \"targets\": [{
                 \"type\": \"personal\",
-                \"conversation_id\": \"a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR\",
+                \"conversation_id\": \"$CONV_ID\",
                 \"display_name\": \"Test User\"
             }]
         }")
