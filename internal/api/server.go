@@ -129,7 +129,7 @@ func (s *Server) RegisterHandlers(handlers ...Handler) {
 
 // RegisterInternalHandlers registers internal API handlers
 func (s *Server) RegisterInternalHandlers(handlers ...Handler) {
-	internalV1 := s.router.Group("/api/internal/v1")
+	internalV1 := s.router.Group("/internal/v1")
 	for _, handler := range handlers {
 		handler.RegisterRoutes(internalV1)
 	}

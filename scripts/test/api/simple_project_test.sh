@@ -4,7 +4,7 @@
 set -e
 
 API_URL="http://localhost:8080"
-BASE_URL="${API_URL}/api/internal/v1"
+BASE_URL="${API_URL}/internal/v1"
 
 # 顏色
 RED='\033[0;31m'
