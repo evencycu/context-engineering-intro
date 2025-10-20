@@ -39,16 +39,16 @@ func NewProvisionService(
 }
 
 type ProvisionCreateRequest struct {
-	CompanyID     uuid.UUID             `json:"company_id"`
-	CreatedBy     uuid.UUID             `json:"created_by"`
-	ProjectName   string                `json:"project_name"`
-	ProjectDesc   string                `json:"project_description"`
-	TeamsTenantID string                `json:"teams_tenant_id"`
+	CompanyID     uuid.UUID             `json:"companyId"`
+	CreatedBy     uuid.UUID             `json:"createdBy"`
+	ProjectName   string                `json:"projectName"`
+	ProjectDesc   string                `json:"projectDescription"`
+	TeamsTenantID string                `json:"teamsTenantId"`
 	Targets       database.JSONBTargets `json:"targets"`
 }
 
 type ProvisionCreateResponse struct {
-	NotifyKey   string                `json:"notify_key"`
+	NotifyKey   string                `json:"notifyKey"`
 	Project     *database.Project     `json:"project"`
 	Destination *database.Destination `json:"destination"`
 }
