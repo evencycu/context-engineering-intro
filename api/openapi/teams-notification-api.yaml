@@ -1226,19 +1226,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExternalDestinationsResponse"
 
-  /api/v1/external/health:
-    get:
-      summary: External API health check
-      description: Health check for external API
-      tags: [External API]
-      responses:
-        "200":
-          description: Health status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalHealthResponse"
-
   /internal/v1/queue/stats:
     get:
       summary: Get queue lengths

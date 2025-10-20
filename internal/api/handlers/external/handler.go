@@ -29,9 +29,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	// Get project destinations
 	rg.GET("/destinations/:notifyKey", h.GetProjectDestinations)
-
-	// Health check for external API
-	rg.GET("/external/health", h.HealthCheck)
 }
 
 // SendNotificationRequest represents the request to send notification
