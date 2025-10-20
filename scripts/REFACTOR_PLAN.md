@@ -25,8 +25,7 @@ scripts/
 │   ├── smart-deploy.sh
 │   ├── quick-redeploy.sh
 │   ├── deploy.sh
-│   ├── docker.sh
-│   └── start_server.sh
+│   └── docker.sh
 ├── test/                      # 測試相關
 │   ├── e2e/
 │   │   ├── e2e_test.sh
@@ -96,10 +95,8 @@ scripts/
 │   │   └── quick-redeploy.sh
 │   ├── docker/                # Docker 部署
 │   │   ├── deploy.sh
-│   │   ├── docker.sh
-│   │   └── start_server.sh
+│   │   └── docker.sh
 │   └── k8s/                   # Kubernetes 部署
-│       └── openapi.sh
 ├── test/                      # 測試工具
 │   ├── e2e/                   # 端到端測試
 │   │   ├── e2e_test.sh

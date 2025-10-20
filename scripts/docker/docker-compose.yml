@@ -41,9 +41,7 @@ services:
       retries: 5
 
   api-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: teamsnotify-api-server
     container_name: teamsnotify-api-server
     ports:
       - "8080:8080"

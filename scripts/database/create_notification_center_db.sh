@@ -129,7 +129,7 @@ echo "   postgresql://$DB_USER:teamsnotify123@localhost:5432/$TARGET_DB?sslmode=
 echo ""
 echo "🚀 Next Steps:"
 echo "   1. Update your environment: export DATABASE_URL=\"postgresql://$DB_USER:teamsnotify123@localhost:5432/$TARGET_DB?sslmode=disable\""
-echo "   2. Start server: ./start_server.sh"
+echo "   2. Start server: ./scripts/deploy/docker/deploy.sh server"
 echo "   3. Test queue: ./scripts/test_queue.sh"
 echo ""
 

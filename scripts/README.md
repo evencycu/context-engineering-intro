@@ -15,11 +15,9 @@
   - `smart-deploy.sh` - 智能部署
   - `quick-redeploy.sh` - 快速重構
 - `docker/` - Docker 部署腳本
-  - `deploy.sh` - Docker 部署
+  - `deploy.sh` - Docker 部署 (支援 server, openapi, stop, restart 等模式)
   - `docker.sh` - Docker 工具
-  - `start_server.sh` - 啟動服務器
 - `k8s/` - Kubernetes 部署腳本
-  - `openapi.sh` - OpenAPI 部署
 
 ### 🧪 `test/` - 測試工具
 - `e2e/` - 端到端測試

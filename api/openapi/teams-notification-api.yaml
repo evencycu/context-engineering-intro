@@ -3375,51 +3375,7 @@ components:
               schema:
                 $ref: "#/components/schemas/DashboardResponse"
 
-
   # ===== 計費管理端點 =====
-  /api/v1/billing/usage:
-    get:
-      summary: 獲取使用量記錄
-      tags: [Billing]
-      description: 獲取系統使用量記錄
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - name: start_date
-          in: query
-          description: 開始日期
-          required: false
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          description: 結束日期
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        "200":
-          description: 使用量記錄
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UsageRecordsResponse"
-
-  /api/v1/billing/usage/summary:
-    get:
-      summary: 獲取使用量摘要
-      tags: [Billing]
-      description: 獲取使用量統計摘要
-      responses:
-        "200":
-          description: 使用量摘要
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UsageSummaryResponse"
-
   /api/v1/billing/usage/company/{companyId}:
     get:
       summary: 獲取公司使用量
@@ -3459,20 +3415,6 @@ components:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectUsageResponse"
-
-  /api/v1/billing/plans:
-    get:
-      summary: 獲取計費方案
-      tags: [Billing]
-      description: 獲取可用的計費方案
-      responses:
-        "200":
-          description: 計費方案列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BillingPlansResponse"
-
 
   # ===== 文件管理端點 =====
   /api/v1/files/upload:
@@ -3516,114 +3458,7 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/files/upload/multiple:
-    post:
-      summary: 批量上傳文件
-      tags: [Files]
-      description: 批量上傳多個文件
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                project_id:
-                  type: string
-                  format: uuid
-      responses:
-        "200":
-          description: 批量上傳成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MultipleFileUploadResponse"
-
-  /api/v1/files/{id}:
-    get:
-      summary: 獲取文件信息
-      tags: [Files]
-      description: 獲取文件詳細信息
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 文件信息
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FileInfoResponse"
-        "404":
-          description: 文件不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    delete:
-      summary: 刪除文件
-      tags: [Files]
-      description: 刪除指定文件
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 文件刪除成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessResponse"
-        "404":
-          description: 文件不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /api/v1/files/{id}/download:
-    get:
-      summary: 下載文件
-      tags: [Files]
-      description: 下載指定文件
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 文件下載
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        "404":
-          description: 文件不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-
-# ===== 新增 Schema 定義 =====
+    # ===== 新增 Schema 定義 =====
 
     # 監控相關 Schema
     SystemHealthResponse:
@@ -3778,7 +3613,6 @@ components:
               items:
                 type: object
 
-
     # 計費相關 Schema
     UsageRecordsResponse:
       type: object
@@ -3916,7 +3750,6 @@ components:
                   storage_mb:
                     type: integer
 
-
     # 文件管理相關 Schema
     FileUploadResponse:
       type: object
@@ -4006,7 +3839,6 @@ components:
           type: string
           example: "Operation completed successfully"
 
-
   # ===== 缺失的系統端點 =====
   /metrics:
     get:
@@ -4068,7 +3900,6 @@ components:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
 
   # ===== 缺失的核心業務端點變體 =====
   /api/v1/companies/{id}/status:
@@ -4192,7 +4023,6 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-
   # ===== 缺失的錯誤處理和狀態端點 =====
   /api/v1/queue/status:
     get:
@@ -4279,7 +4109,6 @@ components:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
 
     # 新增缺失的 Schema 定義
     SystemMetricsResponse:
@@ -4462,7 +4291,6 @@ components:
           type: array
           items:
             type: string
-
 
   # ===== 剩餘端點以達到 100% 同步 =====
   /api/v1/users/{id}/password:
@@ -4651,7 +4479,6 @@ components:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-
     # 最後的 Schema 定義
     UpdatePasswordRequest:
       type: object
@@ -4713,7 +4540,6 @@ components:
           type: integer
         offset:
           type: integer
-
 
   # ===== 最後的端點以達到 100% 同步 =====
   /api/v1/bots/platform:
@@ -4820,7 +4646,6 @@ components:
               schema:
                 $ref: "#/components/schemas/ApiHealthResponse"
 
-
     # 最後的 Schema 定義
     BotsResponse:
       type: object
@@ -4924,4 +4749,3 @@ components:
           type: number
         cpu_usage:
           type: number
-
