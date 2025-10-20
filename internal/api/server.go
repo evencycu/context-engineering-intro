@@ -80,7 +80,7 @@ func NewServer(cfg Config) *Server {
 
 	// 4. CORS (after rate limiting)
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "https://yourdomain.com"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "http://localhost:8082", "https://yourdomain.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -119,11 +119,19 @@ func NewServer(cfg Config) *Server {
 	}
 }
 
-// RegisterHandlers registers all API handlers
+// RegisterHandlers registers all API handlers (external/public APIs)
 func (s *Server) RegisterHandlers(handlers ...Handler) {
 	v1 := s.router.Group("/api/v1")
 	for _, handler := range handlers {
 		handler.RegisterRoutes(v1)
+	}
+}
+
+// RegisterInternalHandlers registers internal API handlers
+func (s *Server) RegisterInternalHandlers(handlers ...Handler) {
+	internalV1 := s.router.Group("/api/internal/v1")
+	for _, handler := range handlers {
+		handler.RegisterRoutes(internalV1)
 	}
 }
 

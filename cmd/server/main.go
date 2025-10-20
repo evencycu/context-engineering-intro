@@ -212,8 +212,13 @@ func main() {
 		auth.POST("/refresh", authMiddleware.RefreshToken)
 	}
 
-	// Register API routes
-	server.RegisterHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, messagesHandler, provisionHandler, externalHandler, systemHandler, billingHandler, fileHandler, queueHandler, monitoringHandler)
+	// Register external/public API routes (api/v1)
+	// These APIs are accessible externally: external, provision, messages
+	server.RegisterHandlers(externalHandler, provisionHandler, messagesHandler)
+
+	// Register internal API routes (api/internal/v1)
+	// These APIs are for internal use only: companies, users, projects, bots, destinations, notifications, system, billing, files, queue, monitoring
+	server.RegisterInternalHandlers(companyHandler, userHandler, projectHandler, botHandler, destinationHandler, notificationHandler, systemHandler, billingHandler, fileHandler, queueHandler, monitoringHandler)
 
 	// Start server
 	logger.Info("Starting server on port " + cfg.Port)

@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Base URL
-BASE_URL="http://localhost:8080/api/v1"
+BASE_URL="http://localhost:8080/api/internal/v1"
 
 # Fixed IDs (應該在資料庫中已存在)
 COMPANY_ID="550e8400-e29b-41d4-a716-446655440001"
