@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV2/services/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/database"
 	"github.com/google/uuid"
 )
