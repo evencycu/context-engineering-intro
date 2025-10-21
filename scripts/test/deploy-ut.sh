@@ -41,7 +41,7 @@ kubectl wait --for=condition=ready pod -l app=teams-notification-redis -n teams-
 
 # 部署 API Server
 echo "🚀 部署 API Server..."
-kubectl apply -f deployments/ut/api-server.yaml
+kubectl apply -f deployments/ut/apiserver.yaml
 
 # 部署 Worker
 echo "⚙️ 部署 Worker..."
@@ -53,7 +53,7 @@ kubectl apply -f deployments/ut/admin.yaml
 
 # 等待所有 Pod 就緒
 echo "⏳ 等待所有 Pod 就緒..."
-kubectl wait --for=condition=ready pod -l app=teams-notification-api-server -n teams-notification-ut --timeout=300s
+kubectl wait --for=condition=ready pod -l app=teams-notification-apiserver -n teams-notification-ut --timeout=300s
 kubectl wait --for=condition=ready pod -l app=teams-notification-worker -n teams-notification-ut --timeout=300s
 kubectl wait --for=condition=ready pod -l app=teams-notification-admin -n teams-notification-ut --timeout=300s
 
@@ -65,5 +65,5 @@ kubectl get services -n teams-notification-ut
 
 echo ""
 echo "🌐 取得服務 URL："
-echo "API Server: $(minikube service teams-notification-api-server -n teams-notification-ut --url)"
+echo "API Server: $(minikube service teams-notification-apiserver -n teams-notification-ut --url)"
 echo "Admin: $(minikube service teams-notification-admin -n teams-notification-ut --url)"

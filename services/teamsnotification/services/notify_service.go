@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 
+	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 )
 
 // NotifyService handles external user notification requests
 type NotifyService interface {
-	SendNotification(ctx context.Context, req *ExternalNotificationRequest) (*ExternalNotificationResponse, error)
+	SendNotification(ctx context.Context, req *NotifyRequest) (*NotifyResponse, error)
 }
 
 // notifyService implements NotifyService
@@ -34,8 +34,8 @@ func NewNotifyService(
 	}
 }
 
-// ExternalNotificationRequest represents an external notification request
-type ExternalNotificationRequest struct {
+// NotifyRequest represents an external notification request
+type NotifyRequest struct {
 	NotifyKey   string         `json:"notify_key" validate:"required,min=3,max=50"`
 	Message     string         `json:"message" validate:"required,min=1,max=4000"`
 	MessageType string         `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
@@ -45,20 +45,20 @@ type ExternalNotificationRequest struct {
 	Metadata    map[string]any `json:"metadata" validate:"omitempty"`
 }
 
-// ExternalNotificationResponse represents the response for external notification
-type ExternalNotificationResponse struct {
-	NotificationID    string                      `json:"notification_id"`
-	Status            string                      `json:"status"`
-	Message           string                      `json:"message"`
-	ProjectID         string                      `json:"project_id"`
-	ProjectName       string                      `json:"project_name"`
-	DestinationsCount int                         `json:"destinations_count"`
-	Results           []ExternalDestinationResult `json:"results"`
-	EstimatedDelivery string                      `json:"estimated_delivery"`
+// NotifyResponse represents the response for external notification
+type NotifyResponse struct {
+	NotificationID    string              `json:"notification_id"`
+	Status            string              `json:"status"`
+	Message           string              `json:"message"`
+	ProjectID         string              `json:"project_id"`
+	ProjectName       string              `json:"project_name"`
+	DestinationsCount int                 `json:"destinations_count"`
+	Results           []DestinationResult `json:"results"`
+	EstimatedDelivery string              `json:"estimated_delivery"`
 }
 
-// ExternalDestinationResult represents the result for each destination
-type ExternalDestinationResult struct {
+// DestinationResult represents the result for each destination
+type DestinationResult struct {
 	DestinationID   string `json:"destination_id"`
 	DestinationName string `json:"destination_name"`
 	Success         bool   `json:"success"`
@@ -67,7 +67,7 @@ type ExternalDestinationResult struct {
 }
 
 // SendNotification sends notification to external users
-func (s *notifyService) SendNotification(ctx context.Context, req *ExternalNotificationRequest) (*ExternalNotificationResponse, error) {
+func (s *notifyService) SendNotification(ctx context.Context, req *NotifyRequest) (*NotifyResponse, error) {
 	// Validate and set defaults
 	if req.MessageType == "" {
 		req.MessageType = "text"
@@ -127,9 +127,9 @@ func (s *notifyService) SendNotification(ctx context.Context, req *ExternalNotif
 	}
 
 	// Create external results based on destinations
-	externalResults := make([]ExternalDestinationResult, len(destinations))
+	destinationResults := make([]DestinationResult, len(destinations))
 	for i, dest := range destinations {
-		externalResults[i] = ExternalDestinationResult{
+		destinationResults[i] = DestinationResult{
 			DestinationID:   dest.ID.String(),
 			DestinationName: dest.Name,
 			Success:         true, // Will be updated by actors
@@ -138,14 +138,14 @@ func (s *notifyService) SendNotification(ctx context.Context, req *ExternalNotif
 		}
 	}
 
-	response := &ExternalNotificationResponse{
+	response := &NotifyResponse{
 		NotificationID:    notification.ID.String(),
 		Status:            "pending", // Always pending for async processing
 		Message:           "Notification queued for processing",
 		ProjectID:         project.ID.String(),
 		ProjectName:       project.NotifyKey,
 		DestinationsCount: len(destinations),
-		Results:           externalResults,
+		Results:           destinationResults,
 		EstimatedDelivery: estimatedTime,
 	}
 
@@ -157,7 +157,7 @@ func (s *notifyService) SendNotification(ctx context.Context, req *ExternalNotif
 }
 
 // GetProjectDestinations returns available destinations for a project
-func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]ExternalDestinationInfo, error) {
+func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]DestinationInfo, error) {
 	project, err := s.projectRepo.GetByNotifyKey(ctx, notifyKey)
 	if err != nil {
 		return nil, fmt.Errorf("project not found for notify_key: %s", notifyKey)
@@ -168,9 +168,9 @@ func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey st
 		return nil, fmt.Errorf("failed to get destinations: %w", err)
 	}
 
-	result := make([]ExternalDestinationInfo, len(destinations))
+	result := make([]DestinationInfo, len(destinations))
 	for i, dest := range destinations {
-		result[i] = ExternalDestinationInfo{
+		result[i] = DestinationInfo{
 			ID:          dest.ID.String(),
 			Name:        dest.Name,
 			Description: dest.Description,
@@ -182,8 +182,8 @@ func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey st
 	return result, nil
 }
 
-// ExternalDestinationInfo represents destination information for external users
-type ExternalDestinationInfo struct {
+// DestinationInfo represents destination information for external users
+type DestinationInfo struct {
 	ID          string                `json:"id"`
 	Name        string                `json:"name"`
 	Description string                `json:"description"`

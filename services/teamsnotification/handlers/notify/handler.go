@@ -1,4 +1,4 @@
-package external
+package notify
 
 import (
 	"net/http"
@@ -44,9 +44,9 @@ type SendNotificationRequest struct {
 
 // SendNotificationResponse represents the response for send notification
 type SendNotificationResponse struct {
-	Success bool                                   `json:"success"`
-	Data    *services.ExternalNotificationResponse `json:"data,omitempty"`
-	Error   string                                 `json:"error,omitempty"`
+	Success bool                     `json:"success"`
+	Data    *services.NotifyResponse `json:"data,omitempty"`
+	Error   string                   `json:"error,omitempty"`
 }
 
 // SendNotification handles external notification sending
@@ -86,7 +86,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	}
 
 	// Convert to service request
-	serviceReq := &services.ExternalNotificationRequest{
+	serviceReq := &services.NotifyRequest{
 		NotifyKey:   req.NotifyKey,
 		Message:     req.Message,
 		MessageType: req.MessageType,
@@ -119,9 +119,9 @@ type GetProjectDestinationsRequest struct {
 
 // GetProjectDestinationsResponse represents the response for get project destinations
 type GetProjectDestinationsResponse struct {
-	Success      bool                               `json:"success"`
-	Destinations []services.ExternalDestinationInfo `json:"destinations,omitempty"`
-	Error        string                             `json:"error,omitempty"`
+	Success      bool                       `json:"success"`
+	Destinations []services.DestinationInfo `json:"destinations,omitempty"`
+	Error        string                     `json:"error,omitempty"`
 }
 
 // GetProjectDestinations gets available destinations for a project
@@ -136,7 +136,7 @@ func (h *Handler) GetProjectDestinations(c *gin.Context) {
 	}
 
 	// For now, return empty destinations - TODO: Implement proper destinations endpoint
-	destinations := []services.ExternalDestinationInfo{}
+	destinations := []services.DestinationInfo{}
 
 	c.JSON(http.StatusOK, GetProjectDestinationsResponse{
 		Success:      true,

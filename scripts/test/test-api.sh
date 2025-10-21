@@ -6,7 +6,7 @@ set -e
 echo "🧪 測試 UT 環境 API..."
 
 # 取得 API Server URL
-API_URL=$(minikube service teams-notification-api-server -n teams-notification-ut --url)
+API_URL=$(minikube service teams-notification-apiserver -n teams-notification-ut --url)
 echo "📡 API Server URL: $API_URL"
 
 # 等待 API Server 就緒

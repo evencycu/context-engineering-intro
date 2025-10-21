@@ -36,9 +36,9 @@
 version: '3.8'
 
 services:
-  api-server:
+  apiserver:
     build: .
-    container_name: teamsnotify-api-server
+    container_name: teamsnotify-apiserver
     ports:
       - "8080:8080"
     environment:
@@ -82,25 +82,25 @@ CMD ["./server"]
 
 #### API Server Deployment
 ```yaml
-# deployments/api-server/deployment.yaml
+# deployments/apiserver/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: teams-notification-api-server
+  name: teams-notification-apiserver
   namespace: teams-notification
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: teams-notification-api-server
+      app: teams-notification-apiserver
   template:
     metadata:
       labels:
-        app: teams-notification-api-server
+        app: teams-notification-apiserver
     spec:
       containers:
-        - name: api-server
-          image: teams-notification/api-server:v1.0.0
+        - name: apiserver
+          image: teams-notification/apiserver:v1.0.0
           ports:
             - containerPort: 8080
               name: http
@@ -138,15 +138,15 @@ spec:
 
 #### Service 配置
 ```yaml
-# deployments/api-server/service.yaml
+# deployments/apiserver/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: teams-notification-api-server
+  name: teams-notification-apiserver
   namespace: teams-notification
 spec:
   selector:
-    app: teams-notification-api-server
+    app: teams-notification-apiserver
   ports:
     - name: http
       port: 80
@@ -535,7 +535,7 @@ kubectl apply -f deployments/postgres/
 kubectl apply -f deployments/redis/
 
 # 3. 部署 App 組件
-kubectl apply -f deployments/api-server/
+kubectl apply -f deployments/apiserver/
 kubectl apply -f deployments/worker/
 kubectl apply -f deployments/admin/
 ```
@@ -549,7 +549,7 @@ kubectl get pods -n teams-notification
 kubectl get services -n teams-notification
 
 # 檢查日誌
-kubectl logs -f deployment/teams-notification-api-server -n teams-notification
+kubectl logs -f deployment/teams-notification-apiserver -n teams-notification
 ```
 
 ---

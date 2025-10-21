@@ -20,7 +20,7 @@ DOCKER_REGISTRY=${DOCKER_REGISTRY:-"teams-notification"}
 GO_VERSION="1.21"
 
 # Services to build
-SERVICES=("api-server" "worker" "admin")
+SERVICES=("apiserver" "worker" "admin")
 
 # Function to print colored output
 print_status() {

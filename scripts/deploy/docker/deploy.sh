@@ -255,9 +255,9 @@ cleanup_images() {
     docker image prune -f 2>/dev/null || true
     
     # Remove specific application images
-    docker rmi teams-notification/api-server:local 2>/dev/null || true
-    docker rmi local-test-api-server 2>/dev/null || true
-    docker rmi teamsnotify-api-server 2>/dev/null || true
+    docker rmi teams-notification/apiserver:local 2>/dev/null || true
+    docker rmi local-test-apiserver 2>/dev/null || true
+    docker rmi teamsnotify-apiserver 2>/dev/null || true
     
     print_success "Docker images cleanup completed"
 }
@@ -377,13 +377,13 @@ mode_docker_full() {
     
     # Build and start API server container
     print_status "Building and starting API server container..."
-    docker-compose -f scripts/docker/docker-compose.yml up -d api-server
+    docker-compose -f scripts/docker/docker-compose.yml up -d apiserver
     
     # Wait for container to be ready
     sleep 5
     
     # Check container status
-    if docker ps | grep -q "teamsnotify-api-server"; then
+    if docker ps | grep -q "teamsnotify-apiserver"; then
         print_success "API server container started"
     else
         print_error "API server container failed to start"

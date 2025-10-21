@@ -21,7 +21,7 @@ COMPOSE_DEV_FILE="docker-compose.dev.yml"
 COMPOSE_PROD_FILE="docker-compose.prod.yml"
 
 # Services
-SERVICES=("api-server" "worker" "admin" "postgres" "redis")
+SERVICES=("apiserver" "worker" "admin" "postgres" "redis")
 
 # Function to print colored output
 print_status() {
@@ -319,10 +319,10 @@ services:
       timeout: 5s
       retries: 5
 
-  api-server:
+  apiserver:
     build:
       context: .
-      dockerfile: deployments/api-server/Dockerfile
+      dockerfile: deployments/apiserver/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -410,8 +410,8 @@ services:
       retries: 5
     restart: unless-stopped
 
-  api-server:
-    image: teams-notification/api-server:latest
+  apiserver:
+    image: teams-notification/apiserver:latest
     ports:
       - "8080:8080"
     environment:
@@ -504,12 +504,12 @@ Options:
 
 Examples:
     $0 build                    # Build all images
-    $0 build api-server         # Build api-server image only
+    $0 build apiserver         # Build apiserver image only
     $0 push                     # Push all images
     $0 start dev                # Start development environment
     $0 stop prod                # Stop production environment
-    $0 logs api-server dev      # Show api-server logs
-    $0 logs api-server dev -f   # Follow api-server logs
+    $0 logs apiserver dev      # Show apiserver logs
+    $0 logs apiserver dev -f   # Follow apiserver logs
     $0 status prod              # Show production status
     $0 cleanup                  # Clean up resources
 
@@ -546,7 +546,7 @@ main() {
                 command="$1"
                 shift
                 ;;
-            api-server|worker|admin|postgres|redis)
+            apiserver|worker|admin|postgres|redis)
                 service="$1"
                 shift
                 ;;

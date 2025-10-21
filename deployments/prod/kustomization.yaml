@@ -9,7 +9,7 @@ resources:
   - configmap.yaml
   - postgres.yaml
   - redis.yaml
-  - api-server.yaml
+  - apiserver.yaml
   # removed worker/admin
 
 commonLabels:

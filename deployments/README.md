@@ -16,7 +16,7 @@ deployments/
 │   ├── configmap.yaml     # 配置映射
 │   ├── postgres.yaml      # PostgreSQL 部署
 │   ├── redis.yaml         # Redis 部署
-│   ├── api-server.yaml    # API 服務部署
+│   ├── apiserver.yaml    # API 服務部署
 │   └── kustomization.yaml # Kustomize 配置
 ├── uat/                   # 驗收測試環境
 │   ├── namespace.yaml
@@ -24,7 +24,7 @@ deployments/
 │   ├── configmap.yaml
 │   ├── postgres.yaml
 │   ├── redis.yaml
-│   ├── api-server.yaml
+│   ├── apiserver.yaml
 │   └── kustomization.yaml
 ├── prod/                  # 生產環境
 │   ├── namespace.yaml
@@ -32,7 +32,7 @@ deployments/
 │   ├── configmap.yaml
 │   ├── postgres.yaml
 │   ├── redis.yaml
-│   ├── api-server.yaml
+│   ├── apiserver.yaml
 │   └── kustomization.yaml
 └── README.md              # 本說明文件
 ```
@@ -241,7 +241,7 @@ fi
 kubectl apply -k deployments/$ENVIRONMENT/
 
 # 等待部署完成
-kubectl wait --for=condition=ready pod -l app=teams-notification-api-server -n teams-notification-$ENVIRONMENT --timeout=300s
+kubectl wait --for=condition=ready pod -l app=teams-notification-apiserver -n teams-notification-$ENVIRONMENT --timeout=300s
 
 echo "✅ 部署完成！"
 ```
@@ -266,7 +266,7 @@ kubectl get pods -n teams-notification-$ENVIRONMENT
 kubectl get services -n teams-notification-$ENVIRONMENT
 
 # 檢查健康狀態
-kubectl exec -it deployment/teams-notification-api-server -n teams-notification-$ENVIRONMENT -- curl http://localhost:8080/health
+kubectl exec -it deployment/teams-notification-apiserver -n teams-notification-$ENVIRONMENT -- curl http://localhost:8080/health
 
 echo "✅ 驗證完成！"
 ```

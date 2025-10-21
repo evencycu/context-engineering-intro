@@ -40,7 +40,7 @@ services:
       timeout: 5s
       retries: 5
 
-  api-server:
+  apiserver:
     image: teamsnotify-api-server
     container_name: teamsnotify-api-server
     ports:

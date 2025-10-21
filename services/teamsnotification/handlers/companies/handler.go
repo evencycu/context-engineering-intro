@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

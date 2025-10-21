@@ -162,7 +162,7 @@ type Config struct {
 ### 容器化部署
 ```yaml
 services:
-  api-server:
+  apiserver:
     image: teams-notification-api:latest
     ports:
       - "8080:8080"

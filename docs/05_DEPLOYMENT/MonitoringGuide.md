@@ -409,7 +409,7 @@ scrape_configs:
 curl -v http://localhost:8080/api/v1/metrics
 
 # 檢查服務狀態
-docker logs teamsnotify-api-server-local
+docker logs teamsnotify-apiserver-local
 ```
 
 #### 8.1.2 指標數據不準確

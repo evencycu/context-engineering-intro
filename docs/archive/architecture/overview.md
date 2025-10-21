@@ -86,11 +86,11 @@ repo-root/
 │   └── openapi/          # OpenAPI 規範
 │
 ├── configs/              # 設定檔
-│   ├── api-server.yaml
+│   ├── apiserver.yaml
 │   └── common.yaml
 │
 ├── deployments/          # K8s 部署檔案
-│   ├── api-server/
+│   ├── apiserver/
 │   └── infra/
 │
 ├── scripts/              # 工具腳本

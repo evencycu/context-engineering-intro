@@ -89,9 +89,9 @@ CMD ["./server", "api"]
 version: '3.8'
 
 services:
-  api-server:
+  apiserver:
     build: .
-    container_name: teamsnotify-api-server
+    container_name: teamsnotify-apiserver
     ports:
       - "8080:8080"
       - "9090:9090"
@@ -132,14 +132,14 @@ services:
 
 #### Deployment 配置
 ```yaml
-# deployments/api-server/deployment.yaml
+# deployments/apiserver/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: teams-notification-api-server
+  name: teams-notification-apiserver
   namespace: teams-notification
   labels:
-    app: teams-notification-api-server
+    app: teams-notification-apiserver
     version: v1.0.0
 spec:
   replicas: 3
@@ -150,16 +150,16 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: teams-notification-api-server
+      app: teams-notification-apiserver
   template:
     metadata:
       labels:
-        app: teams-notification-api-server
+        app: teams-notification-apiserver
         version: v1.0.0
     spec:
       containers:
-        - name: api-server
-          image: teams-notification/api-server:v1.0.0
+        - name: apiserver
+          image: teams-notification/apiserver:v1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -241,14 +241,14 @@ spec:
 
 #### Service 配置
 ```yaml
-# deployments/api-server/service.yaml
+# deployments/apiserver/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: teams-notification-api-server
+  name: teams-notification-apiserver
   namespace: teams-notification
   labels:
-    app: teams-notification-api-server
+    app: teams-notification-apiserver
 spec:
   type: LoadBalancer
   ports:
@@ -261,16 +261,16 @@ spec:
       targetPort: 9090
       protocol: TCP
   selector:
-    app: teams-notification-api-server
+    app: teams-notification-apiserver
 ```
 
 #### Ingress 配置
 ```yaml
-# deployments/api-server/ingress.yaml
+# deployments/apiserver/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: teams-notification-api-server
+  name: teams-notification-apiserver
   namespace: teams-notification
   annotations:
     kubernetes.io/ingress.class: "nginx"
@@ -291,7 +291,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: teams-notification-api-server
+                name: teams-notification-apiserver
                 port:
                   number: 80
 ```
@@ -645,7 +645,7 @@ QUEUE_RETRY_DELAY=5s
 ### 1. 建置映像
 ```bash
 # 建置 API Server
-docker build -t teams-notification/api-server:v1.0.0 .
+docker build -t teams-notification/apiserver:v1.0.0 .
 
 ## (Worker/Admin 已移除)
 ```
@@ -653,7 +653,7 @@ docker build -t teams-notification/api-server:v1.0.0 .
 ### 2. 推送映像
 ```bash
 # 推送到 Registry
-docker push teams-notification/api-server:v1.0.0
+docker push teams-notification/apiserver:v1.0.0
 ## (Worker/Admin 已移除)
 ```
 
@@ -675,7 +675,7 @@ kubectl create configmap teams-notification-config \
   --from-file=configs/
 
 # 部署組件
-kubectl apply -f deployments/api-server/
+kubectl apply -f deployments/apiserver/
 ## (Worker/Admin 已移除)
 ```
 
@@ -688,7 +688,7 @@ kubectl get pods -n teams-notification
 kubectl get services -n teams-notification
 
 # 檢查日誌
-kubectl logs -f deployment/teams-notification-api-server -n teams-notification
+kubectl logs -f deployment/teams-notification-apiserver -n teams-notification
 ```
 
 ---

@@ -338,7 +338,7 @@ Consumer Side:
 
 ```yaml
 services:
-  api-server:
+  apiserver:
     image: teams-notification-api:latest
     ports:
       - "8080:8080"
@@ -415,13 +415,13 @@ repo-root/
 │   └── openapi/          # OpenAPI 規範
 │
 ├── configs/              # 設定檔
-│   ├── api-server.yaml
+│   ├── apiserver.yaml
 │   ├── common.yaml
 │   ├── admin.yaml
 │   └── worker.yaml
 │
 ├── deployments/          # K8s 部署檔案
-│   ├── api-server/
+│   ├── apiserver/
 │   ├── worker/
 │   ├── admin/
 │   └── infra/

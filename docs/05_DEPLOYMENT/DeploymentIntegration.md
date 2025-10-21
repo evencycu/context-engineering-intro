@@ -94,9 +94,9 @@ services:
       retries: 5
 
   # API Server
-  api-server:
+  apiserver:
     build: .
-    container_name: teamsnotify-api-server
+    container_name: teamsnotify-apiserver
     ports:
       - "8080:8080"
       - "9090:9090"
@@ -263,12 +263,12 @@ kubectl wait --for=condition=ready pod -l app=teams-notification-redis -n teams-
 
 # 6. 部署 App 組件
 echo "🚀 部署 App 組件..."
-kubectl apply -f deployments/api-server/
+kubectl apply -f deployments/apiserver/
 ## (worker/admin 已移除)
 
 # 等待 App 組件就緒
 echo "⏳ 等待 App 組件就緒..."
-kubectl wait --for=condition=ready pod -l app=teams-notification-api-server -n teams-notification --timeout=300s
+kubectl wait --for=condition=ready pod -l app=teams-notification-apiserver -n teams-notification --timeout=300s
 ## (worker/admin 已移除)
 
 echo "✅ 部署完成！"
@@ -306,7 +306,7 @@ kubectl exec -it deployment/teams-notification-redis -n teams-notification -- re
 
 # 檢查 API Server 健康狀態
 echo "🚀 檢查 API Server 健康狀態..."
-kubectl exec -it deployment/teams-notification-api-server -n teams-notification -- wget --no-verbose --tries=1 --spider http://localhost:8080/health
+kubectl exec -it deployment/teams-notification-apiserver -n teams-notification -- wget --no-verbose --tries=1 --spider http://localhost:8080/health
 
 # 檢查 Worker 狀態
 echo "⚙️ 檢查 Worker 狀態..."
@@ -443,12 +443,12 @@ data:
 ./scripts/deployment/validate-env.sh
 
 # 2. 建置映像
-docker build -t teams-notification/api-server:v1.0.0 .
+docker build -t teams-notification/apiserver:v1.0.0 .
 docker build -t teams-notification/worker:v1.0.0 .
 docker build -t teams-notification/admin:v1.0.0 .
 
 # 3. 推送映像
-docker push teams-notification/api-server:v1.0.0
+docker push teams-notification/apiserver:v1.0.0
 docker push teams-notification/worker:v1.0.0
 docker push teams-notification/admin:v1.0.0
 ```
@@ -506,13 +506,13 @@ kubectl delete namespace teams-notification
 ### 除錯命令
 ```bash
 # 檢查 Pod 日誌
-kubectl logs -f deployment/teams-notification-api-server -n teams-notification
+kubectl logs -f deployment/teams-notification-apiserver -n teams-notification
 
 # 檢查服務連線
-kubectl exec -it deployment/teams-notification-api-server -n teams-notification -- curl http://teams-notification-postgres:5432
+kubectl exec -it deployment/teams-notification-apiserver -n teams-notification -- curl http://teams-notification-postgres:5432
 
 # 檢查環境變數
-kubectl exec -it deployment/teams-notification-api-server -n teams-notification -- env | grep -E "(DATABASE|REDIS|TEAMS)"
+kubectl exec -it deployment/teams-notification-apiserver -n teams-notification -- env | grep -E "(DATABASE|REDIS|TEAMS)"
 ```
 
 ---

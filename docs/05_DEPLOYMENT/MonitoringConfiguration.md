@@ -196,7 +196,7 @@ curl http://localhost:8080/api/v1/monitoring/health
 curl http://localhost:8080/api/v1/metrics
 
 # 檢查日誌
-docker logs teamsnotify-api-server
+docker logs teamsnotify-apiserver
 ```
 
 ## 總結

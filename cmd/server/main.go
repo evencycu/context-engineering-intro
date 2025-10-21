@@ -5,26 +5,27 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/actor"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/storage"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/token"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification"
+	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/billing"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/monitoring"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notify"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/provision"
 	qhandler "github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/queue"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -106,7 +107,7 @@ func main() {
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo, metricsService)
 
 	// Initialize Token Manager for Teams API token caching
-	tokenManager := services.NewTokenManager(redisClient)
+	tokenManager := token.NewTokenManager(redisClient)
 	logger.Info("Token Manager initialized successfully")
 
 	// Billing service (must be initialized before notificationProcessor)
@@ -125,8 +126,8 @@ func main() {
 		redisClient,
 		redisQueue,
 		actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo, projectRepo),
-		services.NewTokenManagerAdapter(tokenManager),
-		services.NewBillingServiceAdapter(billingService),
+		token.NewTokenManagerAdapter(tokenManager),
+		token.NewBillingServiceAdapter(billingService),
 		10,                   // Max 10 actors
 		notificationDestRepo, // For enqueue worker to move ND pending->enqueued
 	)
@@ -164,7 +165,7 @@ func main() {
 	destinationHandler := destinations.NewHandler(destinationService)
 	notificationHandler := notifications.NewHandler(notificationService)
 	provisionHandler := provision.NewHandler(provisionService)
-	externalHandler := external.NewHandler(notifyService)
+	externalHandler := notify.NewHandler(notifyService)
 	billingHandler := billing.NewHandler(billingService)
 	fileHandler := files.NewHandler(fileService)
 	// Queue observability handler
@@ -176,7 +177,7 @@ func main() {
 	monitoringHandler := monitoring.NewMonitoringHandler(monitoringService)
 
 	// Create server
-	server := api.NewServer(api.Config{
+	server := teamsnotification.NewServer(teamsnotification.Config{
 		Port:         cfg.Port,
 		Environment:  "development",
 		RateLimit:    rate.Limit(100), // 100 requests per second

@@ -105,7 +105,7 @@ docker-compose up -d
 docker-compose ps
 
 # 查看日誌
-docker-compose logs -f api-server
+docker-compose logs -f apiserver
 ```
 
 #### 5.1.2 環境變數設定
@@ -126,7 +126,7 @@ export REDIS_URL="redis://localhost:6379"
 #### 5.2.1 部署配置
 
 ```yaml
-# deployments/api-server/deployment.yaml
+# deployments/apiserver/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -142,7 +142,7 @@ spec:
         app: teams-notification-api
     spec:
       containers:
-      - name: api-server
+      - name: apiserver
         image: teams-notification-api:latest
         ports:
         - containerPort: 8080
@@ -174,7 +174,7 @@ spec:
 #### 5.2.2 服務配置
 
 ```yaml
-# deployments/api-server/service.yaml
+# deployments/apiserver/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -275,7 +275,7 @@ WRITE_TIMEOUT="30s"
 #### 6.2.1 API Server 配置
 
 ```yaml
-# configs/api-server.yaml
+# configs/apiserver.yaml
 server:
   port: 8080
   environment: production
@@ -357,7 +357,7 @@ curl http://localhost:8080/metrics
 
 ```bash
 # 查看服務日誌
-docker-compose logs -f api-server
+docker-compose logs -f apiserver
 
 # 查看特定日誌
 tail -f server.log | grep "ERROR"
@@ -470,7 +470,7 @@ lsof -i :8080
 env | grep -E "(DATABASE_URL|REDIS_URL|TEAMS_)"
 
 # 檢查日誌
-docker-compose logs api-server
+docker-compose logs apiserver
 ```
 
 #### 11.1.2 資料庫連線失敗
@@ -744,7 +744,7 @@ curl http://localhost:8080/api/v1/queue/stats
 curl http://localhost:8080/api/v1/metrics | jq '.actor_pool'
 
 # 重啟服務
-docker-compose restart api-server
+docker-compose restart apiserver
 ```
 
 #### 2. Teams API 認證失敗
@@ -753,10 +753,10 @@ docker-compose restart api-server
 **解決方案**:
 ```bash
 # 檢查環境變數
-docker exec teamsnotify-api-server env | grep TEAMS
+docker exec teamsnotify-apiserver env | grep TEAMS
 
 # 更新憑證
-docker exec teamsnotify-api-server sh -c 'export TEAMS_BOT_APP_ID="your-app-id"'
+docker exec teamsnotify-apiserver sh -c 'export TEAMS_BOT_APP_ID="your-app-id"'
 ```
 
 #### 3. 數據庫連接問題
@@ -800,13 +800,13 @@ curl http://localhost:8080/api/v1/monitoring/performance
 #### 日誌分析
 ```bash
 # 查看 API 服務日誌
-docker logs teamsnotify-api-server --tail 100
+docker logs teamsnotify-apiserver --tail 100
 
 # 查看錯誤日誌
-docker logs teamsnotify-api-server 2>&1 | grep ERROR
+docker logs teamsnotify-apiserver 2>&1 | grep ERROR
 
 # 查看 Actor Pool 日誌
-docker logs teamsnotify-api-server 2>&1 | grep "Actor"
+docker logs teamsnotify-apiserver 2>&1 | grep "Actor"
 ```
 
 ### 性能優化建議

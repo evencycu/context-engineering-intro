@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

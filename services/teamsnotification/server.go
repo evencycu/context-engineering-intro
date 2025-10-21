@@ -1,4 +1,4 @@
-package api
+package teamsnotification
 
 import (
 	"context"
@@ -15,21 +15,21 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 
+	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/billing"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/external"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/monitoring"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notify"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/projects"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/provision"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/queue"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
 )
 
 // Server represents the API server
@@ -184,7 +184,7 @@ func (s *Server) RegisterRoutes(
 	notificationHandler *notifications.Handler,
 	messagesHandler *messages.Handler,
 	provisionHandler *provision.Handler,
-	externalHandler *external.Handler,
+	externalHandler *notify.Handler,
 	systemHandler *system.Handler,
 	billingHandler *billing.Handler,
 	fileHandler *files.Handler,

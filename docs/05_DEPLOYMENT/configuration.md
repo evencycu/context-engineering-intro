@@ -140,7 +140,7 @@ curl http://localhost:8080/metrics
 
 ### YAML 配置檔案
 
-#### `configs/api-server.yaml`
+#### `configs/apiserver.yaml`
 ```yaml
 server:
   port: 8080
@@ -267,7 +267,7 @@ services:
     volumes:
       - redis_data:/data
 
-  api-server:
+  apiserver:
     build: .
     ports:
       - "8080:8080"
@@ -314,7 +314,7 @@ CMD ["./server"]
 
 ### 部署配置
 
-#### `deployments/api-server/deployment.yaml`
+#### `deployments/apiserver/deployment.yaml`
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -331,7 +331,7 @@ spec:
         app: teams-notification-api
     spec:
       containers:
-      - name: api-server
+      - name: apiserver
         image: teams-notification-api:latest
         ports:
         - containerPort: 8080
@@ -372,7 +372,7 @@ spec:
 
 ### 服務配置
 
-#### `deployments/api-server/service.yaml`
+#### `deployments/apiserver/service.yaml`
 ```yaml
 apiVersion: v1
 kind: Service

@@ -263,7 +263,7 @@ internal/
 ```
 configs/
 ├── common.yaml           # 通用配置
-├── api-server.yaml       # API 服務配置
+├── apiserver.yaml       # API 服務配置
 ├── worker.yaml           # Worker 配置
 └── admin.yaml            # 管理員配置
 ```

@@ -1,4 +1,4 @@
-package external
+package notify
 
 import (
 	"testing"
