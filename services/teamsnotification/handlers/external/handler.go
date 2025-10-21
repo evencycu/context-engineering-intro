@@ -9,13 +9,13 @@ import (
 
 // Handler handles external user API requests
 type Handler struct {
-	externalService services.ExternalService
+	notifyService services.NotifyService
 }
 
 // NewHandler creates a new external handler
-func NewHandler(externalService services.ExternalService) *Handler {
+func NewHandler(notifyService services.NotifyService) *Handler {
 	return &Handler{
-		externalService: externalService,
+		notifyService: notifyService,
 	}
 }
 
@@ -97,7 +97,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	}
 
 	// Send notification
-	response, err := h.externalService.SendNotification(c.Request.Context(), serviceReq)
+	response, err := h.notifyService.SendNotification(c.Request.Context(), serviceReq)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, SendNotificationResponse{
 			Success: false,

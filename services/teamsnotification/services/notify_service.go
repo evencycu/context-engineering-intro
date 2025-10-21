@@ -9,25 +9,25 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 )
 
-// ExternalService handles external user notification requests
-type ExternalService interface {
+// NotifyService handles external user notification requests
+type NotifyService interface {
 	SendNotification(ctx context.Context, req *ExternalNotificationRequest) (*ExternalNotificationResponse, error)
 }
 
-// externalService implements ExternalService
-type externalService struct {
+// notifyService implements NotifyService
+type notifyService struct {
 	projectRepo         repositories.ProjectRepository
 	destinationRepo     repositories.DestinationRepository
 	notificationService NotificationService
 }
 
-// NewExternalService creates a new external service
-func NewExternalService(
+// NewNotifyService creates a new notify service
+func NewNotifyService(
 	projectRepo repositories.ProjectRepository,
 	destinationRepo repositories.DestinationRepository,
 	notificationService NotificationService,
-) ExternalService {
-	return &externalService{
+) NotifyService {
+	return &notifyService{
 		projectRepo:         projectRepo,
 		destinationRepo:     destinationRepo,
 		notificationService: notificationService,
@@ -67,7 +67,7 @@ type ExternalDestinationResult struct {
 }
 
 // SendNotification sends notification to external users
-func (s *externalService) SendNotification(ctx context.Context, req *ExternalNotificationRequest) (*ExternalNotificationResponse, error) {
+func (s *notifyService) SendNotification(ctx context.Context, req *ExternalNotificationRequest) (*ExternalNotificationResponse, error) {
 	// Validate and set defaults
 	if req.MessageType == "" {
 		req.MessageType = "text"
@@ -157,7 +157,7 @@ func (s *externalService) SendNotification(ctx context.Context, req *ExternalNot
 }
 
 // GetProjectDestinations returns available destinations for a project
-func (s *externalService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]ExternalDestinationInfo, error) {
+func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey string) ([]ExternalDestinationInfo, error) {
 	project, err := s.projectRepo.GetByNotifyKey(ctx, notifyKey)
 	if err != nil {
 		return nil, fmt.Errorf("project not found for notify_key: %s", notifyKey)

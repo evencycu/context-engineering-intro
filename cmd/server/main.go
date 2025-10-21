@@ -135,7 +135,7 @@ func main() {
 	logger.Info("Notification Processor started successfully")
 
 	// External service
-	externalService := services.NewExternalService(projectRepo, destinationRepo, notificationService)
+	notifyService := services.NewNotifyService(projectRepo, destinationRepo, notificationService)
 
 	// File service
 	localStorage := storage.NewLocalStorage("uploads") // Assuming "uploads" directory
@@ -164,7 +164,7 @@ func main() {
 	destinationHandler := destinations.NewHandler(destinationService)
 	notificationHandler := notifications.NewHandler(notificationService)
 	provisionHandler := provision.NewHandler(provisionService)
-	externalHandler := external.NewHandler(externalService)
+	externalHandler := external.NewHandler(notifyService)
 	billingHandler := billing.NewHandler(billingService)
 	fileHandler := files.NewHandler(fileService)
 	// Queue observability handler
