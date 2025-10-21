@@ -21,7 +21,7 @@ import (
 	qhandler "github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/queue"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/system"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/middleware"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/storage"
