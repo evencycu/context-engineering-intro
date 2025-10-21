@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/evencycu/TeamsNotifyGoV2/services/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/database"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

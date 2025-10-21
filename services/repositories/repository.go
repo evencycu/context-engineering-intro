@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/database"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/database"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )

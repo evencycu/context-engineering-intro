@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/evencycu/TeamsNotifyGoV2/services/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/database"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/database"
 	"github.com/google/uuid"
 )
 
