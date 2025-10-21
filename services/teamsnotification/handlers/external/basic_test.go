@@ -11,7 +11,7 @@ func TestHandler_NewHandler(t *testing.T) {
 	// 測試創建新的 handler
 	handler := NewHandler(nil)
 	assert.NotNil(t, handler)
-	assert.Nil(t, handler.externalService)
+	assert.Nil(t, handler.notifyService)
 }
 
 func TestHandler_RegisterRoutes(t *testing.T) {
