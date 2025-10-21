@@ -24,7 +24,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/storage"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
