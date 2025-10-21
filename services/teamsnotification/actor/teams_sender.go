@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/database"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 )
 
 // teamsSender implements TeamsSender interface for sending messages to Microsoft Teams

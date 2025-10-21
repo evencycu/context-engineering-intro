@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
-	"github.com/evencycu/TeamsNotifyGoV2/libs/database"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
