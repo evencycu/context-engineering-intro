@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/actor"
+	"github.com/evencycu/TeamsNotifyGoV2/services/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/services"
 	"github.com/evencycu/TeamsNotifyGoV2/services/handlers/billing"
 	"github.com/evencycu/TeamsNotifyGoV2/services/handlers/bots"
