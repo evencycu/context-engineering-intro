@@ -29,7 +29,7 @@ USER_EMAIL="testuser${TIMESTAMP}@example.com"
 echo -e "${BLUE}curl -X POST ${BASE_URL}/users -H \"Content-Type: application/json\" -d '{...}'${NC}"
 USER_RESPONSE=$(curl -s -X POST ${BASE_URL}/users \
   -H "Content-Type: application/json" \
-  -d "{\"company_id\":\"$COMPANY_ID\",\"email\":\"$USER_EMAIL\",\"name\":\"Test User\",\"role\":\"user\",\"password\":\"password123\"}")
+  -d "{\"companyId\":\"$COMPANY_ID\",\"email\":\"$USER_EMAIL\",\"name\":\"Test User\",\"role\":\"user\",\"password\":\"password123\"}")
 
 echo "$USER_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$USER_RESPONSE"
 USER_ID=$(echo "$USER_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['id'])" 2>/dev/null || echo "")

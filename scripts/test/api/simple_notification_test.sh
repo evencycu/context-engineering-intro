@@ -15,9 +15,9 @@ BASE_URL="http://localhost:8080/internal/v1"
 
 # Fixed IDs (應該在資料庫中已存在)
 COMPANY_ID="550e8400-e29b-41d4-a716-446655440001"
-USER_ID=""
-PROJECT_ID=""
-DESTINATION_ID=""
+USER_ID="650e8400-e29b-41d4-a716-446655440001"
+PROJECT_ID="750e8400-e29b-41d4-a716-446655440001"
+DESTINATION_ID="950e8400-e29b-41d4-a716-446655440003"
 NOTIFICATION_ID=""
 
 # Test counters
@@ -126,7 +126,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/destinations" \
         "type": "personal",
         "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
         "display_name": "Test User",
-        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       }
     ],
     "createdBy": "'"$USER_ID"'"
@@ -153,6 +153,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "messageType": "text",
     "content": "這是一條測試通知訊息",
     "priority": "normal",
+    "targets": ["'"$DESTINATION_ID"'"],
     "metadata": {
       "test_type": "simple_text",
       "environment": "test"
@@ -160,8 +161,9 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
-NOTIFICATION_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notification_id'])" 2>/dev/null)
-if [ -n "$NOTIFICATION_ID" ]; then
+NOTIFICATION_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notificationId'])" 2>/dev/null)
+STATUS=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['status'])" 2>/dev/null)
+if [ -n "$NOTIFICATION_ID" ] && [ "$STATUS" = "pending" ]; then
     print_result 0 "發送文字通知成功 (ID: $NOTIFICATION_ID)"
 else
     print_result 1 "發送文字通知失敗"
@@ -181,6 +183,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "messageType": "text",
     "content": "🚨 這是一條高優先級測試通知",
     "priority": "high",
+    "targets": ["'"$DESTINATION_ID"'"],
     "metadata": {
       "test_type": "high_priority",
       "alert_level": "critical"
@@ -188,8 +191,9 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
-HIGH_PRIORITY_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notification_id'])" 2>/dev/null)
-if [ -n "$HIGH_PRIORITY_ID" ]; then
+HIGH_PRIORITY_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notificationId'])" 2>/dev/null)
+STATUS=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['status'])" 2>/dev/null)
+if [ -n "$HIGH_PRIORITY_ID" ] && [ "$STATUS" = "pending" ]; then
     print_result 0 "發送高優先級通知成功"
 else
     print_result 1 "發送高優先級通知失敗"
@@ -208,12 +212,14 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "messageType": "text",
     "content": "Hi @TestUser, 請查看這條重要訊息",
     "mentions": ["TestUser"],
-    "priority": "normal"
+    "priority": "normal",
+    "targets": ["'"$DESTINATION_ID"'"]
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
-MENTION_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notification_id'])" 2>/dev/null)
-if [ -n "$MENTION_ID" ]; then
+MENTION_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notificationId'])" 2>/dev/null)
+STATUS=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['status'])" 2>/dev/null)
+if [ -n "$MENTION_ID" ] && [ "$STATUS" = "pending" ]; then
     print_result 0 "發送包含 Mentions 的通知成功"
 else
     print_result 1 "發送包含 Mentions 的通知失敗"

@@ -31,7 +31,7 @@ NOTIFY_KEY="test-project-$(date +%s)-$(openssl rand -hex 16 2>/dev/null || cat /
 echo -e "${BLUE}curl -X POST ${BASE_URL}/projects -H \"Content-Type: application/json\" -d '{...}'${NC}"
 PROJECT_RESPONSE=$(curl -s -X POST ${BASE_URL}/projects \
   -H "Content-Type: application/json" \
-  -d "{\"company_id\":\"$COMPANY_ID\",\"notify_key\":\"$NOTIFY_KEY\",\"description\":\"This is a test project for API testing\",\"daily_limit\":1000,\"monthly_limit\":30000,\"priority\":\"normal\",\"created_by\":\"$USER_ID\"}")
+  -d "{\"companyId\":\"$COMPANY_ID\",\"notifyKey\":\"$NOTIFY_KEY\",\"description\":\"This is a test project for API testing\",\"dailyLimit\":1000,\"monthlyLimit\":30000,\"priority\":\"normal\",\"createdBy\":\"$USER_ID\"}")
 
 echo "$PROJECT_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$PROJECT_RESPONSE"
 
