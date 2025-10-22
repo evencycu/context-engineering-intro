@@ -157,13 +157,13 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/destinations" \
         "type": "channel",
         "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
         "display_name": "Test Channel",
-        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       },
       {
         "type": "personal",
         "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
         "display_name": "Test User",
-        "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+        "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
       }
     ],
     "botId": "'"$BOT_ID"'",
@@ -251,13 +251,13 @@ if [ -n "$DESTINATION_ID" ]; then
             "type": "channel",
             "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2",
             "display_name": "Updated Test Channel",
-            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           },
           {
             "type": "groupchat",
             "conversation_id": "19:f26a8d8a235f430db87a404491cd2ffc@thread.v2",
             "display_name": "Test Group Chat",
-            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           }
         ]
       }')
@@ -287,7 +287,7 @@ if [ -n "$DESTINATION_ID" ]; then
             "type": "personal",
             "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR",
             "display_name": "Validate User",
-            "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
+            "tenant_id": "051cece0-e4dc-4aed-b471-bf29824e1ee6"
           }
         ]
       }')
