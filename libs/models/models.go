@@ -487,15 +487,16 @@ type BillingPlan struct {
 	Status               string  `json:"status" db:"status"`
 }
 
-// CompanyBilling represents company billing information
-type CompanyBilling struct {
+// ProjectBilling represents project billing information
+type ProjectBilling struct {
 	BaseModel
-	CompanyID     uuid.UUID `json:"company_id" db:"company_id"`
-	BillingPlanID uuid.UUID `json:"billing_plan_id" db:"billing_plan_id"`
-	Status        string    `json:"status" db:"status"`
-	BillingEmail  string    `json:"billing_email" db:"billing_email"`
-	PaymentMethod string    `json:"payment_method" db:"payment_method"`
-	Currency      string    `json:"currency" db:"currency"`
+	ProjectID        uuid.UUID  `json:"project_id" db:"project_id"`
+	BillingPlanID    *uuid.UUID `json:"billing_plan_id" db:"billing_plan_id"`
+	BillingStatus    string     `json:"billing_status" db:"billing_status"`
+	PaymentMethod    *string    `json:"payment_method" db:"payment_method"`
+	BillingCycle     string     `json:"billing_cycle" db:"billing_cycle"`
+	NextBillingDate  *time.Time `json:"next_billing_date" db:"next_billing_date"`
+	TotalUsageCost   float64    `json:"total_usage_cost" db:"total_usage_cost"`
 }
 
 // File represents a file stored in the system
@@ -516,17 +517,13 @@ type File struct {
 // UsageRecord represents a usage record for billing
 type UsageRecord struct {
 	BaseModel
-	CompanyID      uuid.UUID  `json:"company_id" db:"company_id"`
-	ProjectID      *uuid.UUID `json:"project_id" db:"project_id"`
-	UserID         *uuid.UUID `json:"user_id" db:"user_id"`
-	NotificationID *uuid.UUID `json:"notification_id" db:"notification_id"`
-	BotID          *uuid.UUID `json:"bot_id" db:"bot_id"`
-	BotType        *BotType   `json:"bot_type" db:"bot_type"`
-	RecordType     string     `json:"record_type" db:"record_type"` // notification, attachment, mention, adaptive_card
-	Quantity       int        `json:"quantity" db:"quantity"`
-	UnitPrice      float64    `json:"unit_price" db:"unit_price"`
-	TotalCost      float64    `json:"total_cost" db:"total_cost"`
-	BillingPeriod  time.Time  `json:"billing_period" db:"billing_period"`
+	ProjectID   uuid.UUID     `json:"project_id" db:"project_id"`
+	UserID      *uuid.UUID    `json:"user_id" db:"user_id"`
+	RecordType  string        `json:"record_type" db:"record_type"` // notification, api_call, storage
+	Quantity    int           `json:"quantity" db:"quantity"`
+	UnitCost    float64       `json:"unit_cost" db:"unit_cost"`
+	TotalCost   float64       `json:"total_cost" db:"total_cost"`
+	Metadata    JSONBObject   `json:"metadata" db:"metadata"`
 }
 
 // =============================================
@@ -621,13 +618,12 @@ type BotStatusSummary struct {
 
 // UsageSummary represents a usage summary view
 type UsageSummary struct {
+	ProjectID     uuid.UUID `json:"project_id" db:"project_id"`
+	NotifyKey     string    `json:"notify_key" db:"notify_key"`
 	CompanyID     uuid.UUID `json:"company_id" db:"company_id"`
 	CompanyName   string    `json:"company_name" db:"company_name"`
-	BillingPeriod time.Time `json:"billing_period" db:"billing_period"`
 	RecordType    string    `json:"record_type" db:"record_type"`
-	BotType       *BotType  `json:"bot_type" db:"bot_type"`
 	TotalQuantity int       `json:"total_quantity" db:"total_quantity"`
 	TotalCost     float64   `json:"total_cost" db:"total_cost"`
-	ProjectsUsed  int       `json:"projects_used" db:"projects_used"`
-	BotsUsed      int       `json:"bots_used" db:"bots_used"`
+	UsageDate     time.Time `json:"usage_date" db:"usage_date"`
 }

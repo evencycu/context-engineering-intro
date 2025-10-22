@@ -22,10 +22,10 @@ type BillingService interface {
 	CreateBillingPlan(ctx context.Context, req *CreateBillingPlanRequest) (*database.BillingPlan, error)
 	UpdateBillingPlan(ctx context.Context, id uuid.UUID, req *UpdateBillingPlanRequest) (*database.BillingPlan, error)
 
-	// Company billing
-	GetCompanyBilling(ctx context.Context, companyID uuid.UUID) (*database.CompanyBilling, error)
-	UpdateCompanyBilling(ctx context.Context, companyID uuid.UUID, req *UpdateCompanyBillingRequest) (*database.CompanyBilling, error)
-	SetCompanyBillingPlan(ctx context.Context, companyID uuid.UUID, planID uuid.UUID) (*database.CompanyBilling, error)
+	// Project billing
+	GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error)
+	UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*database.ProjectBilling, error)
+	SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*database.ProjectBilling, error)
 
 	// Analytics
 	GetAnalyticsOverview(ctx context.Context, req *GetAnalyticsOverviewRequest) (*AnalyticsOverviewData, error)
@@ -40,7 +40,6 @@ type BillingService interface {
 type billingService struct {
 	usageRepo   repositories.UsageRecordRepository
 	billingRepo repositories.BillingPlanRepository
-	companyRepo repositories.CompanyRepository
 	projectRepo repositories.ProjectRepository
 	userRepo    repositories.UserRepository
 }
@@ -49,14 +48,12 @@ type billingService struct {
 func NewBillingService(
 	usageRepo repositories.UsageRecordRepository,
 	billingRepo repositories.BillingPlanRepository,
-	companyRepo repositories.CompanyRepository,
 	projectRepo repositories.ProjectRepository,
 	userRepo repositories.UserRepository,
 ) BillingService {
 	return &billingService{
 		usageRepo:   usageRepo,
 		billingRepo: billingRepo,
-		companyRepo: companyRepo,
 		projectRepo: projectRepo,
 		userRepo:    userRepo,
 	}
