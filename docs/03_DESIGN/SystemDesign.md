@@ -173,9 +173,24 @@ sequenceDiagram
 
 ---
 
-## 6. 資料模型（詳細見 ERD）
+## 6. 資料模型（同步 schema.sql/init.sql，詳細見 ERD）
 - 參考：`ERD.md`
 - 覆蓋：companies、users、projects、teams_bots、bot_installations、notifications、notification_destinations、destinations、billing_plans、project_billing、usage_records、files、audit_logs
+
+### 6.0 本次同步要點
+- 計費改為 `project_billing`（唯一鍵：`project_id`），完全取代 `company_billing`
+- `usage_records` 僅保留 `project_id`（移除 `company_id`），並在 `usage_summary` 檢視以 `project_id/notify_key/company` 彙總
+- `destinations.targets` 採 JSONB 陣列，型別與欄位約束：
+  - `type`: `personal` | `groupchat` | `channel`
+  - `tenant_id`（必填）
+  - `conversation_id`（groupchat/channel 必填；personal 與 email 二擇一）
+  - `email`（personal 可用）
+- `notifications` 與 `notification_destinations`：以 `targets` 展開建立分派記錄，`notification_destinations` 含重試與 `conversation_id` 欄位
+- 檢視：`notification_summary`、`usage_summary`、`bot_status_summary` 已可直接用於報表
+
+### 6.1 外部 API 相關
+- `/api/v1/notify` 支援 `targets=["all"|conversation_id|email]`，依 `notify_key` 展開目的地
+- `/api/v1/destinations/{notifyKey}` 回傳該專案目的地與 targets 明細（對應 `destinations` 與 JSONB targets）
 
 ### 6.1 資料庫配置
 - **資料庫名稱**: `notification_center`
@@ -373,9 +388,10 @@ type RetryPolicy struct {
 - **目的地管理** (`/destinations`) - 通知目的地管理
 - **通知管理** (`/notifications`) - 通知發送和管理
 
-### 15.2 特殊功能 API
+### 15.2 特殊功能 API（外部）
 - **Provision API** (`/provision`) - 一鍵建立專案和目的地
-- **External API** (`/external/notify`) - 外部系統通知發送
+- **Notify API** (`/api/v1/notify`) - 外部系統通知發送
+- **Destinations API** (`/api/v1/destinations/{notifyKey}`) - 查詢專案目的地
 - **Queue Management API** (`/queue`) - 內部佇列管理和監控
 - **訊息管理** (`/messages`) - 訊息歷史和狀態查詢
 

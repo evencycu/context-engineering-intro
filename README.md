@@ -175,6 +175,16 @@ export TEAMS_NOTIFY_REDIS_HOST=localhost
 make run
 ```
 
+## 🧾 計費與使用量（Billing & Usage）
+
+- `project_billing`（唯一鍵：`project_id`）取代 `company_billing`
+- `usage_records` 以 `project_id` 記錄用量，`usage_summary` 檢視可直接查詢彙總
+
+## 🌐 外部 API
+
+- POST `/api/v1/notify`：依 `notifyKey` 發送通知，`targets` 支援 `all`、conversation_id、email
+- GET `/api/v1/destinations/{notifyKey}`：查詢專案目的地與 targets 明細
+
 ## 🧪 Testing and Validation
 
 ### Automated API Testing

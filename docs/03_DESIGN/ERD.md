@@ -1,5 +1,45 @@
 # 🗃️ ERD（資料實體關聯圖）
 
+## Schema Sync (2025-10-22)
+
+本節同步 `scripts/database/schema.sql` 與 `scripts/database/init.sql` 的最新資料模型重點：
+
+- 專案計費（Project Billing）
+  - 表：`project_billing`
+  - 關聯：`project_id` 唯一對應 `projects(id)`，取代舊的 `company_billing`
+  - 欄位：`billing_plan_id`, `billing_status`, `payment_method`, `billing_cycle`, `next_billing_date`, `total_usage_cost`
+
+- 使用量紀錄（Usage Records）
+  - 表：`usage_records`
+  - 以 `project_id` 為主索引，移除 `company_id`
+  - 欄位：`record_type`, `quantity`, `unit_cost`, `total_cost`, `metadata`, `created_at`
+  - 檢視表：`usage_summary` 依 `project_id/notify_key/company` 彙總
+
+- 目的地（Destinations）
+  - 表：`destinations`（`project_id` 外鍵）
+  - `targets` 使用 JSONB 陣列，支援下列型別鍵：
+    - `type`: `personal` | `groupchat` | `channel`
+    - `tenant_id`（必填）
+    - `conversation_id`（groupchat/channel 必填；personal 與 email 二擇一）
+    - `email`（personal 可用）
+  - 索引：GIN 針對 `targets`、`conversation_id`、`email`、`tenant_id`
+
+- 通知與分派（Notifications / Notification Destinations）
+  - 表：`notifications`（`status`: pending/enqueued/processing/sent/failed/cancelled）
+  - 表：`notification_destinations`（依 `targets` 展開，包含 `conversation_id`、重試欄位、`priority`）
+  - 檢視表：`notification_summary` 統計目的地數量與狀態
+
+- Bot 與安裝（Teams Bots / Installations）
+  - 統一於 `teams_bots` 與 `bot_installations`（含 `conversation_type` 與 `conversation_id`）
+  - 健康檢查：`bot_health_status` 與檢視 `bot_status_summary`
+
+- 初始化資料（init.sql 範例）
+  - `projects.notify_key`: `cfh-alert-gogo`
+  - 範例安裝會產生可用的 `conversation_id`（personal/groupchat/channel）
+  - 範例目的地：`950e8400-...-0003` 包含 3 種 targets，可用於整合測試
+
+以上變更已反映於系統 API 與外部 `/api/v1/notify`、`/api/v1/destinations/{notifyKey}` 行為。
+
 > Teams Notification Bot Platform - 完整的資料模型設計
 
 ## 核心實體關係圖
