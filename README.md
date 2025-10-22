@@ -68,6 +68,47 @@ curl http://localhost:8080/health
 
 ## 🛠️ Development Setup
 
+## 📋 Makefile 指令統一管理
+
+所有專案相關的指令都通過 Makefile 統一管理，不再直接調用腳本：
+
+### 常用指令
+
+```bash
+# 查看所有可用指令
+make help
+
+# 建構與運行
+make build          # 建構應用程式
+make run            # 運行應用程式
+make test           # 運行測試
+make clean          # 清理建構檔案
+
+# 部署指令
+make deploy         # 完整部署
+make deploy-restart # 重啟所有服務
+make deploy-status  # 檢查服務狀態
+make deploy-logs    # 顯示服務日誌
+
+# OpenAPI 管理
+make openapi-start  # 啟動 OpenAPI 服務
+make openapi-open   # 開啟 Swagger UI
+
+# 測試指令
+make test-api       # API 測試
+make test-e2e       # 端到端測試
+make test-load      # 負載測試
+```
+
+### 指令統一原則
+
+- ✅ **統一管理**: 所有指令都通過 `make` 命令執行
+- ✅ **向後兼容**: 保留 legacy 命令以確保兼容性
+- ✅ **一致性**: 團隊成員都使用相同的 Makefile 指令
+- ✅ **可維護性**: 集中管理所有指令，便於維護和更新
+
+詳細說明請參考: [Makefile 指令使用指南](./docs/07_DEVELOPMENT/MakefileGuide.md)
+
 ### Option 1: Full Docker Environment (Recommended)
 
 ```bash
@@ -405,7 +446,7 @@ docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center <
 ./server
 
 # 3. 測試 Queue API
-./scripts/test_queue.sh
+make test-api
 ```
 
 ### Queue 監控 API

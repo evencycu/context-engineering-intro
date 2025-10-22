@@ -230,7 +230,16 @@ go test ./services/teamsnotification/integration/...
 
 ```bash
 # 執行 API 測試
-./scripts/test/api/simple_*.sh
+make test-api
+
+# 執行 E2E 測試
+make test-e2e
+
+# 執行負載測試
+make test-load
+
+# 生成測試報告
+make test-report
 ```
 
 ---
