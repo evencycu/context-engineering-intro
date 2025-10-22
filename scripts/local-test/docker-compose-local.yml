@@ -45,7 +45,7 @@ services:
   apiserver:
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: build/teamsnotification/Dockerfile
     container_name: teamsnotify-api-server-local
     ports:
       - "8080:8080"

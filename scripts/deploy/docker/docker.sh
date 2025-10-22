@@ -67,7 +67,7 @@ build_image() {
     
     print_status "Building Docker image for $service:$tag..."
     
-    local dockerfile="deployments/$service/Dockerfile"
+    local dockerfile="build/teamsnotification/Dockerfile"
     if [[ ! -f "$dockerfile" ]]; then
         print_error "Dockerfile not found: $dockerfile"
         return 1
@@ -322,7 +322,7 @@ services:
   apiserver:
     build:
       context: .
-      dockerfile: deployments/apiserver/Dockerfile
+      dockerfile: build/teamsnotification/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -341,7 +341,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: deployments/worker/Dockerfile
+      dockerfile: build/teamsnotification/Dockerfile
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgres://postgres:password@postgres:5432/teams_notification?sslmode=disable
@@ -358,7 +358,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: deployments/admin/Dockerfile
+      dockerfile: build/teamsnotification/Dockerfile
     ports:
       - "8081:8081"
     environment:
