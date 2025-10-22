@@ -52,17 +52,17 @@ INSERT INTO billing_plans (id, name, description, price_per_notification, price_
 ('a50e8400-e29b-41d4-a716-446655440003', 'Enterprise Plan', 'Enterprise notification plan', 0.0001, 100.00, 50000000, 50, 100, '{"notifications": true, "files": true, "analytics": true, "priority_support": true}', true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- Insert company billing
-INSERT INTO company_billing (id, company_id, billing_plan_id, billing_status, payment_method, billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at) VALUES
-('b50e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'a50e8400-e29b-41d4-a716-446655440002', 'active', 'credit_card', 'monthly', '2025-02-01', 15.50, NOW(), NOW()),
-('b50e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'a50e8400-e29b-41d4-a716-446655440001', 'active', 'bank_transfer', 'monthly', '2025-02-01', 8.75, NOW(), NOW())
+-- Insert project billing
+INSERT INTO project_billing (id, project_id, billing_plan_id, billing_status, payment_method, billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at) VALUES
+('b50e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', 'a50e8400-e29b-41d4-a716-446655440002', 'active', 'credit_card', 'monthly', '2025-02-01', 15.50, NOW(), NOW()),
+('b50e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440002', 'a50e8400-e29b-41d4-a716-446655440001', 'active', 'bank_transfer', 'monthly', '2025-02-01', 8.75, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample usage records
-INSERT INTO usage_records (id, company_id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at) VALUES
-('c50e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'notification', 100, 0.01, 1.00, '{"message_type": "text", "priority": "normal"}', NOW()),
-('c50e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'notification', 50, 0.01, 0.50, '{"message_type": "file", "priority": "high"}', NOW()),
-('c50e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440003', 'notification', 200, 0.005, 1.00, '{"message_type": "text", "priority": "normal"}', NOW())
+INSERT INTO usage_records (id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at) VALUES
+('c50e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'notification', 100, 0.01, 1.00, '{"message_type": "text", "priority": "normal"}', NOW()),
+('c50e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'notification', 50, 0.01, 0.50, '{"message_type": "file", "priority": "high"}', NOW()),
+('c50e8400-e29b-41d4-a716-446655440003', '750e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440003', 'notification', 200, 0.005, 1.00, '{"message_type": "text", "priority": "normal"}', NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample files

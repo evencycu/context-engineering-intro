@@ -30,13 +30,13 @@ type UsageRecordRepository interface {
 	GetTrends(ctx context.Context, companyID *uuid.UUID, projectID *uuid.UUID, userID *uuid.UUID, startDate, endDate *time.Time, groupBy string) ([]*UsageTrend, error)
 }
 
-// CompanyBillingRepository defines the interface for company billing operations
-type CompanyBillingRepository interface {
-	Create(ctx context.Context, entity *database.CompanyBilling) error
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) (*database.CompanyBilling, error)
-	Update(ctx context.Context, entity *database.CompanyBilling) error
-	Delete(ctx context.Context, companyID uuid.UUID) error
-	SetBillingPlan(ctx context.Context, companyID uuid.UUID, planID uuid.UUID) error
+// ProjectBillingRepository defines the interface for project billing operations
+type ProjectBillingRepository interface {
+	Create(ctx context.Context, entity *database.ProjectBilling) error
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error)
+	Update(ctx context.Context, entity *database.ProjectBilling) error
+	Delete(ctx context.Context, projectID uuid.UUID) error
+	SetBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) error
 }
 
 // UsageSummary represents usage summary data
@@ -167,16 +167,14 @@ func NewUsageRecordRepository(db *sqlx.DB) UsageRecordRepository {
 
 func (r *usageRecordRepository) Create(ctx context.Context, entity *database.UsageRecord) error {
 	query := `INSERT INTO usage_records (
-		id, company_id, project_id, user_id, notification_id, bot_id, bot_type,
-		record_type, quantity, unit_price, total_cost, billing_period, created_at, updated_at
+		id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at
 	) VALUES (
-		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+		$1, $2, $3, $4, $5, $6, $7, $8, $9
 	)`
 
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.ProjectID, entity.UserID, entity.NotificationID,
-		entity.BotID, entity.BotType, entity.RecordType, entity.Quantity,
-		entity.UnitPrice, entity.TotalCost, entity.BillingPeriod, entity.CreatedAt, entity.UpdatedAt,
+		entity.ID, entity.ProjectID, entity.UserID, entity.RecordType, entity.Quantity,
+		entity.UnitCost, entity.TotalCost, entity.Metadata, entity.CreatedAt,
 	)
 	return err
 }
@@ -187,17 +185,15 @@ func (r *usageRecordRepository) CreateBatch(ctx context.Context, entities []*dat
 	}
 
 	query := `INSERT INTO usage_records (
-		id, company_id, project_id, user_id, notification_id, bot_id, bot_type,
-		record_type, quantity, unit_price, total_cost, billing_period, created_at, updated_at
+		id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at
 	) VALUES (
-		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+		$1, $2, $3, $4, $5, $6, $7, $8, $9
 	)`
 
 	for _, entity := range entities {
 		_, err := r.db.ExecContext(ctx, query,
-			entity.ID, entity.CompanyID, entity.ProjectID, entity.UserID, entity.NotificationID,
-			entity.BotID, entity.BotType, entity.RecordType, entity.Quantity,
-			entity.UnitPrice, entity.TotalCost, entity.BillingPeriod, entity.CreatedAt, entity.UpdatedAt,
+			entity.ID, entity.ProjectID, entity.UserID, entity.RecordType, entity.Quantity,
+			entity.UnitCost, entity.TotalCost, entity.Metadata, entity.CreatedAt,
 		)
 		if err != nil {
 			return err
@@ -207,15 +203,13 @@ func (r *usageRecordRepository) CreateBatch(ctx context.Context, entities []*dat
 }
 
 func (r *usageRecordRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.UsageRecord, error) {
-	query := `SELECT id, company_id, project_id, user_id, notification_id, bot_id, bot_type,
-		record_type, quantity, unit_price, total_cost, billing_period, created_at, updated_at
+	query := `SELECT id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at
 		FROM usage_records WHERE id = $1`
 
 	var record database.UsageRecord
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&record.ID, &record.CompanyID, &record.ProjectID, &record.UserID, &record.NotificationID,
-		&record.BotID, &record.BotType, &record.RecordType, &record.Quantity,
-		&record.UnitPrice, &record.TotalCost, &record.BillingPeriod, &record.CreatedAt, &record.UpdatedAt,
+		&record.ID, &record.ProjectID, &record.UserID, &record.RecordType, &record.Quantity,
+		&record.UnitCost, &record.TotalCost, &record.Metadata, &record.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -248,40 +242,42 @@ func (r *usageRecordRepository) GetTrends(ctx context.Context, companyID *uuid.U
 	return []*UsageTrend{}, nil
 }
 
-// companyBillingRepository implements CompanyBillingRepository
-type companyBillingRepository struct {
+// projectBillingRepository implements ProjectBillingRepository
+type projectBillingRepository struct {
 	db *sqlx.DB
 }
 
-// NewCompanyBillingRepository creates a new company billing repository
-func NewCompanyBillingRepository(db *sqlx.DB) CompanyBillingRepository {
-	return &companyBillingRepository{db: db}
+// NewProjectBillingRepository creates a new project billing repository
+func NewProjectBillingRepository(db *sqlx.DB) ProjectBillingRepository {
+	return &projectBillingRepository{db: db}
 }
 
-func (r *companyBillingRepository) Create(ctx context.Context, entity *database.CompanyBilling) error {
-	query := `INSERT INTO company_billing (
-		id, company_id, billing_plan_id, status, billing_email, payment_method,
-		currency, created_at, updated_at
+func (r *projectBillingRepository) Create(ctx context.Context, entity *database.ProjectBilling) error {
+	query := `INSERT INTO project_billing (
+		id, project_id, billing_plan_id, billing_status, payment_method,
+		billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at
 	) VALUES (
-		$1, $2, $3, $4, $5, $6, $7, $8, $9
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 	)`
 
 	_, err := r.db.ExecContext(ctx, query,
-		entity.ID, entity.CompanyID, entity.BillingPlanID, entity.Status,
-		entity.BillingEmail, entity.PaymentMethod, entity.Currency, entity.CreatedAt, entity.UpdatedAt,
+		entity.ID, entity.ProjectID, entity.BillingPlanID, entity.BillingStatus,
+		entity.PaymentMethod, entity.BillingCycle, entity.NextBillingDate, entity.TotalUsageCost,
+		entity.CreatedAt, entity.UpdatedAt,
 	)
 	return err
 }
 
-func (r *companyBillingRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) (*database.CompanyBilling, error) {
-	query := `SELECT id, company_id, billing_plan_id, status, billing_email, payment_method,
-		currency, created_at, updated_at
-		FROM company_billing WHERE company_id = $1`
+func (r *projectBillingRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error) {
+	query := `SELECT id, project_id, billing_plan_id, billing_status, payment_method,
+		billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at
+		FROM project_billing WHERE project_id = $1`
 
-	var billing database.CompanyBilling
-	err := r.db.QueryRowContext(ctx, query, companyID).Scan(
-		&billing.ID, &billing.CompanyID, &billing.BillingPlanID, &billing.Status,
-		&billing.BillingEmail, &billing.PaymentMethod, &billing.Currency, &billing.CreatedAt, &billing.UpdatedAt,
+	var billing database.ProjectBilling
+	err := r.db.QueryRowContext(ctx, query, projectID).Scan(
+		&billing.ID, &billing.ProjectID, &billing.BillingPlanID, &billing.BillingStatus,
+		&billing.PaymentMethod, &billing.BillingCycle, &billing.NextBillingDate, &billing.TotalUsageCost,
+		&billing.CreatedAt, &billing.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -289,27 +285,27 @@ func (r *companyBillingRepository) GetByCompanyID(ctx context.Context, companyID
 	return &billing, nil
 }
 
-func (r *companyBillingRepository) Update(ctx context.Context, entity *database.CompanyBilling) error {
-	query := `UPDATE company_billing SET
-		billing_plan_id = $2, status = $3, billing_email = $4, payment_method = $5,
-		currency = $6, updated_at = $7
-		WHERE company_id = $1`
+func (r *projectBillingRepository) Update(ctx context.Context, entity *database.ProjectBilling) error {
+	query := `UPDATE project_billing SET
+		billing_plan_id = $2, billing_status = $3, payment_method = $4,
+		billing_cycle = $5, next_billing_date = $6, total_usage_cost = $7, updated_at = $8
+		WHERE project_id = $1`
 
 	_, err := r.db.ExecContext(ctx, query,
-		entity.CompanyID, entity.BillingPlanID, entity.Status, entity.BillingEmail,
-		entity.PaymentMethod, entity.Currency, entity.UpdatedAt,
+		entity.ProjectID, entity.BillingPlanID, entity.BillingStatus, entity.PaymentMethod,
+		entity.BillingCycle, entity.NextBillingDate, entity.TotalUsageCost, entity.UpdatedAt,
 	)
 	return err
 }
 
-func (r *companyBillingRepository) Delete(ctx context.Context, companyID uuid.UUID) error {
-	query := `DELETE FROM company_billing WHERE company_id = $1`
-	_, err := r.db.ExecContext(ctx, query, companyID)
+func (r *projectBillingRepository) Delete(ctx context.Context, projectID uuid.UUID) error {
+	query := `DELETE FROM project_billing WHERE project_id = $1`
+	_, err := r.db.ExecContext(ctx, query, projectID)
 	return err
 }
 
-func (r *companyBillingRepository) SetBillingPlan(ctx context.Context, companyID uuid.UUID, planID uuid.UUID) error {
-	query := `UPDATE company_billing SET billing_plan_id = $2, updated_at = $3 WHERE company_id = $1`
-	_, err := r.db.ExecContext(ctx, query, companyID, planID, time.Now())
+func (r *projectBillingRepository) SetBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) error {
+	query := `UPDATE project_billing SET billing_plan_id = $2, updated_at = $3 WHERE project_id = $1`
+	_, err := r.db.ExecContext(ctx, query, projectID, planID, time.Now())
 	return err
 }

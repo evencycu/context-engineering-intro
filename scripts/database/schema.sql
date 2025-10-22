@@ -247,10 +247,10 @@ CREATE TABLE billing_plans (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Company Billing
-CREATE TABLE company_billing (
+-- Project Billing
+CREATE TABLE project_billing (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE UNIQUE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE UNIQUE,
     billing_plan_id UUID REFERENCES billing_plans(id) ON DELETE SET NULL,
     billing_status VARCHAR(50) DEFAULT 'active', -- 'active', 'suspended', 'cancelled'
     payment_method VARCHAR(50), -- 'credit_card', 'bank_transfer', 'invoice'
@@ -264,8 +264,7 @@ CREATE TABLE company_billing (
 -- Usage Records
 CREATE TABLE usage_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     record_type VARCHAR(50) NOT NULL, -- 'notification', 'api_call', 'storage'
     quantity INTEGER NOT NULL DEFAULT 1,
@@ -429,15 +428,14 @@ CREATE INDEX idx_bot_health_status_status ON bot_health_status(status);
 CREATE INDEX idx_bot_health_status_last_check ON bot_health_status(last_check_at);
 
 -- Usage Records indexes
-CREATE INDEX idx_usage_records_company_id ON usage_records(company_id);
 CREATE INDEX idx_usage_records_project_id ON usage_records(project_id);
 CREATE INDEX idx_usage_records_user_id ON usage_records(user_id);
 CREATE INDEX idx_usage_records_record_type ON usage_records(record_type);
 CREATE INDEX idx_usage_records_created_at ON usage_records(created_at);
 
--- Company Billing indexes
-CREATE INDEX idx_company_billing_company_id ON company_billing(company_id);
-CREATE INDEX idx_company_billing_billing_plan_id ON company_billing(billing_plan_id);
+-- Project Billing indexes
+CREATE INDEX idx_project_billing_project_id ON project_billing(project_id);
+CREATE INDEX idx_project_billing_billing_plan_id ON project_billing(billing_plan_id);
 
 -- Files indexes
 CREATE INDEX idx_files_project_id ON files(project_id);
@@ -484,7 +482,7 @@ CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FO
 CREATE TRIGGER update_notification_destinations_updated_at BEFORE UPDATE ON notification_destinations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bot_routing_rules_updated_at BEFORE UPDATE ON bot_routing_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- (removed third party bot api keys trigger)
-CREATE TRIGGER update_company_billing_updated_at BEFORE UPDATE ON company_billing FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_project_billing_updated_at BEFORE UPDATE ON project_billing FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -547,16 +545,18 @@ GROUP BY tb.id, tb.name, tb.status, tb.app_id, h.status, h.last_check_at, h.resp
 -- Usage Summary View
 CREATE VIEW usage_summary AS
 SELECT 
-    ur.company_id,
+    ur.project_id,
+    p.notify_key,
+    p.company_id,
     c.name as company_name,
     ur.record_type,
     SUM(ur.quantity) as total_quantity,
     SUM(ur.total_cost) as total_cost,
-    COUNT(DISTINCT ur.project_id) as projects_used,
     ur.created_at::date as usage_date
 FROM usage_records ur
-JOIN companies c ON ur.company_id = c.id
-GROUP BY ur.company_id, c.name, ur.record_type, ur.created_at::date;
+JOIN projects p ON ur.project_id = p.id
+JOIN companies c ON p.company_id = c.id
+GROUP BY ur.project_id, p.notify_key, p.company_id, c.name, ur.record_type, ur.created_at::date;
 
 -- File Summary View
 CREATE VIEW file_summary AS
