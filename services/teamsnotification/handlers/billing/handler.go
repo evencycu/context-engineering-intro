@@ -469,19 +469,19 @@ type UpdateProjectBillingRequest struct {
 	BillingStatus    *string `json:"billingStatus" validate:"omitempty,oneof=active suspended cancelled"`
 }
 
-// UpdateCompanyBilling updates company billing information
-func (h *Handler) UpdateCompanyBilling(c *gin.Context) {
-	companyIDStr := c.Param("companyId")
-	companyID, err := uuid.Parse(companyIDStr)
+// UpdateProjectBilling updates project billing information
+func (h *Handler) UpdateProjectBilling(c *gin.Context) {
+	projectIDStr := c.Param("projectId")
+	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid company ID format",
+			"error":   "Invalid project ID format",
 		})
 		return
 	}
 
-	var req UpdateCompanyBillingRequest
+	var req UpdateProjectBillingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -490,16 +490,16 @@ func (h *Handler) UpdateCompanyBilling(c *gin.Context) {
 		return
 	}
 
-	billing, err := h.billingService.UpdateCompanyBilling(c.Request.Context(), companyID, &services.UpdateCompanyBillingRequest{
-		BillingEmail:  req.BillingEmail,
-		PaymentMethod: req.PaymentMethod,
-		Currency:      req.Currency,
-		Status:        req.Status,
+	billing, err := h.billingService.UpdateProjectBilling(c.Request.Context(), projectID, &services.UpdateProjectBillingRequest{
+		PaymentMethod:    req.PaymentMethod,
+		BillingCycle:     req.BillingCycle,
+		NextBillingDate: req.NextBillingDate,
+		BillingStatus:    req.BillingStatus,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to update company billing: " + err.Error(),
+			"error":   "Failed to update project billing: " + err.Error(),
 		})
 		return
 	}
@@ -510,24 +510,24 @@ func (h *Handler) UpdateCompanyBilling(c *gin.Context) {
 	})
 }
 
-// SetCompanyBillingPlanRequest represents a set company billing plan request
-type SetCompanyBillingPlanRequest struct {
+// SetProjectBillingPlanRequest represents a set project billing plan request
+type SetProjectBillingPlanRequest struct {
 	BillingPlanID uuid.UUID `json:"billingPlanId" validate:"required"`
 }
 
-// SetCompanyBillingPlan sets the billing plan for a company
-func (h *Handler) SetCompanyBillingPlan(c *gin.Context) {
-	companyIDStr := c.Param("companyId")
-	companyID, err := uuid.Parse(companyIDStr)
+// SetProjectBillingPlan sets the billing plan for a project
+func (h *Handler) SetProjectBillingPlan(c *gin.Context) {
+	projectIDStr := c.Param("projectId")
+	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid company ID format",
+			"error":   "Invalid project ID format",
 		})
 		return
 	}
 
-	var req SetCompanyBillingPlanRequest
+	var req SetProjectBillingPlanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -536,11 +536,11 @@ func (h *Handler) SetCompanyBillingPlan(c *gin.Context) {
 		return
 	}
 
-	billing, err := h.billingService.SetCompanyBillingPlan(c.Request.Context(), companyID, req.BillingPlanID)
+	billing, err := h.billingService.SetProjectBillingPlan(c.Request.Context(), projectID, req.BillingPlanID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to set company billing plan: " + err.Error(),
+			"error":   "Failed to set project billing plan: " + err.Error(),
 		})
 		return
 	}

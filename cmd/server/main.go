@@ -113,9 +113,9 @@ func main() {
 	// Billing service (must be initialized before notificationProcessor)
 	billingPlanRepo := repositories.NewBillingPlanRepository(db)
 	usageRecordRepo := repositories.NewUsageRecordRepository(db)
-	companyBillingRepo := repositories.NewCompanyBillingRepository(db)
-	billingService := services.NewBillingService(usageRecordRepo, billingPlanRepo, companyRepo, projectRepo, userRepo)
-	_ = companyBillingRepo // Will be used when implementing company billing features
+	projectBillingRepo := repositories.NewProjectBillingRepository(db)
+	billingService := services.NewBillingService(usageRecordRepo, billingPlanRepo, projectRepo, userRepo)
+	_ = projectBillingRepo // Will be used when implementing project billing features
 
 	// Initialize Redis Queue
 	redisQueue := actor.NewRedisQueue(redisClient)

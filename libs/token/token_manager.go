@@ -13,6 +13,7 @@ import (
 
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/actor"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -336,12 +337,23 @@ func NewBillingServiceAdapter(bs services.BillingService) *BillingServiceAdapter
 // RecordUsage implements actor.BillingService interface
 func (a *BillingServiceAdapter) RecordUsage(ctx context.Context, req *actor.RecordUsageRequest) error {
 	// Convert actor.RecordUsageRequest to services.RecordUsageRequest
+	projectID := uuid.Nil
+	if req.ProjectID != nil {
+		projectID = *req.ProjectID
+	}
+	
 	return a.bs.RecordUsage(ctx, &services.RecordUsageRequest{
-		CompanyID:      req.CompanyID,
-		ProjectID:      req.ProjectID,
-		UserID:         req.UserID,
-		NotificationID: req.NotificationID,
-		
-		
+		ProjectID:   projectID,
+		UserID:      req.UserID,
+		RecordType:  req.RecordType,
+		Quantity:    req.Quantity,
+		UnitCost:    req.UnitPrice,
+		TotalCost:   req.TotalCost,
+		Metadata:    map[string]any{
+			"notification_id": req.NotificationID,
+			"bot_id": req.BotID,
+			"bot_type": req.BotType,
+			"billing_period": req.BillingPeriod,
+		},
 	})
 }

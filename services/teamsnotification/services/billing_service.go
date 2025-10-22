@@ -136,11 +136,11 @@ type UpdateBillingPlanRequest struct {
 	Status               *string
 }
 
-type UpdateCompanyBillingRequest struct {
-	BillingEmail  *string
-	PaymentMethod *string
-	Currency      *string
-	Status        *string
+type UpdateProjectBillingRequest struct {
+	PaymentMethod    *string
+	BillingCycle     *string
+	NextBillingDate *string
+	BillingStatus    *string
 }
 
 type GetAnalyticsOverviewRequest struct {
@@ -209,17 +209,13 @@ type ProjectUsageData struct {
 }
 
 type RecordUsageRequest struct {
-	CompanyID      uuid.UUID
-	ProjectID      *uuid.UUID
-	UserID         *uuid.UUID
-	NotificationID *uuid.UUID
-	BotID          *uuid.UUID
-	BotType        *database.BotType
-	RecordType     string
-	Quantity       int
-	UnitPrice      float64
-	TotalCost      float64
-	BillingPeriod  time.Time
+	ProjectID   uuid.UUID
+	UserID      *uuid.UUID
+	RecordType  string
+	Quantity    int
+	UnitCost    float64
+	TotalCost   float64
+	Metadata    map[string]any
 }
 
 // Implementation methods
@@ -270,17 +266,17 @@ func (s *billingService) UpdateBillingPlan(ctx context.Context, id uuid.UUID, re
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) GetCompanyBilling(ctx context.Context, companyID uuid.UUID) (*database.CompanyBilling, error) {
+func (s *billingService) GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) UpdateCompanyBilling(ctx context.Context, companyID uuid.UUID, req *UpdateCompanyBillingRequest) (*database.CompanyBilling, error) {
+func (s *billingService) UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*database.ProjectBilling, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) SetCompanyBillingPlan(ctx context.Context, companyID uuid.UUID, planID uuid.UUID) (*database.CompanyBilling, error) {
+func (s *billingService) SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*database.ProjectBilling, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
@@ -325,11 +321,8 @@ func (s *billingService) GetCompanyAnalytics(ctx context.Context, companyID uuid
 
 func (s *billingService) RecordUsage(ctx context.Context, req *RecordUsageRequest) error {
 	// Validate required fields
-	if req.CompanyID == uuid.Nil {
-		return fmt.Errorf("company_id is required")
-	}
-	if req.ProjectID == nil || *req.ProjectID == uuid.Nil {
-		return fmt.Errorf("project_id is required for billing")
+	if req.ProjectID == uuid.Nil {
+		return fmt.Errorf("project_id is required")
 	}
 	if req.RecordType == "" {
 		return fmt.Errorf("record_type is required")
@@ -342,17 +335,13 @@ func (s *billingService) RecordUsage(ctx context.Context, req *RecordUsageReques
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		CompanyID:      req.CompanyID,
-		ProjectID:      req.ProjectID,
-		UserID:         req.UserID,
-		NotificationID: req.NotificationID,
-		BotID:          req.BotID,
-		BotType:        req.BotType,
-		RecordType:     req.RecordType,
-		Quantity:       req.Quantity,
-		UnitPrice:      req.UnitPrice,
-		TotalCost:      req.TotalCost,
-		BillingPeriod:  req.BillingPeriod,
+		ProjectID:   req.ProjectID,
+		UserID:      req.UserID,
+		RecordType:  req.RecordType,
+		Quantity:    req.Quantity,
+		UnitCost:    req.UnitCost,
+		TotalCost:   req.TotalCost,
+		Metadata:    database.JSONBObject(req.Metadata),
 	}
 
 	// Save to database
