@@ -162,9 +162,9 @@ erDiagram
         timestamptz updated_at
     }
 
-    COMPANY_BILLING {
+    PROJECT_BILLING {
         uuid id PK
-        uuid company_id FK
+        uuid project_id FK
         uuid billing_plan_id FK
         string billing_status "active|suspended|cancelled"
         string payment_method "credit_card|bank_transfer|invoice"
@@ -222,7 +222,7 @@ erDiagram
     COMPANIES ||--o{ USERS : "has"
     COMPANIES ||--o{ PROJECTS : "owns"
     COMPANIES ||--o{ TEAMS_BOTS : "manages"
-    COMPANIES ||--o{ COMPANY_BILLING : "billed"
+    PROJECTS ||--o{ PROJECT_BILLING : "billed"
     COMPANIES ||--o{ USAGE_RECORDS : "tracks"
 
     USERS ||--o{ PROJECTS : "creates"
@@ -249,7 +249,7 @@ erDiagram
 
 
 
-    BILLING_PLANS ||--o{ COMPANY_BILLING : "plans"
+    BILLING_PLANS ||--o{ PROJECT_BILLING : "plans"
 ```
 
 ## 核心實體說明
@@ -271,7 +271,7 @@ erDiagram
 
 ### 4. 計費系統
 - **BILLING_PLANS**: 計費方案
-- **COMPANY_BILLING**: 公司計費記錄
+- **PROJECT_BILLING**: 專案計費記錄
 - **USAGE_RECORDS**: 使用記錄
 
 ### 5. 檔案管理
@@ -312,9 +312,9 @@ ALTER TABLE projects ADD CONSTRAINT projects_company_notify_key_unique
 ALTER TABLE bot_installations ADD CONSTRAINT bot_installations_bot_tenant_conversation_unique 
     UNIQUE (bot_id, bot_type, teams_tenant_id, conversation_id);
 
--- 公司計費唯一性
-ALTER TABLE company_billing ADD CONSTRAINT company_billing_company_unique 
-    UNIQUE (company_id);
+-- 專案計費唯一性
+ALTER TABLE project_billing ADD CONSTRAINT project_billing_project_unique 
+    UNIQUE (project_id);
 ```
 
 ## 資料庫配置

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )

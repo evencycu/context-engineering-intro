@@ -175,7 +175,7 @@ sequenceDiagram
 
 ## 6. 資料模型（詳細見 ERD）
 - 參考：`ERD.md`
-- 覆蓋：companies、users、projects、teams_bots、bot_installations、notifications、notification_destinations、destinations、billing_plans、company_billing、usage_records、files、audit_logs
+- 覆蓋：companies、users、projects、teams_bots、bot_installations、notifications、notification_destinations、destinations、billing_plans、project_billing、usage_records、files、audit_logs
 
 ### 6.1 資料庫配置
 - **資料庫名稱**: `notification_center`
