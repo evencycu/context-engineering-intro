@@ -2119,7 +2119,7 @@ components:
           type: object
           additionalProperties: true
           description: Additional metadata
-          example: {"source": "external", "version": "1.0"}
+          example: { "source": "external", "version": "1.0" }
 
     ExternalNotifyResponse:
       type: object
@@ -3148,15 +3148,6 @@ components:
         nextBillingDate:
           type: string
           format: date
-
-    CompanyBillingUpdateRequest:
-      type: object
-      properties:
-        planId:
-          type: string
-          format: uuid
-        billingEnabled:
-          type: boolean
 
     BillingAnalyticsResponse:
       type: object

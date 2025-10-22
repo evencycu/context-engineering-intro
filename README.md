@@ -158,7 +158,7 @@ make test
 # Run with verbose output
 make test-verbose
 
-# Build the binary
+# Build the server binary
 make build
 
 # Check environment variables

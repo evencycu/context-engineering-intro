@@ -6,6 +6,5 @@ __pycache__
 server
 *.log
 nohup.out
-/bin/
 /dist/
 .DS_Store

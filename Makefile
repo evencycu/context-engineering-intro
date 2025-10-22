@@ -70,7 +70,7 @@ db-reset:
 # Application operations
 build:
 	@echo "Building application..."
-	go build -o bin/server ./cmd/server
+	go build -o server ./cmd/server
 
 run:
 	@echo "Running application..."
@@ -82,7 +82,7 @@ test:
 
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -rf bin/
+	rm -f server
 	go clean
 
 # Development setup
@@ -95,7 +95,7 @@ clean:
 # Production build
 prod-build:
 	@echo "Building for production..."
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/server ./cmd/server
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
 # OpenAPI Documentation
 openapi-start:
