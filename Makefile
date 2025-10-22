@@ -2,41 +2,6 @@
 
 
 # Default target
-help:
-	@echo "Available commands:"
-	@echo "  docker-up      - Start PostgreSQL and Redis with Docker Compose"
-	@echo "  docker-down    - Stop Docker containers"
-	@echo "  docker-logs    - Show Docker container logs"
-	@echo "  db-reset       - Reset database (drop and recreate)"
-	@echo "  build          - Build the application"
-	@echo "  run            - Run the application"
-	@echo "  test           - Run tests"
-	@echo "  clean          - Clean build artifacts"
-	@echo ""
-	@echo "E2E Testing:"
-	@echo "  test-e2e       - Run E2E tests"
-	@echo "  test-load      - Run load tests"
-	@echo "  test-api       - Run API tests"
-	@echo "  test-report    - Generate test reports"
-	@echo "  test-full      - Run full E2E test suite"
-	@echo ""
-	@echo "Development:"
-	@echo "  dev-deploy     - Deploy latest code to Docker environment"
-	@echo "  deploy-local   - Deploy to local process (fastest)"
-	@echo "  deploy-docker  - Deploy to local Docker (isolated)"
-	@echo "  deploy-persistent - Deploy to persistent Docker (keeps data)"
-	@echo ""
-	@echo "Persistent Docker:"
-	@echo "  persistent-up    - Start persistent Docker services"
-	@echo "  persistent-down  - Stop persistent Docker services"
-	@echo "  persistent-logs  - Show persistent Docker logs"
-	@echo "  persistent-clean - Clean persistent Docker data"
-	@echo ""
-	@echo "OpenAPI Documentation:"
-	@echo "  openapi-start  - Start OpenAPI server (Swagger UI)"
-	@echo "  openapi-stop   - Stop OpenAPI server"
-	@echo "  openapi-status - Check OpenAPI server status"
-	@echo "  openapi-open   - Open Swagger UI in browser"
 
 # Docker operations
 docker-up:
@@ -97,22 +62,67 @@ prod-build:
 	@echo "Building for production..."
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
+# Deployment commands (integrated from deploy.sh)
+deploy:
+	@echo "Running full deployment..."
+	@./scripts/deploy/docker/deploy.sh deploy
+
+deploy-dev:
+	@echo "Running development deployment..."
+	@./scripts/deploy/docker/deploy.sh dev
+
+deploy-local:
+	@echo "Running local deployment..."
+	@./scripts/deploy/docker/deploy.sh local
+
+deploy-quick:
+	@echo "Running quick deployment..."
+	@./scripts/deploy/docker/deploy.sh quick
+
+deploy-docker:
+	@echo "Running Docker deployment..."
+	@./scripts/deploy/docker/deploy.sh docker-full
+
+deploy-server:
+	@echo "Deploying server only..."
+	@./scripts/deploy/docker/deploy.sh server
+
+deploy-openapi:
+	@echo "Deploying OpenAPI only..."
+	@./scripts/deploy/docker/deploy.sh openapi
+
+deploy-stop:
+	@echo "Stopping all services..."
+	@./scripts/deploy/docker/deploy.sh stop
+
+deploy-restart:
+	@echo "Restarting all services..."
+	@./scripts/deploy/docker/deploy.sh restart
+
+deploy-status:
+	@echo "Checking service status..."
+	@./scripts/deploy/docker/deploy.sh status
+
+deploy-logs:
+	@echo "Showing server logs..."
+	@./scripts/deploy/docker/deploy.sh logs
+
 # OpenAPI Documentation
 openapi-start:
 	@echo "Starting OpenAPI server..."
-	./scripts/openapi.sh start
+	@./scripts/deploy/docker/deploy.sh openapi
 
 openapi-stop:
 	@echo "Stopping OpenAPI server..."
-	./scripts/openapi.sh stop
+	@./scripts/deploy/docker/deploy.sh stop
 
 openapi-status:
 	@echo "Checking OpenAPI server status..."
-	./scripts/openapi.sh status
+	@./scripts/deploy/docker/deploy.sh status
 
 openapi-open:
 	@echo "Opening Swagger UI in browser..."
-	./scripts/openapi.sh open
+	@open http://localhost:8082/ || echo "Please open http://localhost:8082/ in your browser"
 
 # E2E Testing
 test-e2e:
@@ -131,43 +141,72 @@ test-report:
 	@echo "Generating test reports..."
 	./scripts/utils/generate_test_report.sh generate
 
+# Help
+help:
+	@echo "Available commands:"
+	@echo ""
+	@echo "Build & Run:"
+	@echo "  build          - Build the application"
+	@echo "  run            - Run the application"
+	@echo "  test           - Run tests"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  dev-setup      - Setup development environment"
+	@echo "  prod-build     - Build for production"
+	@echo ""
+	@echo "Deployment (integrated from deploy.sh):"
+	@echo "  deploy         - Full deployment"
+	@echo "  deploy-dev     - Development deployment"
+	@echo "  deploy-local   - Local deployment"
+	@echo "  deploy-quick   - Quick deployment"
+	@echo "  deploy-docker  - Docker deployment"
+	@echo "  deploy-server  - Deploy server only"
+	@echo "  deploy-openapi - Deploy OpenAPI only"
+	@echo "  deploy-stop    - Stop all services"
+	@echo "  deploy-restart - Restart all services"
+	@echo "  deploy-status  - Check service status"
+	@echo "  deploy-logs    - Show server logs"
+	@echo ""
+	@echo "OpenAPI:"
+	@echo "  openapi-start  - Start OpenAPI server"
+	@echo "  openapi-stop   - Stop OpenAPI server"
+	@echo "  openapi-status - Check OpenAPI server status"
+	@echo "  openapi-open   - Open Swagger UI in browser"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test-e2e       - Run E2E tests"
+	@echo "  test-load      - Run load tests"
+	@echo "  test-api       - Run API tests"
+	@echo "  test-report    - Generate test reports"
+	@echo ""
+
 # Full E2E test suite
 test-full:
 	@echo "Running full E2E test suite..."
 	./scripts/test/e2e/run_e2e_tests.sh run
 
-# Development deployment
+# Legacy deployment commands (kept for backward compatibility)
 dev-deploy:
 	@echo "Running development deployment..."
-	./scripts/deploy/local/dev-deploy.sh
-
-# Smart deployment with different modes
-deploy-local:
-	@echo "Deploying to local process..."
-	./scripts/deploy/local/smart-deploy.sh local-process
-
-deploy-docker:
-	@echo "Deploying to local Docker..."
-	./scripts/deploy/local/smart-deploy.sh local-docker
+	@./scripts/deploy/local/dev-deploy.sh
 
 deploy-persistent:
 	@echo "Deploying to persistent Docker..."
-	./scripts/deploy/local/smart-deploy.sh persistent-docker
+	@./scripts/deploy/local/smart-deploy.sh persistent-docker
 
 # Persistent Docker management
 persistent-up:
 	@echo "Starting persistent Docker services..."
-	docker-compose -f scripts/docker/docker-compose-persistent.yml up -d
+	@docker-compose -f scripts/docker/docker-compose-persistent.yml up -d
 
 persistent-down:
 	@echo "Stopping persistent Docker services..."
-	docker-compose -f scripts/docker/docker-compose-persistent.yml down
+	@docker-compose -f scripts/docker/docker-compose-persistent.yml down
 
 persistent-logs:
 	@echo "Showing persistent Docker logs..."
-	docker-compose -f docker-compose-persistent.yml logs -f
+	@docker-compose -f docker-compose-persistent.yml logs -f
 
 persistent-clean:
 	@echo "Cleaning persistent Docker data..."
-	docker-compose -f scripts/docker/docker-compose-persistent.yml down -v
-	docker volume rm teamsnotify_postgres_data teamsnotify_redis_data 2>/dev/null || true
+	@docker-compose -f scripts/docker/docker-compose-persistent.yml down -v
+	@docker volume rm teamsnotify_postgres_data teamsnotify_redis_data 2>/dev/null || true
