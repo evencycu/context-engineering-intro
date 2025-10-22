@@ -21,7 +21,7 @@ COMPOSE_DEV_FILE="docker-compose.dev.yml"
 COMPOSE_PROD_FILE="docker-compose.prod.yml"
 
 # Services
-SERVICES=("apiserver" "worker" "admin" "postgres" "redis")
+SERVICES=("apiserver" "postgres" "redis")
 
 # Function to print colored output
 print_status() {
@@ -338,42 +338,6 @@ services:
       - ./configs:/etc/config:ro
       - ./logs:/var/log
 
-  worker:
-    build:
-      context: .
-      dockerfile: build/teamsnotification/Dockerfile
-    environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgres://postgres:password@postgres:5432/teams_notification?sslmode=disable
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./configs:/etc/config:ro
-      - ./logs:/var/log
-
-  admin:
-    build:
-      context: .
-      dockerfile: build/teamsnotification/Dockerfile
-    ports:
-      - "8081:8081"
-    environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgres://postgres:password@postgres:5432/teams_notification?sslmode=disable
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./configs:/etc/config:ro
-      - ./logs:/var/log
-
 volumes:
   postgres_data:
   redis_data:
@@ -421,45 +385,6 @@ services:
       - TEAMS_APP_ID=${TEAMS_APP_ID}
       - TEAMS_APP_PASSWORD=${TEAMS_APP_PASSWORD}
       - TEAMS_TENANT_ID=${TEAMS_TENANT_ID}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./configs:/etc/config:ro
-      - ./logs:/var/log
-    restart: unless-stopped
-
-  worker:
-    image: teams-notification/worker:latest
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - TEAMS_APP_ID=${TEAMS_APP_ID}
-      - TEAMS_APP_PASSWORD=${TEAMS_APP_PASSWORD}
-      - TEAMS_TENANT_ID=${TEAMS_TENANT_ID}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./configs:/etc/config:ro
-      - ./logs:/var/log
-    restart: unless-stopped
-
-  admin:
-    image: teams-notification/admin:latest
-    ports:
-      - "8081:8081"
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -546,7 +471,7 @@ main() {
                 command="$1"
                 shift
                 ;;
-            apiserver|worker|admin|postgres|redis)
+            apiserver|postgres|redis)
                 service="$1"
                 shift
                 ;;
