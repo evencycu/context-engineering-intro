@@ -38,10 +38,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		billing.POST("/plans", h.CreateBillingPlan)
 		billing.PUT("/plans/:id", h.UpdateBillingPlan)
 
-		// Company billing
-		billing.GET("/company/:companyId", h.GetCompanyBilling)
-		billing.PUT("/company/:companyId", h.UpdateCompanyBilling)
-		billing.POST("/company/:companyId/plan", h.SetCompanyBillingPlan)
+		// Project billing
+		billing.GET("/project/:projectId", h.GetProjectBilling)
+		billing.PUT("/project/:projectId", h.UpdateProjectBilling)
+		billing.POST("/project/:projectId/plan", h.SetProjectBillingPlan)
 
 		// Analytics
 		billing.GET("/analytics/overview", h.GetAnalyticsOverview)
@@ -434,23 +434,23 @@ func (h *Handler) UpdateBillingPlan(c *gin.Context) {
 	})
 }
 
-// GetCompanyBilling gets billing information for a company
-func (h *Handler) GetCompanyBilling(c *gin.Context) {
-	companyIDStr := c.Param("companyId")
-	companyID, err := uuid.Parse(companyIDStr)
+// GetProjectBilling gets billing information for a project
+func (h *Handler) GetProjectBilling(c *gin.Context) {
+	projectIDStr := c.Param("projectId")
+	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid company ID format",
+			"error":   "Invalid project ID format",
 		})
 		return
 	}
 
-	billing, err := h.billingService.GetCompanyBilling(c.Request.Context(), companyID)
+	billing, err := h.billingService.GetProjectBilling(c.Request.Context(), projectID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Company billing not found: " + err.Error(),
+			"error":   "Project billing not found: " + err.Error(),
 		})
 		return
 	}
@@ -461,12 +461,12 @@ func (h *Handler) GetCompanyBilling(c *gin.Context) {
 	})
 }
 
-// UpdateCompanyBillingRequest represents an update company billing request
-type UpdateCompanyBillingRequest struct {
-	BillingEmail  *string `json:"billingEmail" validate:"omitempty,email"`
-	PaymentMethod *string `json:"paymentMethod" validate:"omitempty,oneof=credit_card bank_transfer paypal"`
-	Currency      *string `json:"currency" validate:"omitempty,len=3"`
-	Status        *string `json:"status" validate:"omitempty,oneof=active suspended cancelled"`
+// UpdateProjectBillingRequest represents an update project billing request
+type UpdateProjectBillingRequest struct {
+	PaymentMethod    *string `json:"paymentMethod" validate:"omitempty,oneof=credit_card bank_transfer invoice"`
+	BillingCycle     *string `json:"billingCycle" validate:"omitempty,oneof=monthly yearly"`
+	NextBillingDate *string `json:"nextBillingDate" validate:"omitempty,datetime=2006-01-02"`
+	BillingStatus    *string `json:"billingStatus" validate:"omitempty,oneof=active suspended cancelled"`
 }
 
 // UpdateCompanyBilling updates company billing information
