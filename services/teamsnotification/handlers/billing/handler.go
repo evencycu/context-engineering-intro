@@ -463,10 +463,10 @@ func (h *Handler) GetProjectBilling(c *gin.Context) {
 
 // UpdateProjectBillingRequest represents an update project billing request
 type UpdateProjectBillingRequest struct {
-	PaymentMethod    *string `json:"paymentMethod" validate:"omitempty,oneof=credit_card bank_transfer invoice"`
-	BillingCycle     *string `json:"billingCycle" validate:"omitempty,oneof=monthly yearly"`
+	PaymentMethod   *string `json:"paymentMethod" validate:"omitempty,oneof=credit_card bank_transfer invoice"`
+	BillingCycle    *string `json:"billingCycle" validate:"omitempty,oneof=monthly yearly"`
 	NextBillingDate *string `json:"nextBillingDate" validate:"omitempty,datetime=2006-01-02"`
-	BillingStatus    *string `json:"billingStatus" validate:"omitempty,oneof=active suspended cancelled"`
+	BillingStatus   *string `json:"billingStatus" validate:"omitempty,oneof=active suspended cancelled"`
 }
 
 // UpdateProjectBilling updates project billing information
@@ -491,10 +491,10 @@ func (h *Handler) UpdateProjectBilling(c *gin.Context) {
 	}
 
 	billing, err := h.billingService.UpdateProjectBilling(c.Request.Context(), projectID, &services.UpdateProjectBillingRequest{
-		PaymentMethod:    req.PaymentMethod,
-		BillingCycle:     req.BillingCycle,
+		PaymentMethod:   req.PaymentMethod,
+		BillingCycle:    req.BillingCycle,
 		NextBillingDate: req.NextBillingDate,
-		BillingStatus:    req.BillingStatus,
+		BillingStatus:   req.BillingStatus,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -600,7 +600,7 @@ func (a *NotificationActor) recordUsage(ctx context.Context) error {
 		return fmt.Errorf("failed to get notification: %w", err)
 	}
 
-	// Get project to get company_id and billing info
+	// Get project to get billing info
 	project, err := a.DB.GetProjectByID(ctx, notification.ProjectID)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)

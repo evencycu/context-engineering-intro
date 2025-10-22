@@ -413,7 +413,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompanyBillingUpdateRequest"
+              $ref: "#/components/schemas/ProjectBillingUpdateRequest"
       responses:
         "200":
           description: Company billing status updated successfully
@@ -1603,13 +1603,13 @@ paths:
         "404":
           $ref: "#/components/responses/NotFoundError"
 
-  /internal/v1/billing/company/{companyId}:
+  /internal/v1/billing/project/{projectId}:
     get:
-      summary: Get company billing
+      summary: Get project billing
       tags: [Internal API - Billing]
-      description: Get company billing information
+      description: Get project billing information
       parameters:
-        - name: companyId
+        - name: projectId
           in: path
           required: true
           schema:
@@ -1617,20 +1617,20 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Company billing information
+          description: Project billing information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyBillingResponse"
+                $ref: "#/components/schemas/ProjectBillingResponse"
         "404":
           $ref: "#/components/responses/NotFoundError"
 
     put:
-      summary: Update company billing
+      summary: Update project billing
       tags: [Internal API - Billing]
-      description: Update company billing information
+      description: Update project billing information
       parameters:
-        - name: companyId
+        - name: projectId
           in: path
           required: true
           schema:
@@ -1641,14 +1641,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompanyBillingUpdateRequest"
+              $ref: "#/components/schemas/ProjectBillingUpdateRequest"
       responses:
         "200":
-          description: Company billing updated successfully
+          description: Project billing updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyBillingResponse"
+                $ref: "#/components/schemas/ProjectBillingResponse"
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":
@@ -2240,13 +2240,21 @@ components:
           type: string
           enum: [active, inactive, suspended]
 
-    CompanyBillingUpdateRequest:
+    ProjectBillingUpdateRequest:
       type: object
-      required:
-        - billingEnabled
       properties:
-        billingEnabled:
-          type: boolean
+        paymentMethod:
+          type: string
+          enum: [credit_card, bank_transfer, paypal]
+        billingCycle:
+          type: string
+          enum: [monthly, yearly]
+        nextBillingDate:
+          type: string
+          format: date
+        billingStatus:
+          type: string
+          enum: [active, suspended, cancelled]
 
     PaginationResponse:
       type: object
@@ -3128,10 +3136,10 @@ components:
         pagination:
           $ref: "#/components/schemas/PaginationResponse"
 
-    CompanyBillingResponse:
+    ProjectBillingResponse:
       type: object
       properties:
-        companyId:
+        projectId:
           type: string
           format: uuid
         planId:
