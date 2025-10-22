@@ -1402,7 +1402,7 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	filterList := make([]string, 0)
 	if filterFlag {
 		for _, rt := range req.Targets {
-			if strings.ToLower(rt) == "all" {
+			if strings.EqualFold(rt, "all") {
 				filterFlag = false
 				break
 			}
@@ -1463,14 +1463,27 @@ func filterDestinations(destinations []*database.Destination, targets []string) 
 	filteredDestinations := make([]*database.Destination, 0)
 	for _, d := range destinations {
 		for _, t := range targets {
+			matched := false
 			if strings.Contains(t, "@") {
-				if strings.ToLower(t) == strings.ToLower(d.Targets[0].Email) {
-					filteredDestinations = append(filteredDestinations, d)
+				for _, tgt := range d.Targets {
+					if strings.EqualFold(t, tgt.Email) {
+						filteredDestinations = append(filteredDestinations, d)
+						matched = true
+						break
+					}
 				}
 			} else {
-				if strings.ToLower(t) == strings.ToLower(d.Targets[0].ConversationID) {
-					filteredDestinations = append(filteredDestinations, d)
+				// match by conversation_id across all targets
+				for _, tgt := range d.Targets {
+					if strings.EqualFold(t, tgt.ConversationID) {
+						filteredDestinations = append(filteredDestinations, d)
+						matched = true
+						break
+					}
 				}
+			}
+			if matched {
+				break // avoid duplicate appends for the same destination
 			}
 		}
 	}

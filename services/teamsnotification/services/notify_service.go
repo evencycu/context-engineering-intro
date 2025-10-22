@@ -12,6 +12,7 @@ import (
 // NotifyService handles external user notification requests
 type NotifyService interface {
 	SendNotification(ctx context.Context, req *NotifyRequest) (*NotifyResponse, error)
+	GetProjectDestinations(ctx context.Context, notifyKey string) ([]DestinationInfo, error)
 }
 
 // notifyService implements NotifyService

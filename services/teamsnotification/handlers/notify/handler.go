@@ -135,8 +135,15 @@ func (h *Handler) GetProjectDestinations(c *gin.Context) {
 		return
 	}
 
-	// For now, return empty destinations - TODO: Implement proper destinations endpoint
-	destinations := []services.DestinationInfo{}
+	// Get destinations from service
+	destinations, err := h.notifyService.GetProjectDestinations(c.Request.Context(), req.NotifyKey)
+	if err != nil {
+		c.JSON(http.StatusNotFound, GetProjectDestinationsResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, GetProjectDestinationsResponse{
 		Success:      true,

@@ -20,6 +20,11 @@ PROJECT_ID="750e8400-e29b-41d4-a716-446655440001"
 DESTINATION_ID="950e8400-e29b-41d4-a716-446655440003"
 NOTIFICATION_ID=""
 
+# Predefined conversation IDs from scripts/database/init.sql
+PERSONAL_CONV_ID="a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+GROUPCHAT_CONV_ID="19:f26a8d8a235f430db87a404491cd2ffc@thread.v2"
+CHANNEL_CONV_ID="19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+
 # Test counters
 TOTAL_TESTS=0
 PASSED_TESTS=0
@@ -153,7 +158,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "messageType": "text",
     "content": "這是一條測試通知訊息",
     "priority": "normal",
-    "targets": ["'"$DESTINATION_ID"'"],
+    "targets": ["'"$PERSONAL_CONV_ID"'", "'"$GROUPCHAT_CONV_ID"'", "'"$CHANNEL_CONV_ID"'"],
     "metadata": {
       "test_type": "simple_text",
       "environment": "test"
@@ -183,7 +188,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "messageType": "text",
     "content": "🚨 這是一條高優先級測試通知",
     "priority": "high",
-    "targets": ["'"$DESTINATION_ID"'"],
+    "targets": ["'"$PERSONAL_CONV_ID"'", "'"$GROUPCHAT_CONV_ID"'", "'"$CHANNEL_CONV_ID"'"],
     "metadata": {
       "test_type": "high_priority",
       "alert_level": "critical"
@@ -213,7 +218,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notifications" \
     "content": "Hi @TestUser, 請查看這條重要訊息",
     "mentions": ["TestUser"],
     "priority": "normal",
-    "targets": ["'"$DESTINATION_ID"'"]
+    "targets": ["'"$PERSONAL_CONV_ID"'", "'"$GROUPCHAT_CONV_ID"'", "'"$CHANNEL_CONV_ID"'"]
   }')
 echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
 
