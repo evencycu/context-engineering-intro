@@ -28,6 +28,7 @@ A comprehensive Microsoft Teams notification system that provides pre-registered
 - **Cache/Queue**: Redis for caching and message queuing
 - **Authentication**: JWT-based with Teams Bot Framework validation
 - **Configuration**: Viper with environment variable support
+- **Project Structure**: Refactored with `libs/` for shared libraries and `services/` for business logic
 
 ## ⚡ Quick Start
 
@@ -388,6 +389,7 @@ docker run -d \
 - **[部署指南](./docs/05_DEPLOYMENT/DeploymentGuide.md)** - 部署和配置指南
 - **[用戶手冊](./docs/06_USER_GUIDE/UserManual.md)** - 用戶使用指南
 - **[開發指南](./docs/07_DEVELOPMENT/DevelopmentGuide.md)** - 開發環境和流程指南
+- **[重構指南](./docs/07_DEVELOPMENT/RefactoringGuide.md)** - 目錄結構重構說明
 
 ## 🔄 Queue & Circuit Breaker (新功能)
 

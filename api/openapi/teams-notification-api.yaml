@@ -3,19 +3,29 @@ info:
   title: Teams Notification API (Go implementation)
   version: 1.0.0
   description: |
-    This specification documents the REST endpoints implemented in `cmd/server/main.go`.
-    Includes all available routes including billing and file management features.
+    This specification documents the REST endpoints implemented in the Teams Notification Go service.
+    Includes all available routes for internal and external APIs.
+
+    ## API Structure
+    - **External APIs** (`/api/v1`): Public APIs for external clients
+    - **Internal APIs** (`/internal/v1`): Internal management APIs
+    - **System APIs**: Health, metrics, and configuration endpoints
 
     ## Recent Updates (v1.0.0)
-    - **Configuration Management**: Unified configuration system with environment variable validation
+    - **Unified Configuration**: Environment-based configuration system
     - **Error Handling**: Standardized error responses with proper HTTP status codes
     - **Token Management**: Redis-backed token caching for improved performance
     - **Monitoring**: Enhanced health checks and system metrics
     - **Logging**: Structured logging with configurable levels and formats
+
 servers:
   - url: http://localhost:8080
-    description: Local development (default configuration)
+    description: Local development server
+  - url: https://api.teamsnotify.com
+    description: Production server
+
 paths:
+  # System endpoints
   /health:
     get:
       summary: Service health check
@@ -27,6 +37,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+
   /metrics:
     get:
       summary: System metrics
@@ -39,6 +50,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricsResponse"
+
   /config:
     get:
       summary: Get system configuration
@@ -48,31 +60,19 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: Configuration information
+          description: System configuration
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConfigResponse"
-              examples:
-                sample:
-                  summary: Example config
-                  value:
-                    server: { port: "8080", environment: "development" }
-                    database:
-                      {
-                        url: "postgresql://user:pass@localhost:5432/db?sslmode=disable",
-                      }
-                    redis: { url: "redis://localhost:6379" }
-                    teams: { appId: "<id>", tenantId: "<tenant>" }
-                    actor: { max_actors: 10 }
-                    logger: { level: "info", format: "json" }
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/UnauthorizedError"
+
   /config/validate:
     post:
-      summary: Validate configuration
+      summary: Validate system configuration
       tags: [System]
-      description: Validates current system configuration and environment variables
+      description: Validates the current system configuration
       security:
         - bearerAuth: []
       responses:
@@ -82,52 +82,231 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConfigValidationResponse"
-              examples:
-                valid:
-                  summary: Valid configuration
-                  value:
-                    valid: true
-                    errors: []
-                    warnings: []
-                invalid:
-                  summary: Missing required environment variables
-                  value:
-                    valid: false
-                    errors:
-                      - field: "TN_DATABASE_URL"
-                        message: "missing required env"
-                      - field: "TN_REDIS_URL"
-                        message: "missing required env"
-                    warnings: []
         "401":
-          $ref: "#/components/responses/Unauthorized"
-  /internal/v1/companies:
-    get:
-      summary: List companies
-      tags: [Companies]
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
-        - name: search
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
+          $ref: "#/components/responses/UnauthorizedError"
+
+  # External API endpoints (/api/v1)
+  /api/v1/notify:
+    post:
+      summary: Send notification (External API)
+      tags: [External API]
+      description: Send a notification to Teams using project notify key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalNotifyRequest"
       responses:
         "200":
-          description: Company collection
+          description: Notification sent successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedCompanies"
+                $ref: "#/components/schemas/ExternalNotifyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /api/v1/destinations/{notifyKey}:
+    get:
+      summary: Get project destinations (External API)
+      tags: [External API]
+      description: Get destinations for a project using notify key
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project notify key
+      responses:
+        "200":
+          description: Project destinations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDestinationsResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /api/v1/provision:
+    post:
+      summary: Create project provision
+      tags: [External API]
+      description: Create a new project provision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionCreateRequest"
+      responses:
+        "201":
+          description: Project provision created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+  /api/v1/provision/{notifyKey}:
+    get:
+      summary: Get project provision
+      tags: [External API]
+      description: Get project provision by notify key
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project notify key
+      responses:
+        "200":
+          description: Project provision details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    put:
+      summary: Update project provision
+      tags: [External API]
+      description: Update project provision by notify key
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project notify key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionUpdateRequest"
+      responses:
+        "200":
+          description: Project provision updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /api/v1/provision/{notifyKey}/enable:
+    post:
+      summary: Enable project provision
+      tags: [External API]
+      description: Enable project provision by notify key
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project notify key
+      responses:
+        "200":
+          description: Project provision enabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /api/v1/provision/{notifyKey}/disable:
+    post:
+      summary: Disable project provision
+      tags: [External API]
+      description: Disable project provision by notify key
+      parameters:
+        - name: notifyKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project notify key
+      responses:
+        "200":
+          description: Project provision disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /api/v1/messages:
+    post:
+      summary: Handle Bot Framework messages
+      tags: [External API]
+      description: Handle incoming Bot Framework Activity messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotFrameworkActivity"
+      responses:
+        "200":
+          description: Message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /api/v1/messages/test:
+    post:
+      summary: Test proactive message
+      tags: [External API]
+      description: Send a test proactive message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProactiveTestRequest"
+      responses:
+        "200":
+          description: Test message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # Internal API endpoints (/internal/v1)
+  /internal/v1/companies:
+    get:
+      summary: List companies
+      tags: [Internal API - Companies]
+      description: Get a list of companies with pagination
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyListResponse"
+
     post:
       summary: Create company
-      tags: [Companies]
+      tags: [Internal API - Companies]
+      description: Create a new company
       requestBody:
         required: true
         content:
@@ -136,27 +315,37 @@ paths:
               $ref: "#/components/schemas/CompanyCreateRequest"
       responses:
         "201":
-          description: Created company
+          description: Company created successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
   /internal/v1/companies/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
     get:
       summary: Get company
-      tags: [Companies]
+      tags: [Internal API - Companies]
+      description: Get company by ID
+      parameters:
+        - $ref: "#/components/parameters/CompanyIdParam"
       responses:
         "200":
-          description: Company
+          description: Company details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     put:
       summary: Update company
-      tags: [Companies]
+      tags: [Internal API - Companies]
+      description: Update company by ID
+      parameters:
+        - $ref: "#/components/parameters/CompanyIdParam"
       requestBody:
         required: true
         content:
@@ -165,91 +354,100 @@ paths:
               $ref: "#/components/schemas/CompanyUpdateRequest"
       responses:
         "200":
-          description: Updated company
+          description: Company updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     delete:
       summary: Delete company
-      tags: [Companies]
+      tags: [Internal API - Companies]
+      description: Delete company by ID
+      parameters:
+        - $ref: "#/components/parameters/CompanyIdParam"
       responses:
         "204":
-          description: Deleted
+          description: Company deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/companies/{id}/status:
     patch:
       summary: Update company status
-      tags: [Companies]
+      tags: [Internal API - Companies]
+      description: Update company status by ID
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CompanyIdParam"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [status]
-              properties:
-                status:
-                  type: string
-                  enum: [active, inactive, suspended]
+              $ref: "#/components/schemas/CompanyStatusUpdateRequest"
       responses:
         "200":
-          description: Updated company
+          description: Company status updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/companies/{id}/billing:
     patch:
-      summary: Update company billing enabled flag
-      tags: [Companies]
+      summary: Update company billing status
+      tags: [Internal API - Companies]
+      description: Update company billing status by ID
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CompanyIdParam"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [enabled]
-              properties:
-                enabled:
-                  type: boolean
+              $ref: "#/components/schemas/CompanyBillingUpdateRequest"
       responses:
         "200":
-          description: Updated company
+          description: Company billing status updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  # Users endpoints
   /internal/v1/users:
     get:
       summary: List users
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Get a list of users with pagination
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
-        - name: role
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: User collection
+          description: List of users
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedUsers"
+                $ref: "#/components/schemas/UserListResponse"
+
     post:
       summary: Create user
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Create a new user
       requestBody:
         required: true
         content:
@@ -258,27 +456,47 @@ paths:
               $ref: "#/components/schemas/UserCreateRequest"
       responses:
         "201":
-          description: Created user
+          description: User created successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
   /internal/v1/users/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
     get:
       summary: Get user
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: User
+          description: User details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     put:
       summary: Update user
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Update user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -287,42 +505,64 @@ paths:
               $ref: "#/components/schemas/UserUpdateRequest"
       responses:
         "200":
-          description: Updated user
+          description: User updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     delete:
       summary: Delete user
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Delete user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "204":
-          description: Deleted
+          description: User deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/users/{id}/password:
     patch:
       summary: Change user password
-      tags: [Users]
+      tags: [Internal API - Users]
+      description: Change user password by ID
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [old_password, new_password]
-              properties:
-                oldPassword:
-                  type: string
-                newPassword:
-                  type: string
+              $ref: "#/components/schemas/ChangePasswordRequest"
       responses:
         "200":
-          description: Password updated
+          description: Password changed successfully
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/users/company/{companyId}:
     get:
-      summary: List users by company
-      tags: [Users]
+      summary: Get users by company
+      tags: [Internal API - Users]
+      description: Get users by company ID
       parameters:
         - name: companyId
           in: path
@@ -332,39 +572,56 @@ paths:
             format: uuid
       responses:
         "200":
-          description: User list
+          description: List of users in company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/users/role/{role}:
     get:
-      summary: List users by role
-      tags: [Users]
+      summary: Get users by role
+      tags: [Internal API - Users]
+      description: Get users by role
       parameters:
         - name: role
           in: path
           required: true
           schema:
             type: string
+            enum: [admin, manager, user]
       responses:
         "200":
-          description: User list
-  /internal/v1/projects:
-    get:
-      summary: List projects
-      tags: [Projects]
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
-      responses:
-        "200":
-          description: Project collection
+          description: List of users with role
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedProjects"
+                $ref: "#/components/schemas/UserListResponse"
+
+  # Projects endpoints
+  /internal/v1/projects:
+    get:
+      summary: List projects
+      tags: [Internal API - Projects]
+      description: Get a list of projects with pagination
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+
     post:
       summary: Create project
-      tags: [Projects]
+      tags: [Internal API - Projects]
+      description: Create a new project
       requestBody:
         required: true
         content:
@@ -373,27 +630,47 @@ paths:
               $ref: "#/components/schemas/ProjectCreateRequest"
       responses:
         "201":
-          description: Created project
+          description: Project created successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
   /internal/v1/projects/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
     get:
       summary: Get project
-      tags: [Projects]
+      tags: [Internal API - Projects]
+      description: Get project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Project
+          description: Project details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     put:
       summary: Update project
-      tags: [Projects]
+      tags: [Internal API - Projects]
+      description: Update project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -402,41 +679,68 @@ paths:
               $ref: "#/components/schemas/ProjectUpdateRequest"
       responses:
         "200":
-          description: Updated project
+          description: Project updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     delete:
       summary: Delete project
-      tags: [Projects]
+      tags: [Internal API - Projects]
+      description: Delete project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "204":
-          description: Deleted
+          description: Project deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/projects/{id}/limits:
     patch:
       summary: Update project limits
-      tags: [Projects]
+      tags: [Internal API - Projects]
+      description: Update project limits by ID
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                dailyLimit:
-                  type: integer
-                monthlyLimit:
-                  type: integer
+              $ref: "#/components/schemas/ProjectLimitsUpdateRequest"
       responses:
         "200":
-          description: Updated project
+          description: Project limits updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/projects/company/{companyId}:
     get:
-      summary: List projects by company
-      tags: [Projects]
+      summary: Get projects by company
+      tags: [Internal API - Projects]
+      description: Get projects by company ID
       parameters:
         - name: companyId
           in: path
@@ -446,11 +750,19 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Project list
+          description: List of projects in company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/projects/key/{keyName}:
     get:
-      summary: Get project by notify key
-      tags: [Projects]
+      summary: Get project by key name
+      tags: [Internal API - Projects]
+      description: Get project by notify key name
       parameters:
         - name: keyName
           in: path
@@ -459,319 +771,41 @@ paths:
             type: string
       responses:
         "200":
-          description: Project
+          description: Project details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProjectResponse"
-  /internal/v1/bots/platform:
-    get:
-      summary: List platform bots
-      tags: [Bots]
-      responses:
-        "200":
-          description: Bot list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotListResponse"
-    post:
-      summary: Create platform bot
-      tags: [Bots]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BotCreateRequest"
-      responses:
-        "201":
-          description: Created bot
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotResponse"
-  /internal/v1/bots/platform/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
-    get:
-      summary: Get platform bot
-      tags: [Bots]
-      responses:
-        "200":
-          description: Bot payload
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotResponse"
-    put:
-      summary: Update platform bot
-      tags: [Bots]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BotUpdateRequest"
-      responses:
-        "200":
-          description: Updated bot
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotResponse"
-    delete:
-      summary: Delete platform bot
-      tags: [Bots]
-      responses:
-        "204":
-          description: Deleted
-  /internal/v1/bots/platform/{id}/status:
-    patch:
-      summary: Update bot status
-      tags: [Bots]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [status]
-              properties:
-                status:
-                  type: string
-                  enum: [active, inactive, suspended, maintenance]
-      responses:
-        "200":
-          description: Updated bot
-  /internal/v1/bots/platform/{id}/capabilities:
-    patch:
-      summary: Update bot capabilities
-      tags: [Bots]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
-      responses:
-        "200":
-          description: Updated bot
-  /internal/v1/bots/platform/{id}/test:
-    post:
-      summary: Test bot connection
-      tags: [Bots]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      responses:
-        "200":
-          description: Test result
-  /internal/v1/bots/status/{status}:
-    get:
-      summary: List bots by status
-      tags: [Bots]
-      parameters:
-        - name: status
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [active, inactive, suspended, maintenance]
-      responses:
-        "200":
-          description: Bot list
-  /internal/v1/destinations:
-    get:
-      summary: List destinations
-      tags: [Destinations]
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
-        - name: search
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Destination collection
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaginatedDestinations"
-    post:
-      summary: Create destination
-      tags: [Destinations]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DestinationCreateRequest"
-      responses:
-        "201":
-          description: Created destination
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DestinationResponse"
-  /internal/v1/destinations/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
-    get:
-      summary: Get destination
-      tags: [Destinations]
-      responses:
-        "200":
-          description: Destination
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DestinationResponse"
-    put:
-      summary: Update destination
-      tags: [Destinations]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DestinationUpdateRequest"
-      responses:
-        "200":
-          description: Updated destination
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DestinationResponse"
-    delete:
-      summary: Delete destination
-      tags: [Destinations]
-      responses:
-        "204":
-          description: Deleted
-  /internal/v1/destinations/{id}/targets:
-    patch:
-      summary: Update destination targets
-      tags: [Destinations]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DestinationTargetsRequest"
-      responses:
-        "200":
-          description: Updated destination
-  /internal/v1/destinations/{id}/validate:
-    post:
-      summary: Validate destination targets
-      tags: [Destinations]
-      parameters:
-        - $ref: "#/components/parameters/ID"
-      responses:
-        "200":
-          description: Validation result
-  /internal/v1/destinations/project/{projectId}:
-    get:
-      summary: List destinations by project
-      tags: [Destinations]
-      parameters:
-        - name: projectId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Destination list
-  /internal/v1/destinations/bot/{botId}:
-    get:
-      summary: List destinations by bot
-      tags: [Destinations]
-      parameters:
-        - name: botId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Destination list
-  /internal/v1/destinations/search:
-    get:
-      summary: Search destinations
-      tags: [Destinations]
-      parameters:
-        - name: target_type
-          in: query
-          schema:
-            type: string
-            enum: [person, channel, chatgroup]
-        - name: target_id
-          in: query
-          schema:
-            type: string
-        - name: team_id
-          in: query
-          schema:
-            type: string
-        - name: channel_id
-          in: query
-          schema:
-            type: string
-        - name: user_id
-          in: query
-          schema:
-            type: string
-        - name: group_id
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Destination list
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  # Notifications endpoints
   /internal/v1/notifications:
     get:
       summary: List notifications
-      tags: [Notifications]
+      tags: [Internal API - Notifications]
+      description: Get a list of notifications with pagination
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/SortBy"
-        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
         - name: status
           in: query
           schema:
             type: string
-        - name: search
-          in: query
-          schema:
-            type: string
+            enum: [pending, sent, failed, cancelled]
       responses:
         "200":
-          description: Notification list
+          description: List of notifications
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedNotifications"
+                $ref: "#/components/schemas/NotificationListResponse"
+
     post:
       summary: Send notification
-      tags: [Notifications]
+      tags: [Internal API - Notifications]
+      description: Send a new notification
       requestBody:
         required: true
         content:
@@ -780,43 +814,86 @@ paths:
               $ref: "#/components/schemas/NotificationSendRequest"
       responses:
         "202":
-          description: Notification queued
+          description: Notification queued successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationEnqueueResponse"
+                $ref: "#/components/schemas/NotificationSendResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
   /internal/v1/notifications/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ID"
     get:
       summary: Get notification
-      tags: [Notifications]
+      tags: [Internal API - Notifications]
+      description: Get notification by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Notification
+          description: Notification details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     delete:
       summary: Cancel notification
-      tags: [Notifications]
+      tags: [Internal API - Notifications]
+      description: Cancel notification by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        "204":
-          description: Cancelled
+        "200":
+          description: Notification cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationCancelResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/notifications/{id}/retry:
     post:
       summary: Retry notification
-      tags: [Notifications]
+      tags: [Internal API - Notifications]
+      description: Retry failed notification by ID
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Retry accepted
+          description: Notification retry initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRetryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/notifications/project/{projectId}:
     get:
-      summary: List notifications by project
-      tags: [Notifications]
+      summary: Get notifications by project
+      tags: [Internal API - Notifications]
+      description: Get notifications by project ID
       parameters:
         - name: projectId
           in: path
@@ -826,11 +903,19 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Notification list
+          description: List of notifications for project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/notifications/sender/{senderId}:
     get:
-      summary: List notifications by sender
-      tags: [Notifications]
+      summary: Get notifications by sender
+      tags: [Internal API - Notifications]
+      description: Get notifications by sender ID
       parameters:
         - name: senderId
           in: path
@@ -840,24 +925,39 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Notification list
+          description: List of notifications by sender
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   /internal/v1/notifications/status/{status}:
     get:
-      summary: List notifications by status
-      tags: [Notifications]
+      summary: Get notifications by status
+      tags: [Internal API - Notifications]
+      description: Get notifications by status
       parameters:
         - name: status
           in: path
           required: true
           schema:
             type: string
+            enum: [pending, sent, failed, cancelled]
       responses:
         "200":
-          description: Notification list
+          description: List of notifications with status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
   /internal/v1/notifications/date-range:
     get:
-      summary: List notifications in date range
-      tags: [Notifications]
+      summary: Get notifications by date range
+      tags: [Internal API - Notifications]
+      description: Get notifications within date range
       parameters:
         - name: start_date
           in: query
@@ -873,392 +973,456 @@ paths:
             format: date-time
       responses:
         "200":
-          description: Notification list
-  /api/v1/messages:
-    post:
-      summary: Bot Framework inbound message webhook
-      tags: [Messages]
+          description: List of notifications in date range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDateRangeResponse"
+
+  # Destinations endpoints
+  /internal/v1/destinations:
+    get:
+      summary: List destinations
+      tags: [Internal API - Destinations]
+      description: Get a list of destinations with pagination
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: Acknowledged
-  /api/v1/messages/proactive/test:
+          description: List of destinations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+
     post:
-      summary: Send proactive test message
-      tags: [Messages]
-      responses:
-        "200":
-          description: Test result
-  /api/v1/provision:
-    post:
-      summary: Provision company/project/destination bundle
-      description: |
-        Create a complete notification setup including company, project, and destinations in one API call.
-        This is the recommended way to set up new notification projects.
-      tags: [Provision]
+      summary: Create destination
+      tags: [Internal API - Destinations]
+      description: Create a new destination
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProvisionCreateRequest"
-            examples:
-              basic:
-                summary: Basic provision setup
-                value:
-                  companyId: "e4f160f4-4917-443d-86e9-29071967b768"
-                  createdBy: "11111111-1111-1111-1111-111111111111"
-                  project_name: "My Notification Project"
-                  project_description: "A project for sending notifications"
-                  teams_tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                  targets:
-                    - type: "channel"
-                      tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                      conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
-                    - type: "personal"
-                      tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                      conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+              $ref: "#/components/schemas/DestinationCreateRequest"
       responses:
         "201":
-          description: Created bundle
+          description: Destination created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProvisionCreateResponse"
-              example:
-                data:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
-                  project:
-                    id: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
-                    companyId: "e4f160f4-4917-443d-86e9-29071967b768"
-                    notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
-                    description: "A project for sending notifications"
-                    status: "active"
-                    dailyLimit: 10000
-                    monthlyLimit: 300000
-                    priority: "normal"
-                  destination:
-                    id: "cf867660-26ae-4437-828c-6fb2c2e3eb19"
-                    projectId: "f6a110f8-27f9-477e-a651-6f8cdbc6dca5"
-                    name: "My Notification Project-default"
-                    description: "Auto-provisioned default destination"
-                    teams_tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                    targets:
-                      - type: "channel"
-                        conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
-                        tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                      - type: "personal"
-                        conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
-                        tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-                    status: "active"
-                    validation_status: "pending"
+                $ref: "#/components/schemas/DestinationResponse"
         "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notifyKey}:
-    parameters:
-      - name: notifyKey
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The notify key of the provisioned project
+          $ref: "#/components/responses/BadRequestError"
+
+  /internal/v1/destinations/{id}:
     get:
-      summary: Get provision bundle by notify key
-      description: Retrieve the complete provision bundle including project and destinations
-      tags: [Provision]
+      summary: Get destination
+      tags: [Internal API - Destinations]
+      description: Get destination by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Provision bundle
+          description: Destination details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProvisionReadResponse"
+                $ref: "#/components/schemas/DestinationResponse"
         "404":
-          description: Provision bundle not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFoundError"
+
     put:
-      summary: Update provision bundle
-      description: Update the provision bundle configuration
-      tags: [Provision]
+      summary: Update destination
+      tags: [Internal API - Destinations]
+      description: Update destination by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProvisionUpdateRequest"
+              $ref: "#/components/schemas/DestinationUpdateRequest"
       responses:
         "200":
-          description: Updated bundle
+          description: Destination updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProvisionReadResponse"
-        "404":
-          description: Provision bundle not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notifyKey}/enable:
-    post:
-      summary: Enable provisioned project
-      description: Enable the provisioned project to start accepting notifications
-      tags: [Provision]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The notify key of the provisioned project
-      responses:
-        "200":
-          description: Project enabled successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Project enabled successfully"
-        "404":
-          description: Provision bundle not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /api/v1/provision/{notifyKey}/disable:
-    post:
-      summary: Disable provisioned project
-      description: Disable the provisioned project to stop accepting notifications
-      tags: [Provision]
-      parameters:
-        - name: notifyKey
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The notify key of the provisioned project
-      responses:
-        "200":
-          description: Project disabled successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Project disabled successfully"
-        "404":
-          description: Provision bundle not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  # External API endpoints
-  /api/v1/notify:
-    post:
-      summary: Send notification to external users
-      description: |
-        Send notification using notify_key to pre-configured destinations.
-
-        **Usage Examples:**
-        ```bash
-        # Basic notification
-        curl -X POST http://localhost:8080/api/v1/notify \
-          -H "Content-Type: application/json" \
-          -d '{"notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38", "message": "Hello World"}'
-
-        # Advanced notification with all options
-        curl -X POST http://localhost:8080/api/v1/notify \
-          -H "Content-Type: application/json" \
-          -d '{
-            "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
-            "message": "Urgent: System maintenance in 1 hour",
-            "message_type": "text",
-            "priority": "high",
-            "targets": ["all"],
-            "mentions": ["@everyone"],
-            "metadata": {"source": "monitoring", "alert_level": "critical"}
-          }'
-
-        # Send to specific targets only
-        curl -X POST http://localhost:8080/api/v1/notify \
-          -H "Content-Type: application/json" \
-          -d '{
-            "notify_key": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
-            "message": "Channel-specific message",
-            "targets": ["19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"]
-          }'
-        ```
-      tags: [External API]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExternalNotificationRequest"
-            examples:
-              basic:
-                summary: Basic notification
-                value:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
-                  message: "Hello World"
-              advanced:
-                summary: Advanced notification with all options
-                value:
-                  notifyKey: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
-                  message: "Urgent: System maintenance in 1 hour"
-                  messageType: "text"
-                  priority: "high"
-                  targets: ["all"]
-                  mentions: ["@everyone"]
-                  metadata:
-                    source: "monitoring"
-                    alert_level: "critical"
-      responses:
-        "200":
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExternalNotificationResponse"
-              examples:
-                success:
-                  summary: Successful notification
-                  value:
-                    success: true
-                    data:
-                      notificationId: "123e4567-e89b-12d3-a456-426614174000"
-                      status: "sent"
-                      message: "Notification processed successfully"
-                      projectId: "123e4567-e89b-12d3-a456-426614174000"
-                      project_name: "my-project"
-                      destinationsCount: 3
-                      results:
-                        - destination_id: "19:abc123@thread.v2"
-                          destination_name: "Marketing Team"
-                          success: true
-                        - destination_id: "a:def456"
-                          destination_name: "Personal Chat"
-                          success: true
-                      estimated_delivery: "5-10 minutes"
+                $ref: "#/components/schemas/DestinationResponse"
         "400":
-          description: Bad request - Invalid input or missing required fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                validation_error:
-                  summary: Validation error
-                  value:
-                    success: false
-                    error: "notify_key is required"
-                    code: "VALIDATION_ERROR"
-                    details:
-                      field: "notify_key"
-                      message: "is required"
-                invalid_notifyKey:
-                  summary: Invalid notify key
-                  value:
-                    success: false
-                    error: "Project not found or inactive"
-                    code: "PROJECT_NOT_FOUND"
+          $ref: "#/components/responses/BadRequestError"
         "404":
-          description: Project not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                project_not_found:
-                  summary: Project not found
-                  value:
-                    success: false
-                    error: "Project with notify_key 'invalid-key' not found"
-                    code: "PROJECT_NOT_FOUND"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                server_error:
-                  summary: Server error
-                  value:
-                    success: false
-                    error: "Internal server error"
-                    code: "INTERNAL_ERROR"
+          $ref: "#/components/responses/NotFoundError"
 
-  /api/v1/destinations/{notifyKey}:
-    get:
-      summary: Get project destinations
-      description: Get available destinations for a project
-      tags: [External API]
+    delete:
+      summary: Delete destination
+      tags: [Internal API - Destinations]
+      description: Delete destination by ID
       parameters:
-        - name: notifyKey
+        - name: id
           in: path
           required: true
           schema:
             type: string
-          example: "my-project-key"
+            format: uuid
+      responses:
+        "204":
+          description: Destination deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/destinations/{id}/targets:
+    patch:
+      summary: Update destination targets
+      tags: [Internal API - Destinations]
+      description: Update destination targets by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DestinationTargetsUpdateRequest"
       responses:
         "200":
-          description: Project destinations
+          description: Destination targets updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExternalDestinationsResponse"
+                $ref: "#/components/schemas/DestinationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
-  /internal/v1/queue/stats:
+  /internal/v1/destinations/{id}/validate:
+    post:
+      summary: Validate destination targets
+      tags: [Internal API - Destinations]
+      description: Validate destination targets by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Destination targets validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationValidationResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/destinations/project/{projectId}:
     get:
-      summary: Get queue lengths
-      description: Returns lengths of high/normal/low priority Redis queues
-      tags: [Queue]
+      summary: Get destinations by project
+      tags: [Internal API - Destinations]
+      description: Get destinations by project ID
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Queue lengths
+          description: List of destinations for project
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      high:
-                        type: integer
-                        example: 0
-                      normal:
-                        type: integer
-                        example: 12
-                      low:
-                        type: integer
-                        example: 3
+                $ref: "#/components/schemas/DestinationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
-  # Billing API endpoints
+  /internal/v1/destinations/bot/{botId}:
+    get:
+      summary: Get destinations by bot
+      tags: [Internal API - Destinations]
+      description: Get destinations by bot ID
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of destinations for bot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/destinations/search:
+    get:
+      summary: Search destinations
+      tags: [Internal API - Destinations]
+      description: Search destinations with filters
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [personal, group, channel]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+
+  # Bots endpoints
+  /internal/v1/bots/platform:
+    get:
+      summary: List Teams bots
+      tags: [Internal API - Bots]
+      description: Get a list of Teams bot services
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
+      responses:
+        "200":
+          description: List of Teams bots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotListResponse"
+
+    post:
+      summary: Create Teams bot
+      tags: [Internal API - Bots]
+      description: Create a new Teams bot service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotCreateRequest"
+      responses:
+        "201":
+          description: Bot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+  /internal/v1/bots/platform/{id}:
+    get:
+      summary: Get Teams bot
+      tags: [Internal API - Bots]
+      description: Get Teams bot by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    put:
+      summary: Update Teams bot
+      tags: [Internal API - Bots]
+      description: Update Teams bot by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotUpdateRequest"
+      responses:
+        "200":
+          description: Bot updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    delete:
+      summary: Delete Teams bot
+      tags: [Internal API - Bots]
+      description: Delete Teams bot by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Bot deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/bots/platform/{id}/status:
+    patch:
+      summary: Update bot status
+      tags: [Internal API - Bots]
+      description: Update bot status by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotStatusUpdateRequest"
+      responses:
+        "200":
+          description: Bot status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/bots/platform/{id}/capabilities:
+    patch:
+      summary: Update bot capabilities
+      tags: [Internal API - Bots]
+      description: Update bot capabilities by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotCapabilitiesUpdateRequest"
+      responses:
+        "200":
+          description: Bot capabilities updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/bots/platform/{id}/test:
+    post:
+      summary: Test bot connection
+      tags: [Internal API - Bots]
+      description: Test bot connection by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bot connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotTestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/bots/status/{status}:
+    get:
+      summary: Get bots by status
+      tags: [Internal API - Bots]
+      description: Get bots by status
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [active, inactive, error]
+      responses:
+        "200":
+          description: List of bots with status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotListResponse"
+
+  # Billing endpoints
   /internal/v1/billing/usage:
     get:
       summary: Get usage records
-      description: Retrieve usage records with filtering and pagination
-      tags: [Billing]
+      tags: [Internal API - Billing]
+      description: Get usage records with pagination
       parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
         - name: company_id
           in: query
           schema:
@@ -1269,34 +1433,9 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: page_size
-          in: query
-          schema:
-            type: integer
-            default: 50
       responses:
         "200":
-          description: Usage records
+          description: List of usage records
           content:
             application/json:
               schema:
@@ -1305,10 +1444,15 @@ paths:
   /internal/v1/billing/usage/summary:
     get:
       summary: Get usage summary
+      tags: [Internal API - Billing]
       description: Get usage summary statistics
-      tags: [Billing]
       parameters:
         - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: project_id
           in: query
           schema:
             type: string
@@ -1331,98 +1475,190 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsageSummaryResponse"
 
-  /internal/v1/billing/plans:
+  /internal/v1/billing/usage/company/{companyId}:
     get:
-      summary: Get billing plans
-      description: Retrieve all billing plans
-      tags: [Billing]
+      summary: Get company usage
+      tags: [Internal API - Billing]
+      description: Get usage records for a company
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Billing plans
+          description: Company usage records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/billing/usage/project/{projectId}:
+    get:
+      summary: Get project usage
+      tags: [Internal API - Billing]
+      description: Get usage records for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Project usage records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /internal/v1/billing/plans:
+    get:
+      summary: List billing plans
+      tags: [Internal API - Billing]
+      description: Get a list of billing plans
+      responses:
+        "200":
+          description: List of billing plans
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BillingPlansResponse"
+
     post:
       summary: Create billing plan
+      tags: [Internal API - Billing]
       description: Create a new billing plan
-      tags: [Billing]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateBillingPlanRequest"
+              $ref: "#/components/schemas/BillingPlanCreateRequest"
       responses:
         "201":
-          description: Created billing plan
+          description: Billing plan created successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
 
   /internal/v1/billing/plans/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       summary: Get billing plan
-      description: Get a specific billing plan
-      tags: [Billing]
+      tags: [Internal API - Billing]
+      description: Get billing plan by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Billing plan
+          description: Billing plan details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
     put:
       summary: Update billing plan
-      description: Update a billing plan
-      tags: [Billing]
+      tags: [Internal API - Billing]
+      description: Update billing plan by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateBillingPlanRequest"
+              $ref: "#/components/schemas/BillingPlanUpdateRequest"
       responses:
         "200":
-          description: Updated billing plan
+          description: Billing plan updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BillingPlanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /internal/v1/billing/company/{companyId}:
-    parameters:
-      - name: companyId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       summary: Get company billing
-      description: Get billing information for a company
-      tags: [Billing]
+      tags: [Internal API - Billing]
+      description: Get company billing information
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Company billing
+          description: Company billing information
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompanyBillingResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    put:
+      summary: Update company billing
+      tags: [Internal API - Billing]
+      description: Update company billing information
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyBillingUpdateRequest"
+      responses:
+        "200":
+          description: Company billing updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBillingResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /internal/v1/billing/analytics/overview:
     get:
-      summary: Get analytics overview
+      summary: Get billing analytics overview
+      tags: [Internal API - Billing]
       description: Get billing analytics overview
-      tags: [Billing]
       parameters:
         - name: start_date
           in: query
@@ -1436,131 +1672,123 @@ paths:
             format: date
       responses:
         "200":
-          description: Analytics overview
+          description: Billing analytics overview
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AnalyticsOverviewResponse"
+                $ref: "#/components/schemas/BillingAnalyticsResponse"
 
-  # File Management API endpoints
+  # Files endpoints
   /internal/v1/files:
     get:
       summary: List files
-      description: List files with filtering and pagination
-      tags: [Files]
+      tags: [Internal API - Files]
+      description: Get a list of files with pagination
       parameters:
-        - name: project_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: tags
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-        - name: is_public
-          in: query
-          schema:
-            type: boolean
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: page_size
-          in: query
-          schema:
-            type: integer
-            default: 50
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: File list
+          description: List of files
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileListResponse"
+
+  /internal/v1/files/upload:
     post:
       summary: Upload file
+      tags: [Internal API - Files]
       description: Upload a single file
-      tags: [Files]
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/UploadFileRequest"
+              $ref: "#/components/schemas/FileUploadRequest"
       responses:
         "201":
-          description: File uploaded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FileUploadResponse"
-
-  /internal/v1/files/upload/multiple:
-    post:
-      summary: Upload multiple files
-      description: Upload multiple files at once
-      tags: [Files]
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/UploadMultipleFilesRequest"
-      responses:
-        "201":
-          description: Files uploaded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FileUploadMultipleResponse"
-
-  /internal/v1/files/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    get:
-      summary: Get file
-      description: Get file information
-      tags: [Files]
-      responses:
-        "200":
-          description: File information
+          description: File uploaded successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileResponse"
-    delete:
-      summary: Delete file
-      description: Delete a file
-      tags: [Files]
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+  /internal/v1/files/upload/multiple:
+    post:
+      summary: Upload multiple files
+      tags: [Internal API - Files]
+      description: Upload multiple files
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MultipleFileUploadRequest"
       responses:
-        "200":
-          description: File deleted
+        "201":
+          description: Files uploaded successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FileDeleteResponse"
+                $ref: "#/components/schemas/MultipleFileUploadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+  /internal/v1/files/{id}:
+    get:
+      summary: Get file
+      tags: [Internal API - Files]
+      description: Get file by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: File details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    delete:
+      summary: Delete file
+      tags: [Internal API - Files]
+      description: Delete file by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: File deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /internal/v1/files/{id}/download:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       summary: Download file
-      description: Download file content
-      tags: [Files]
+      tags: [Internal API - Files]
+      description: Download file by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: File content
@@ -1569,72 +1797,238 @@ paths:
               schema:
                 type: string
                 format: binary
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /internal/v1/files/validate:
     post:
       summary: Validate file
+      tags: [Internal API - Files]
       description: Validate file before upload
-      tags: [Files]
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/ValidateFileRequest"
+              $ref: "#/components/schemas/FileValidationRequest"
       responses:
         "200":
-          description: Validation result
+          description: File validation result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidateFileResponse"
+                $ref: "#/components/schemas/FileValidationResponse"
+
+  # Monitoring endpoints
+  /internal/v1/monitoring/health:
+    get:
+      summary: Get system health
+      tags: [Internal API - Monitoring]
+      description: Get comprehensive system health status
+      responses:
+        "200":
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemHealthResponse"
+
+  /internal/v1/monitoring/performance:
+    get:
+      summary: Get performance metrics
+      tags: [Internal API - Monitoring]
+      description: Get system performance metrics
+      responses:
+        "200":
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceMetricsResponse"
+
+  /internal/v1/monitoring/business:
+    get:
+      summary: Get business health
+      tags: [Internal API - Monitoring]
+      description: Get business metrics and health indicators
+      responses:
+        "200":
+          description: Business health metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessHealthResponse"
+
+  /internal/v1/monitoring/alerts:
+    get:
+      summary: Get alert status
+      tags: [Internal API - Monitoring]
+      description: Get current alert status
+      responses:
+        "200":
+          description: Alert status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertStatusResponse"
+
+  /internal/v1/monitoring/dashboard:
+    get:
+      summary: Get monitoring dashboard
+      tags: [Internal API - Monitoring]
+      description: Get comprehensive monitoring dashboard data
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+
+  # Queue endpoints
+  /internal/v1/queue/stats:
+    get:
+      summary: Get queue statistics
+      tags: [Internal API - Queue]
+      description: Get queue statistics and status
+      responses:
+        "200":
+          description: Queue statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatsResponse"
+
+  /internal/v1/queue/status:
+    get:
+      summary: Get queue status
+      tags: [Internal API - Queue]
+      description: Get current queue status
+      responses:
+        "200":
+          description: Queue status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatusResponse"
+
+  /internal/v1/queue/clear:
+    post:
+      summary: Clear queue
+      tags: [Internal API - Queue]
+      description: Clear all items from the queue
+      responses:
+        "200":
+          description: Queue cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueClearResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   parameters:
-    ID:
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+    OffsetParam:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    SearchParam:
+      name: search
+      in: query
+      description: Search term
+      required: false
+      schema:
+        type: string
+
+    CompanyIdParam:
       name: id
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    Limit:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-    Offset:
-      name: offset
-      in: query
-      schema:
-        type: integer
-        minimum: 0
-    SortBy:
-      name: sort_by
-      in: query
-      schema:
-        type: string
-    Order:
-      name: order
-      in: query
-      schema:
-        type: string
-        enum: [asc, desc]
+      description: Company ID
+
+  responses:
+    BadRequestError:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFoundError:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Detailed error information
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          example: "healthy"
+          enum: [healthy, unhealthy]
         timestamp:
           type: string
           format: date-time
         version:
           type: string
-          example: "1.0.0"
+        uptime:
+          type: string
+
     MetricsResponse:
       type: object
       properties:
@@ -1647,213 +2041,162 @@ components:
           $ref: "#/components/schemas/TokenCacheMetrics"
         actor_pool:
           $ref: "#/components/schemas/ActorPoolMetrics"
-        database:
-          $ref: "#/components/schemas/DatabaseMetrics"
-        redis:
-          $ref: "#/components/schemas/RedisMetrics"
+
     SystemMetrics:
       type: object
       properties:
-        uptime:
-          type: string
-          description: "System uptime in seconds"
         memory_usage:
           type: number
-          description: "Memory usage in bytes"
         cpu_usage:
           type: number
-          description: "CPU usage percentage"
         goroutines:
           type: integer
-          description: "Number of active goroutines"
+        uptime:
+          type: string
+
     TokenCacheMetrics:
       type: object
       properties:
-        cache_hits:
+        hits:
           type: integer
-          description: "Number of cache hits"
-        cache_misses:
+        misses:
           type: integer
-          description: "Number of cache misses"
-        active_tokens:
+        hit_rate:
+          type: number
+        total_keys:
           type: integer
-          description: "Number of active cached tokens"
-        refresh_count:
-          type: integer
-          description: "Number of token refreshes"
-        error_count:
-          type: integer
-          description: "Number of token errors"
+
     ActorPoolMetrics:
       type: object
       properties:
         active_actors:
           type: integer
-          description: "Number of active actors"
-        max_actors:
+        idle_actors:
           type: integer
-          description: "Maximum number of actors"
+        total_actors:
+          type: integer
         queue_size:
           type: integer
-          description: "Current queue size"
-        processed_count:
-          type: integer
-          description: "Total processed notifications"
-        error_count:
-          type: integer
-          description: "Total errors"
-    DatabaseMetrics:
+
+    # External API schemas
+    ExternalNotifyRequest:
       type: object
+      required:
+        - notifyKey
+        - message
       properties:
-        open_connections:
-          type: integer
-          description: "Number of open database connections"
-        idle_connections:
-          type: integer
-          description: "Number of idle connections"
-        max_connections:
-          type: integer
-          description: "Maximum connections"
-        query_count:
-          type: integer
-          description: "Total queries executed"
-    RedisMetrics:
-      type: object
-      properties:
-        connected:
-          type: boolean
-          description: "Redis connection status"
-        memory_usage:
+        notifyKey:
           type: string
-          description: "Redis memory usage"
-        key_count:
-          type: integer
-          description: "Number of keys in Redis"
-        operations_per_second:
-          type: number
-          description: "Redis operations per second"
-    ConfigResponse:
-      type: object
-      properties:
-        server:
-          $ref: "#/components/schemas/ServerConfig"
-        database:
-          $ref: "#/components/schemas/DatabaseConfig"
-        redis:
-          $ref: "#/components/schemas/RedisConfig"
-        teams:
-          $ref: "#/components/schemas/TeamsConfig"
-        actor:
-          $ref: "#/components/schemas/ActorConfig"
-    ServerConfig:
-      type: object
-      properties:
-        port:
-          type: string
-        environment:
-          type: string
-        read_timeout:
-          type: string
-        write_timeout:
-          type: string
-        rate_limit:
-          type: integer
-        burst:
-          type: integer
-    DatabaseConfig:
-      type: object
-      properties:
-        max_open_conns:
-          type: integer
-        max_idle_conns:
-          type: integer
-        conn_max_lifetime:
-          type: string
-        conn_max_idle_time:
-          type: string
-    RedisConfig:
-      type: object
-      properties:
-        pool_size:
-          type: integer
-        min_idle_conns:
-          type: integer
-        max_retries:
-          type: integer
-        timeout:
-          type: string
-    TeamsConfig:
-      type: object
-      properties:
-        appId:
-          type: string
-        tenantId:
-          type: string
-        base_url:
-          type: string
-        timeout:
-          type: string
-    ActorConfig:
-      type: object
-      properties:
-        max_actors:
-          type: integer
-        poll_interval:
-          type: string
-        retry_delay:
-          type: string
-        max_retries:
-          type: integer
-        circuit_breaker:
-          $ref: "#/components/schemas/CircuitBreakerConfig"
-    CircuitBreakerConfig:
-      type: object
-      properties:
-        failure_threshold:
-          type: integer
-        recovery_timeout:
-          type: string
-        half_open_max_calls:
-          type: integer
-    ConfigValidationResponse:
-      type: object
-      properties:
-        valid:
-          type: boolean
-          description: "Whether configuration is valid"
-        errors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConfigError"
-        warnings:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConfigWarning"
-    ConfigError:
-      type: object
-      properties:
-        field:
-          type: string
-          description: "Configuration field name"
+          description: Project notify key
+          example: "my-project-key"
         message:
           type: string
-          description: "Error message"
-        code:
+          description: Notification message
+          example: "Hello from external API"
+        messageType:
           type: string
-          description: "Error code"
-    ConfigWarning:
+          enum: [text, file, adaptive_card]
+          default: text
+          description: Type of message
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+          description: Message priority
+        targets:
+          type: array
+          items:
+            type: string
+          description: List of target emails, conversation IDs, or 'all'
+          example: ["all"]
+        mentions:
+          type: array
+          items:
+            type: string
+          description: List of user mentions
+          example: ["@user1", "@user2"]
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
+          example: {"source": "external", "version": "1.0"}
+
+    ExternalNotifyResponse:
       type: object
       properties:
-        field:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/NotifyResponse"
+        error:
           type: string
-          description: "Configuration field name"
+
+    NotifyResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        status:
+          type: string
         message:
           type: string
-          description: "Warning message"
-        suggestion:
+        destinationsCount:
+          type: integer
+        estimated_delivery_time:
           type: string
-          description: "Suggested improvement"
-    Company:
+
+    # Company schemas
+    CompanyCreateRequest:
+      type: object
+      required:
+        - name
+        - contactEmail
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          description: Company name
+        contactEmail:
+          type: string
+          format: email
+          description: Contact email
+        contactPhone:
+          type: string
+          description: Contact phone number
+        address:
+          type: string
+          description: Company address
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          default: active
+        billingEnabled:
+          type: boolean
+          default: false
+
+    CompanyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        billingEnabled:
+          type: boolean
+
+    CompanyResponse:
       type: object
       properties:
         id:
@@ -1877,50 +2220,35 @@ components:
         updatedAt:
           type: string
           format: date-time
-    CompanyCreateRequest:
-      type: object
-      required: [name, contact_email, contact_phone, address]
-      properties:
-        name:
-          type: string
-        contactEmail:
-          type: string
-        contactPhone:
-          type: string
-        address:
-          type: string
-        billingEnabled:
-          type: boolean
-    CompanyUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        contactEmail:
-          type: string
-        contactPhone:
-          type: string
-        address:
-          type: string
-        billingEnabled:
-          type: boolean
-    CompanyResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/Company"
-        message:
-          type: string
-    PaginatedCompanies:
+
+    CompanyListResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Company"
+            $ref: "#/components/schemas/CompanyResponse"
         pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-    PaginationMeta:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    CompanyStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+
+    CompanyBillingUpdateRequest:
+      type: object
+      required:
+        - billingEnabled
+      properties:
+        billingEnabled:
+          type: boolean
+
+    PaginationResponse:
       type: object
       properties:
         total:
@@ -1931,966 +2259,127 @@ components:
           type: integer
         pages:
           type: integer
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        companyId:
-          type: string
-          format: uuid
-        email:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-        status:
-          type: string
-        last_login_at:
-          type: string
-          format: date-time
-    UserCreateRequest:
-      type: object
-      required: [company_id, email, name]
-      properties:
-        companyId:
-          type: string
-          format: uuid
-        email:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-        password:
-          type: string
-    UserUpdateRequest:
-      type: object
-      properties:
-        companyId:
-          type: string
-          format: uuid
-        email:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-        status:
-          type: string
-        password:
-          type: string
-    UserResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/User"
-    PaginatedUsers:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/User"
-        pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-    Project:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        companyId:
-          type: string
-          format: uuid
-        notifyKey:
-          type: string
-        description:
-          type: string
-        status:
-          type: string
-        dailyLimit:
-          type: integer
-        monthlyLimit:
-          type: integer
-        priority:
-          type: string
-        createdBy:
-          type: string
-          format: uuid
-    ProjectCreateRequest:
-      type: object
-      required: [company_id, notify_key, description, created_by]
-      properties:
-        companyId:
-          type: string
-          format: uuid
-        notifyKey:
-          type: string
-        description:
-          type: string
-        dailyLimit:
-          type: integer
-        monthlyLimit:
-          type: integer
-        priority:
-          type: string
-        createdBy:
-          type: string
-          format: uuid
-    ProjectUpdateRequest:
-      type: object
-      properties:
-        description:
-          type: string
-        status:
-          type: string
-        dailyLimit:
-          type: integer
-        monthlyLimit:
-          type: integer
-        priority:
-          type: string
-    ProjectResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/Project"
-    PaginatedProjects:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Project"
-        pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-    Bot:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        appId:
-          type: string
-        tenantId:
-          type: string
-        status:
-          type: string
-        webhookUrl:
-          type: string
-        capabilities:
-          type: object
-        rateLimitPerMinute:
-          type: integer
-        maxConcurrentRequests:
-          type: integer
-    BotCreateRequest:
-      type: object
-      required: [name, app_id]
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        appId:
-          type: string
-        appPassword:
-          type: string
-        tenantId:
-          type: string
-        webhookUrl:
-          type: string
-        capabilities:
-          type: object
-        rateLimitPerMinute:
-          type: integer
-        maxConcurrentRequests:
-          type: integer
-    BotUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        tenantId:
-          type: string
-        webhookUrl:
-          type: string
-        capabilities:
-          type: object
-        rateLimitPerMinute:
-          type: integer
-        maxConcurrentRequests:
-          type: integer
-    BotResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/Bot"
-    BotListResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Bot"
-    Destination:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        teams_tenantId:
-          type: string
-        targets:
-          type: array
-          items:
-            $ref: "#/components/schemas/TeamsTarget"
-        botId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        validation_status:
-          type: string
-        last_validated_at:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-          format: uuid
-    TeamsTarget:
+
+    # Bot Framework schemas
+    BotFrameworkActivity:
       type: object
       properties:
         type:
           type: string
-          enum: [personal, channel, groupchat]
-        conversation_id:
-          type: string
-        email:
-          type: string
-        display_name:
-          type: string
-        tenantId:
-          type: string
-    DestinationCreateRequest:
-      type: object
-      required:
-        [project_id, name, description, teams_tenant_id, targets, created_by]
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        teams_tenantId:
-          type: string
-        targets:
-          type: array
-          items:
-            $ref: "#/components/schemas/TeamsTarget"
-        botId:
-          type: string
-          format: uuid
-        createdBy:
-          type: string
-          format: uuid
-    DestinationUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        botId:
-          type: string
-          format: uuid
-    DestinationTargetsRequest:
-      type: object
-      required: [targets]
-      properties:
-        targets:
-          type: array
-          items:
-            $ref: "#/components/schemas/TeamsTarget"
-    DestinationResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/Destination"
-    PaginatedDestinations:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Destination"
-        pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-    Notification:
-      type: object
-      properties:
         id:
           type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        senderId:
-          type: string
-          format: uuid
-        messageType:
-          type: string
-        content:
-          type: string
-        mentions:
-          type: array
-          items:
-            type: string
-        attachment:
-          type: object
-        adaptiveCard:
-          type: object
-        priority:
-          type: string
-        status:
-          type: string
-        errorMessage:
-          type: string
-        metadata:
-          type: object
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        sentAt:
-          type: string
-          format: date-time
-    NotificationSendRequest:
-      type: object
-      required: [project_id, message_type, content, destinations]
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        senderId:
-          type: string
-          format: uuid
-        messageType:
-          type: string
-          enum: [text, file, adaptive_card]
-        content:
-          type: string
-        mentions:
-          type: array
-          items:
-            type: string
-        attachment:
-          type: object
-        adaptiveCard:
-          type: object
-        priority:
-          type: string
-          enum: [low, normal, high]
-        metadata:
-          type: object
-        destinations:
-          type: array
-          items:
-            type: string
-            format: uuid
-    NotificationEnqueueResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            notificationId:
-              type: string
-              format: uuid
-            status:
-              type: string
-            message:
-              type: string
-            destinationsCount:
-              type: integer
-            estimatedDeliveryTime:
-              type: string
-    NotificationResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/Notification"
-    PaginatedNotifications:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Notification"
-        pagination:
-          $ref: "#/components/schemas/PaginationMeta"
-
-    # External API Schemas
-    ExternalNotificationRequest:
-      type: object
-      required:
-        - notify_key
-        - message
-      properties:
-        notifyKey:
-          type: string
-          description: Project notification key
-          example: "my-project-key"
-          minLength: 3
-          maxLength: 50
-        message:
-          type: string
-          description: Message content to send
-          example: "Hello from external API"
-          minLength: 1
-          maxLength: 4000
-        messageType:
-          type: string
-          description: Type of message
-          enum: [text, file, adaptive_card]
-          default: text
-          example: "text"
-        priority:
-          type: string
-          description: Message priority
-          enum: [low, normal, high]
-          default: normal
-          example: "normal"
-        targets:
-          type: array
-          description: List of target Emails or Conversation IDs or 'all' for all targets
-          items:
-            type: string
-          example: ["all"]
-        mentions:
-          type: array
-          description: List of users to mention
-          items:
-            type: string
-          example: ["@user1", "@user2"]
-        metadata:
-          type: object
-          description: Additional metadata
-          example: { "source": "external", "version": "1.0" }
-
-    ExternalNotificationResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          properties:
-            notificationId:
-              type: string
-              example: "123e4567-e89b-12d3-a456-426614174000"
-            status:
-              type: string
-              enum: [sent, partial, failed]
-              example: "sent"
-            message:
-              type: string
-              example: "Notification processed successfully"
-            projectId:
-              type: string
-              example: "123e4567-e89b-12d3-a456-426614174000"
-            project_name:
-              type: string
-              example: "my-project-key"
-            destinationsCount:
-              type: integer
-              example: 3
-            results:
-              type: array
-              items:
-                $ref: "#/components/schemas/ExternalDestinationResult"
-            estimated_delivery:
-              type: string
-              example: "5-10 minutes"
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationResult:
-      type: object
-      properties:
-        destination_id:
-          type: string
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        destination_name:
-          type: string
-          example: "Marketing Team"
-        success:
-          type: boolean
-          example: true
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        destinations:
-          type: array
-          items:
-            $ref: "#/components/schemas/ExternalDestinationInfo"
-        error:
-          type: string
-          example: ""
-
-    ExternalDestinationInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        name:
-          type: string
-          example: "Marketing Team"
-        description:
-          type: string
-          example: "Marketing team notification destination"
-        status:
-          type: string
-          example: "active"
-        targets:
-          type: array
-          items:
-            type: object
-          example: [{ "type": "channel", "conversation_id": "19:abc123" }]
-
-    ExternalHealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        service:
-          type: string
-          example: "external-api"
         timestamp:
           type: string
-          example: "2025-09-26T03:51:33Z"
+          format: date-time
+        channelId:
+          type: string
+        from:
+          $ref: "#/components/schemas/ChannelAccount"
+        conversation:
+          $ref: "#/components/schemas/ConversationAccount"
+        recipient:
+          $ref: "#/components/schemas/ChannelAccount"
+        text:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
 
-    # Provision API Schemas
+    ChannelAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    ConversationAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    Attachment:
+      type: object
+      properties:
+        contentType:
+          type: string
+        contentUrl:
+          type: string
+        name:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ProactiveTestRequest:
+      type: object
+      required:
+        - conversationId
+        - message
+      properties:
+        conversationId:
+          type: string
+          description: Teams conversation ID
+        message:
+          type: string
+          description: Test message content
+
+    # Provision schemas
     ProvisionCreateRequest:
       type: object
       required:
-        - company_id
-        - created_by
-        - project_name
-        - project_description
-        - teams_tenant_id
-        - targets
-      properties:
-        companyId:
-          type: string
-          format: uuid
-          description: ID of the company
-          example: "e4f160f4-4917-443d-86e9-29071967b768"
-        createdBy:
-          type: string
-          format: uuid
-          description: ID of the user creating the project
-          example: "11111111-1111-1111-1111-111111111111"
-        project_name:
-          type: string
-          description: Name of the project
-          example: "My Notification Project"
-        project_description:
-          type: string
-          description: Description of the project
-          example: "A project for sending notifications"
-        teams_tenantId:
-          type: string
-          description: Microsoft Teams tenant ID
-          example: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-        targets:
-          type: array
-          description: List of Teams conversation targets
-          items:
-            $ref: "#/components/schemas/TeamsTarget"
-          example:
-            - type: "channel"
-              tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-              conversation_id: "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
-            - type: "personal"
-              tenantId: "051cece0-e4dc-4aed-b471-bf29824e1ee6"
-              conversation_id: "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
-
-    ProvisionCreateResponse:
-      type: object
+        - notifyKey
+        - companyId
+        - projectName
       properties:
         notifyKey:
           type: string
-          description: Generated notify key for external API usage
-          example: "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38"
-        project:
-          $ref: "#/components/schemas/Project"
-        destination:
-          $ref: "#/components/schemas/Destination"
-
-    ProvisionReadResponse:
-      type: object
-      properties:
-        project:
-          $ref: "#/components/schemas/Project"
-        destinations:
-          type: array
-          items:
-            $ref: "#/components/schemas/Destination"
+          description: Project notify key
+        companyId:
+          type: string
+          format: uuid
+          description: Company ID
+        projectName:
+          type: string
+          description: Project name
+        description:
+          type: string
+          description: Project description
 
     ProvisionUpdateRequest:
       type: object
       properties:
-        project_description:
+        projectName:
           type: string
-          description: Updated project description
-        targets:
-          type: array
-          description: Updated list of Teams conversation targets
-          items:
-            $ref: "#/components/schemas/TeamsTarget"
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
 
-    # Error Response Schemas
-    ErrorResponse:
+    ProvisionResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: false
-        error:
+        notifyKey:
           type: string
-          example: "Invalid request format"
-        code:
-          type: string
-          description: "Error code for programmatic handling"
-          example: "VALIDATION_FAILED"
-        details:
-          type: string
-          description: "Additional error details"
-          example: "Field 'email' is required"
-        timestamp:
-          type: string
-          format: date-time
-          description: "Error timestamp"
-        request_id:
-          type: string
-          description: "Request ID for tracing"
-          example: "req_123456789"
-    StandardErrorResponse:
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/AppError"
-        timestamp:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-    AppError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: "Error code"
-          enum:
-            - "UNAUTHORIZED"
-            - "INVALID_TOKEN"
-            - "TOKEN_EXPIRED"
-            - "INVALID_API_KEY"
-            - "TEAMS_AUTH_FAILED"
-            - "TEAMS_API_ERROR"
-            - "TEAMS_RATE_LIMIT"
-            - "DATABASE_ERROR"
-            - "RECORD_NOT_FOUND"
-            - "DUPLICATE_RECORD"
-            - "VALIDATION_FAILED"
-            - "INVALID_INPUT"
-            - "MISSING_FIELD"
-            - "INTERNAL_ERROR"
-            - "SERVICE_UNAVAILABLE"
-            - "TIMEOUT"
-        message:
-          type: string
-          description: "Human-readable error message"
-        cause:
-          type: string
-          description: "Underlying error cause"
-          example: "VALIDATION_ERROR"
-        details:
-          type: object
-          additionalProperties: true
-          example: { "field": "notify_key", "message": "is required" }
-
-    ValidationError:
-      type: object
-      properties:
-        field:
-          type: string
-          example: "notify_key"
-        message:
-          type: string
-          example: "is required"
-        value:
-          type: string
-          example: ""
-
-    # Common Response Wrappers
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-        message:
-          type: string
-          example: "Operation completed successfully"
-
-    # API Usage Examples
-    APIUsageExample:
-      type: object
-      properties:
-        curl_example:
-          type: string
-          example: 'curl -X POST http://localhost:8080/api/v1/notify -H ''Content-Type: application/json'' -d ''{"notify_key": "my-project", "message": "Hello World"}'''
-        javascript_example:
-          type: string
-          example: "fetch('http://localhost:8080/api/v1/notify', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notifyKey: 'my-project', message: 'Hello World'}) })"
-
-    # Queue Management Schemas
-    QueueStatus:
-      type: object
-      properties:
-        total_pending:
-          type: integer
-          description: Number of notifications waiting to be retried
-          example: 0
-        total_retrying:
-          type: integer
-          description: Number of notifications currently being retried
-          example: 0
-        total_failed:
-          type: integer
-          description: Number of notifications that have exhausted retries
-          example: 0
-        next_retry_due:
-          type: string
-          format: date-time
-          description: Timestamp of next scheduled retry
-          example: "2025-10-01T10:30:00Z"
-          nullable: true
-        oldest_pending:
-          type: string
-          format: date-time
-          description: Timestamp of oldest pending notification
-          example: "2025-10-01T10:00:00Z"
-          nullable: true
-        circuit_state:
-          type: string
-          description: Current circuit breaker state
-          enum: [closed, open, half-open]
-          example: "closed"
-        last_updated:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2025-10-01T13:58:02Z"
-
-    CircuitBreakerMetrics:
-      type: object
-      properties:
-        state:
-          type: string
-          description: Current circuit breaker state
-          enum: [closed, open, half-open]
-          example: "closed"
-        total_requests:
-          type: integer
-          description: Total number of requests processed
-          example: 1523
-        success_requests:
-          type: integer
-          description: Number of successful requests
-          example: 1498
-        failed_requests:
-          type: integer
-          description: Number of failed requests
-          example: 25
-        failures:
-          type: integer
-          description: Consecutive failures count
-          example: 0
-        last_state_change:
-          type: string
-          format: date-time
-          description: Timestamp of last state change
-          example: "2025-10-01T13:50:08Z"
-
-    # Billing API Schemas
-    UsageRecordsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/UsageRecord"
-        total:
-          type: integer
-          example: 100
-        page:
-          type: integer
-          example: 1
-        page_size:
-          type: integer
-          example: 50
-        error:
-          type: string
-          example: ""
-
-    UsageRecord:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
         companyId:
           type: string
           format: uuid
-        projectId:
-          type: string
-          format: uuid
-        userId:
-          type: string
-          format: uuid
-        record_type:
-          type: string
-          enum: [notification, api_call, storage]
-        quantity:
-          type: integer
-        unit_cost:
-          type: number
-          format: decimal
-        total_cost:
-          type: number
-          format: decimal
-        metadata:
-          type: object
-        createdAt:
-          type: string
-          format: date-time
-
-    UsageSummaryResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/UsageSummary"
-        error:
-          type: string
-          example: ""
-
-    UsageSummary:
-      type: object
-      properties:
-        total_notifications:
-          type: integer
-        total_cost:
-          type: number
-          format: decimal
-        period_start:
-          type: string
-          format: date
-        period_end:
-          type: string
-          format: date
-        breakdown:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              count:
-                type: integer
-              cost:
-                type: number
-                format: decimal
-
-    BillingPlansResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/BillingPlan"
-        error:
-          type: string
-          example: ""
-
-    BillingPlan:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
+        projectName:
           type: string
         description:
           type: string
-        pricePerNotification:
-          type: number
-          format: decimal
-        price_per_month:
-          type: number
-          format: decimal
-        max_notifications_per_month:
-          type: integer
-        max_projects:
-          type: integer
-        max_users:
-          type: integer
-        features:
-          type: object
-        is_active:
-          type: boolean
+        status:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -2898,1355 +2387,48 @@ components:
           type: string
           format: date-time
 
-    CreateBillingPlanRequest:
-      type: object
-      required: [name, description, price_per_notification, price_per_month]
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 100
-        description:
-          type: string
-          minLength: 10
-          maxLength: 500
-        pricePerNotification:
-          type: number
-          format: decimal
-          minimum: 0
-        price_per_month:
-          type: number
-          format: decimal
-          minimum: 0
-        max_notifications_per_month:
-          type: integer
-          minimum: 1
-          maximum: 1000000
-        max_projects:
-          type: integer
-          minimum: 1
-          maximum: 1000
-        max_users:
-          type: integer
-          minimum: 1
-          maximum: 10000
-        features:
-          type: object
-        is_active:
-          type: boolean
-          default: true
-
-    UpdateBillingPlanRequest:
+    ProjectDestinationsResponse:
       type: object
       properties:
-        name:
+        notifyKey:
           type: string
-          minLength: 3
-          maxLength: 100
-        description:
-          type: string
-          minLength: 10
-          maxLength: 500
-        pricePerNotification:
-          type: number
-          format: decimal
-          minimum: 0
-        price_per_month:
-          type: number
-          format: decimal
-          minimum: 0
-        max_notifications_per_month:
-          type: integer
-          minimum: 1
-          maximum: 1000000
-        max_projects:
-          type: integer
-          minimum: 1
-          maximum: 1000
-        max_users:
-          type: integer
-          minimum: 1
-          maximum: 10000
-        features:
-          type: object
-        is_active:
-          type: boolean
-
-    BillingPlanResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/BillingPlan"
-        error:
-          type: string
-          example: ""
-
-    CompanyBillingResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/CompanyBilling"
-        error:
-          type: string
-          example: ""
-
-    CompanyBilling:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        companyId:
-          type: string
-          format: uuid
-        billingPlanId:
-          type: string
-          format: uuid
-        billing_status:
-          type: string
-          enum: [active, suspended, cancelled]
-        paymentMethod:
-          type: string
-        billing_cycle:
-          type: string
-          enum: [monthly, yearly]
-        next_billing_date:
-          type: string
-          format: date
-        total_usage_cost:
-          type: number
-          format: decimal
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    AnalyticsOverviewResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/AnalyticsOverview"
-        error:
-          type: string
-          example: ""
-
-    AnalyticsOverview:
-      type: object
-      properties:
-        total_revenue:
-          type: number
-          format: decimal
-        total_notifications:
-          type: integer
-        active_companies:
-          type: integer
-        active_projects:
-          type: integer
-        period_start:
-          type: string
-          format: date
-        period_end:
-          type: string
-          format: date
-        trends:
-          type: object
-          properties:
-            revenue_trend:
-              type: string
-              enum: [up, down, stable]
-            notification_trend:
-              type: string
-              enum: [up, down, stable]
-
-    # File Management API Schemas
-    FileListResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/FileInfo"
-        total:
-          type: integer
-          example: 100
-        page:
-          type: integer
-          example: 1
-        page_size:
-          type: integer
-          example: 50
-        error:
-          type: string
-          example: ""
-
-    FileInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        fileName:
-          type: string
-        fileSize:
-          type: integer
-        contentType:
-          type: string
-        file_key:
-          type: string
-        file_url:
-          type: string
-        description:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        is_public:
-          type: boolean
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    UploadFileRequest:
-      type: object
-      required: [project_id, file]
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        file:
-          type: string
-          format: binary
-        description:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        is_public:
-          type: boolean
-          default: false
-        expires_at:
-          type: string
-          format: date-time
-
-    UploadMultipleFilesRequest:
-      type: object
-      required: [project_id, files]
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        files:
-          type: array
-          items:
-            type: string
-            format: binary
-        description:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        is_public:
-          type: boolean
-          default: false
-        expires_at:
-          type: string
-          format: date-time
-
-    FileUploadResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/FileInfo"
-        error:
-          type: string
-          example: ""
-
-    FileUploadMultipleResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/FileInfo"
-        errors:
-          type: array
-          items:
-            type: string
-
-    FileResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: "#/components/schemas/FileInfo"
-        error:
-          type: string
-          example: ""
-
-    FileDeleteResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "File deleted successfully"
-        error:
-          type: string
-          example: ""
-
-    ValidateFileRequest:
-      type: object
-      required: [file_name, file_size, content_type]
-      properties:
-        fileName:
-          type: string
-        fileSize:
-          type: integer
-          minimum: 1
-        contentType:
-          type: string
-
-    ValidateFileResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        valid:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "File is valid"
-        error:
-          type: string
-          example: ""
-
-  # ===== 監控端點 =====
-  /internal/v1/monitoring/health:
-    get:
-      summary: 系統健康監控
-      tags: [Monitoring]
-      description: 獲取系統整體健康狀態
-      responses:
-        "200":
-          description: 系統健康狀態
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemHealthResponse"
-              examples:
-                healthy:
-                  summary: 健康狀態
-                  value:
-                    status: "healthy"
-                    timestamp: "2025-10-13T14:22:20Z"
-                    components:
-                      api:
-                        status: "healthy"
-                        message: "API service running"
-                      database:
-                        status: "healthy"
-                        message: "Database connection successful"
-                      redis:
-                        status: "healthy"
-                        message: "Redis connection successful"
-                    overall:
-                      score: 100
-                      grade: "A"
-                      message: "System is healthy"
-
-  /internal/v1/monitoring/performance:
-    get:
-      summary: 性能指標監控
-      tags: [Monitoring]
-      description: 獲取系統性能指標
-      responses:
-        "200":
-          description: 性能指標
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PerformanceMetricsResponse"
-
-  /internal/v1/monitoring/business:
-    get:
-      summary: 業務指標監控
-      tags: [Monitoring]
-      description: 獲取業務相關指標
-      responses:
-        "200":
-          description: 業務指標
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BusinessMetricsResponse"
-
-  /internal/v1/monitoring/alerts:
-    get:
-      summary: 告警狀態監控
-      tags: [Monitoring]
-      description: 獲取系統告警狀態
-      responses:
-        "200":
-          description: 告警狀態
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AlertsResponse"
-
-  /internal/v1/monitoring/dashboard:
-    get:
-      summary: 儀表板數據
-      tags: [Monitoring]
-      description: 獲取儀表板所需數據
-      responses:
-        "200":
-          description: 儀表板數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardResponse"
-
-  # ===== 計費管理端點 =====
-  /internal/v1/billing/usage/company/{companyId}:
-    get:
-      summary: 獲取公司使用量
-      tags: [Billing]
-      description: 獲取特定公司的使用量記錄
-      parameters:
-        - name: companyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 公司使用量
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompanyUsageResponse"
-
-  /internal/v1/billing/usage/project/{projectId}:
-    get:
-      summary: 獲取專案使用量
-      tags: [Billing]
-      description: 獲取特定專案的使用量記錄
-      parameters:
-        - name: projectId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 專案使用量
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectUsageResponse"
-
-  # ===== 文件管理端點 =====
-  /internal/v1/files/upload:
-    post:
-      summary: 上傳文件
-      tags: [Files]
-      description: 上傳單個文件
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                projectId:
-                  type: string
-                  format: uuid
-                description:
-                  type: string
-                tags:
-                  type: array
-                  items:
-                    type: string
-                is_public:
-                  type: boolean
-                  default: false
-      responses:
-        "200":
-          description: 文件上傳成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FileUploadResponse"
-        "400":
-          description: 上傳失敗
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    # ===== 新增 Schema 定義 =====
-
-    # 監控相關 Schema
-    SystemHealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        timestamp:
-          type: string
-          format: date-time
-        components:
-          type: object
-          properties:
-            api:
-              $ref: "#/components/schemas/ComponentStatus"
-            database:
-              $ref: "#/components/schemas/ComponentStatus"
-            redis:
-              $ref: "#/components/schemas/ComponentStatus"
-        overall:
-          type: object
-          properties:
-            score:
-              type: integer
-              example: 100
-            grade:
-              type: string
-              example: "A"
-            message:
-              type: string
-              example: "System is healthy"
-
-    ComponentStatus:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        message:
-          type: string
-          example: "Service running"
-        timestamp:
-          type: string
-          format: date-time
-
-    PerformanceMetricsResponse:
-      type: object
-      properties:
-        system_metrics:
-          type: object
-          properties:
-            uptime_seconds:
-              type: integer
-            memory_usage_mb:
-              type: number
-            cpu_usage_percent:
-              type: number
-        redis_metrics:
-          type: object
-          properties:
-            connected_clients:
-              type: integer
-            used_memory_mb:
-              type: number
-            keys_count:
-              type: integer
-        business_metrics:
-          type: object
-          properties:
-            notifications_sent:
-              type: integer
-            notifications_failed:
-              type: integer
-            success_rate_percent:
-              type: number
-
-    BusinessMetricsResponse:
-      type: object
-      properties:
-        active_projects:
-          type: integer
-        active_destinations:
-          type: integer
-        notifications_today:
-          type: integer
-        success_rate_percent:
-          type: number
-        queue_health:
-          type: object
-          properties:
-            pending_count:
-              type: integer
-            processing_count:
-              type: integer
-            failed_count:
-              type: integer
-            status:
-              type: string
-        teams_api_health:
-          type: object
-          properties:
-            status:
-              type: string
-            response_time_ms:
-              type: number
-            success_rate_percent:
-              type: number
-
-    AlertsResponse:
-      type: object
-      properties:
-        active_alerts:
-          type: integer
-        alert_history:
-          type: array
-          items:
-            type: object
-        alert_rules:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              threshold:
-                type: number
-              status:
-                type: string
-
-    DashboardResponse:
-      type: object
-      properties:
-        summary:
-          type: object
-          properties:
-            total_notifications:
-              type: integer
-            success_rate:
-              type: number
-            active_projects:
-              type: integer
-        charts:
-          type: object
-          properties:
-            notifications_timeline:
-              type: array
-              items:
-                type: object
-            error_rate_trend:
-              type: array
-              items:
-                type: object
-
-    # 計費相關 Schema
-    UsageRecordsResponse:
-      type: object
-      properties:
-        records:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              projectId:
-                type: string
-                format: uuid
-              companyId:
-                type: string
-                format: uuid
-              notification_count:
-                type: integer
-              api_calls:
-                type: integer
-              storage_usage_mb:
-                type: number
-              date:
-                type: string
-                format: date
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    UsageSummaryResponse:
-      type: object
-      properties:
-        total_notifications:
-          type: integer
-        total_api_calls:
-          type: integer
-        total_storage_mb:
-          type: number
-        period:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
-
-    CompanyUsageResponse:
-      type: object
-      properties:
-        companyId:
-          type: string
-          format: uuid
-        company_name:
-          type: string
-        usage:
-          type: object
-          properties:
-            notifications:
-              type: integer
-            api_calls:
-              type: integer
-            storage_mb:
-              type: number
-        period:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
-
-    ProjectUsageResponse:
-      type: object
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        project_name:
-          type: string
-        usage:
-          type: object
-          properties:
-            notifications:
-              type: integer
-            api_calls:
-              type: integer
-            storage_mb:
-              type: number
-        period:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
-
-    BillingPlansResponse:
-      type: object
-      properties:
-        plans:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              name:
-                type: string
-              description:
-                type: string
-              price:
-                type: number
-              features:
-                type: array
-                items:
-                  type: string
-              limits:
-                type: object
-                properties:
-                  notifications_per_month:
-                    type: integer
-                  api_calls_per_month:
-                    type: integer
-                  storage_mb:
-                    type: integer
-
-    # 文件管理相關 Schema
-    FileUploadResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        file_id:
-          type: string
-          format: uuid
-        fileName:
-          type: string
-        fileSize:
-          type: integer
-        file_url:
-          type: string
-        message:
-          type: string
-          example: "File uploaded successfully"
-
-    MultipleFileUploadResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        files:
-          type: array
-          items:
-            type: object
-            properties:
-              file_id:
-                type: string
-                format: uuid
-              fileName:
-                type: string
-              fileSize:
-                type: integer
-              file_url:
-                type: string
-        message:
-          type: string
-          example: "Files uploaded successfully"
-
-    FileInfoResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        fileName:
-          type: string
-        fileSize:
-          type: integer
-        contentType:
-          type: string
-        file_url:
-          type: string
-        description:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        is_public:
-          type: boolean
-        expires_at:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "Operation completed successfully"
-
-  # ===== 缺失的系統端點 =====
-  /metrics:
-    get:
-      summary: 系統指標
-      tags: [System]
-      description: 獲取系統運行指標
-      responses:
-        "200":
-          description: 系統指標
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemMetricsResponse"
-
-  /config:
-    get:
-      summary: 獲取系統配置
-      tags: [System]
-      description: 獲取當前系統配置
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: 系統配置
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConfigResponse"
-        "401":
-          description: 未授權
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /config/validate:
-    post:
-      summary: 驗證系統配置
-      tags: [System]
-      description: 驗證系統配置是否正確
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConfigValidationRequest"
-      responses:
-        "200":
-          description: 配置驗證結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConfigValidationResponse"
-        "401":
-          description: 未授權
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  # ===== 缺失的核心業務端點變體 =====
-  /internal/v1/companies/{id}/status:
-    patch:
-      summary: 更新公司狀態
-      tags: [Companies]
-      description: 更新公司狀態
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateCompanyStatusRequest"
-      responses:
-        "200":
-          description: 狀態更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompanyResponse"
-        "404":
-          description: 公司不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/companies/{id}/billing:
-    patch:
-      summary: 更新公司計費狀態
-      tags: [Companies]
-      description: 更新公司計費啟用狀態
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateCompanyBillingRequest"
-      responses:
-        "200":
-          description: 計費狀態更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompanyResponse"
-        "404":
-          description: 公司不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/projects/{id}/limits:
-    get:
-      summary: 獲取專案限制
-      tags: [Projects]
-      description: 獲取專案的使用限制
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 專案限制
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectLimitsResponse"
-        "404":
-          description: 專案不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    patch:
-      summary: 更新專案限制
-      tags: [Projects]
-      description: 更新專案的使用限制
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateProjectLimitsRequest"
-      responses:
-        "200":
-          description: 限制更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectLimitsResponse"
-        "404":
-          description: 專案不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  # ===== 缺失的錯誤處理和狀態端點 =====
-  /internal/v1/queue/status:
-    get:
-      summary: 獲取隊列狀態
-      tags: [Queue]
-      description: 獲取通知隊列狀態
-      responses:
-        "200":
-          description: 隊列狀態
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/QueueStatusResponse"
-
-  /internal/v1/queue/clear:
-    post:
-      summary: 清空隊列
-      tags: [Queue]
-      description: 清空所有待處理的通知
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: 隊列清空成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessResponse"
-        "401":
-          description: 未授權
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/notifications/{id}/status:
-    get:
-      summary: 獲取通知狀態
-      tags: [Notifications]
-      description: 獲取特定通知的處理狀態
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 通知狀態
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationStatusResponse"
-        "404":
-          description: 通知不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/notifications/{id}/retry:
-    post:
-      summary: 重試通知
-      tags: [Notifications]
-      description: 重試失敗的通知
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 重試成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessResponse"
-        "404":
-          description: 通知不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    # 新增缺失的 Schema 定義
-    SystemMetricsResponse:
-      type: object
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        system:
-          type: object
-          properties:
-            uptime_seconds:
-              type: integer
-            memory_usage_mb:
-              type: number
-            cpu_usage_percent:
-              type: number
-            goroutines:
-              type: integer
-        redis:
-          type: object
-          properties:
-            connected_clients:
-              type: integer
-            used_memory_mb:
-              type: number
-            keys_count:
-              type: integer
-        business:
-          type: object
-          properties:
-            notifications_sent:
-              type: integer
-            notifications_failed:
-              type: integer
-            notifications_pending:
-              type: integer
-            success_rate_percent:
-              type: number
-            teams_api_calls:
-              type: integer
-            teams_api_errors:
-              type: integer
-
-    UpdateCompanyStatusRequest:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [active, inactive, suspended]
-          example: "active"
-
-    UpdateCompanyBillingRequest:
-      type: object
-      properties:
-        billingEnabled:
-          type: boolean
-          example: true
-
-    ProjectLimitsResponse:
-      type: object
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        limits:
-          type: object
-          properties:
-            notifications_per_month:
-              type: integer
-            api_calls_per_month:
-              type: integer
-            storage_mb:
-              type: integer
-            max_destinations:
-              type: integer
-        current_usage:
-          type: object
-          properties:
-            notifications_this_month:
-              type: integer
-            api_calls_this_month:
-              type: integer
-            storage_used_mb:
-              type: number
-            destinationsCount:
-              type: integer
-
-    UpdateProjectLimitsRequest:
-      type: object
-      properties:
-        notifications_per_month:
-          type: integer
-          minimum: 0
-        api_calls_per_month:
-          type: integer
-          minimum: 0
-        storage_mb:
-          type: integer
-          minimum: 0
-        max_destinations:
-          type: integer
-          minimum: 0
-
-    QueueStatusResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        pending_count:
-          type: integer
-        processing_count:
-          type: integer
-        failed_count:
-          type: integer
-        total_processed:
-          type: integer
-        processing_rate_per_minute:
-          type: number
-
-    NotificationStatusResponse:
-      type: object
-      properties:
-        notificationId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [pending, enqueued, processing, sent, failed, cancelled]
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
         destinations:
           type: array
           items:
-            type: object
-            properties:
-              destination_id:
-                type: string
-                format: uuid
-              status:
-                type: string
-              sentAt:
-                type: string
-                format: date-time
-              errorMessage:
-                type: string
+            $ref: "#/components/schemas/DestinationResponse"
 
-    ConfigValidationRequest:
+    DestinationResponse:
       type: object
       properties:
-        config:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [personal, group, channel]
+        conversationId:
+          type: string
+        displayName:
+          type: string
+        tenantId:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Configuration schemas
+    ConfigResponse:
+      type: object
+      properties:
+        environment:
+          type: string
+        version:
+          type: string
+        features:
           type: object
-          properties:
-            database_url:
-              type: string
-            redis_url:
-              type: string
-            teams_appId:
-              type: string
-            teams_tenantId:
-              type: string
-            teams_appPassword:
-              type: string
+          additionalProperties: true
 
     ConfigValidationResponse:
       type: object
@@ -4262,409 +2444,1062 @@ components:
           items:
             type: string
 
-  # ===== 剩餘端點以達到 100% 同步 =====
-  /internal/v1/users/{id}/password:
-    patch:
-      summary: 更新用戶密碼
-      tags: [Users]
-      description: 更新用戶密碼
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdatePasswordRequest"
-      responses:
-        "200":
-          description: 密碼更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessResponse"
-        "404":
-          description: 用戶不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/users/company/{companyId}:
-    get:
-      summary: 獲取公司用戶列表
-      tags: [Users]
-      description: 獲取特定公司的所有用戶
-      parameters:
-        - name: companyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200":
-          description: 公司用戶列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UsersResponse"
-        "404":
-          description: 公司不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/users/role/{role}:
-    get:
-      summary: 獲取角色用戶列表
-      tags: [Users]
-      description: 獲取特定角色的所有用戶
-      parameters:
-        - name: role
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [admin, user, viewer]
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200":
-          description: 角色用戶列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UsersResponse"
-
-  /internal/v1/projects/company/{companyId}:
-    get:
-      summary: 獲取公司專案列表
-      tags: [Projects]
-      description: 獲取特定公司的所有專案
-      parameters:
-        - name: companyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200":
-          description: 公司專案列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectsResponse"
-        "404":
-          description: 公司不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /internal/v1/projects/key/{keyName}:
-    get:
-      summary: 根據密鑰名稱獲取專案
-      tags: [Projects]
-      description: 根據 notify_key 獲取專案信息
-      parameters:
-        - name: keyName
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 專案信息
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectResponse"
-        "404":
-          description: 專案不存在
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-    # 最後的 Schema 定義
-    UpdatePasswordRequest:
+    # User schemas
+    UserCreateRequest:
       type: object
-      properties:
-        current_password:
-          type: string
-          minLength: 8
-        newPassword:
-          type: string
-          minLength: 8
-        confirm_password:
-          type: string
-          minLength: 8
       required:
-        - current_password
-        - new_password
-        - confirm_password
+        - companyId
+        - email
+        - name
+        - role
+        - password
+      properties:
+        companyId:
+          type: string
+          format: uuid
+          description: Company ID
+        email:
+          type: string
+          format: email
+          description: User email
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          description: User name
+        role:
+          type: string
+          enum: [admin, manager, user]
+          description: User role
+        password:
+          type: string
+          minLength: 8
+          description: User password
 
-    ApiKeyResponse:
+    UserUpdateRequest:
       type: object
       properties:
-        apiKey:
+        email:
           type: string
-          example: "ak_1234567890abcdef"
+          format: email
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        role:
+          type: string
+          enum: [admin, manager, user]
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
         createdAt:
           type: string
           format: date-time
-        expires_at:
-          type: string
-          format: date-time
-        last_used:
+        updatedAt:
           type: string
           format: date-time
 
-    UsersResponse:
+    UserListResponse:
       type: object
       properties:
-        users:
+        data:
           type: array
           items:
             $ref: "#/components/schemas/UserResponse"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
 
-    ProjectsResponse:
+    ChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+      properties:
+        oldPassword:
+          type: string
+          description: Current password
+        newPassword:
+          type: string
+          minLength: 8
+          description: New password
+
+    # Project schemas
+    ProjectCreateRequest:
+      type: object
+      required:
+        - companyId
+        - notifyKey
+        - description
+        - createdBy
+      properties:
+        companyId:
+          type: string
+          format: uuid
+          description: Company ID
+        notifyKey:
+          type: string
+          description: Project notify key
+        description:
+          type: string
+          description: Project description
+        dailyLimit:
+          type: integer
+          minimum: 0
+          description: Daily notification limit
+        monthlyLimit:
+          type: integer
+          minimum: 0
+          description: Monthly notification limit
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+          description: Project priority
+        createdBy:
+          type: string
+          format: uuid
+          description: Creator user ID
+
+    ProjectUpdateRequest:
       type: object
       properties:
-        projects:
+        notifyKey:
+          type: string
+        description:
+          type: string
+        dailyLimit:
+          type: integer
+          minimum: 0
+        monthlyLimit:
+          type: integer
+          minimum: 0
+        priority:
+          type: string
+          enum: [low, normal, high]
+
+    ProjectResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        notifyKey:
+          type: string
+        description:
+          type: string
+        dailyLimit:
+          type: integer
+        monthlyLimit:
+          type: integer
+        priority:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectListResponse:
+      type: object
+      properties:
+        data:
           type: array
           items:
             $ref: "#/components/schemas/ProjectResponse"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
 
-  # ===== 最後的端點以達到 100% 同步 =====
-  /internal/v1/bots/platform:
-    get:
-      summary: 獲取平台 Bot 列表
-      tags: [Bots]
-      description: 獲取所有平台的 Bot 列表
-      responses:
-        "200":
-          description: Bot 列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotsResponse"
-
-  /internal/v1/bots/status/{status}:
-    get:
-      summary: 根據狀態獲取 Bot
-      tags: [Bots]
-      description: 根據狀態獲取 Bot 列表
-      parameters:
-        - name: status
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [active, inactive, error]
-      responses:
-        "200":
-          description: Bot 列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BotsResponse"
-
-  /internal/v1/notifications/test:
-    post:
-      summary: 測試通知
-      tags: [Notifications]
-      description: 發送測試通知
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TestNotificationRequest"
-      responses:
-        "200":
-          description: 測試通知發送成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TestNotificationResponse"
-
-  /internal/v1/destinations/{id}/test:
-    post:
-      summary: 測試目標
-      tags: [Destinations]
-      description: 測試目標連接
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: 目標測試成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TestDestinationResponse"
-
-  /api/v1/provision:
-    post:
-      summary: 快速配置
-      tags: [System]
-      description: 快速配置專案和目標
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ProvisionRequest"
-      responses:
-        "200":
-          description: 配置成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProvisionResponse"
-
-  /api/v1/health:
-    get:
-      summary: API 健康檢查
-      tags: [System]
-      description: API 服務健康檢查
-      responses:
-        "200":
-          description: API 健康狀態
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiHealthResponse"
-
-    # 最後的 Schema 定義
-    BotsResponse:
+    ProjectLimitsUpdateRequest:
       type: object
       properties:
-        bots:
-          type: array
-          items:
-            $ref: "#/components/schemas/BotResponse"
-        total:
+        dailyLimit:
           type: integer
+          minimum: 0
+        monthlyLimit:
+          type: integer
+          minimum: 0
 
-    TestNotificationRequest:
+    # Notification schemas
+    NotificationSendRequest:
       type: object
+      required:
+        - projectId
+        - messageType
+        - content
+        - targets
       properties:
         projectId:
           type: string
           format: uuid
-        content:
+          description: Project ID
+        senderId:
           type: string
+          format: uuid
+          description: Sender user ID
         messageType:
           type: string
-          enum: [text, html, markdown]
+          enum: [text, file, adaptive_card]
+          description: Type of message
+        content:
+          type: string
+          maxLength: 4000
+          description: Message content
+        mentions:
+          type: array
+          items:
+            type: string
+          description: List of user mentions
         priority:
           type: string
-          enum: [low, normal, high, urgent]
-      required:
-        - project_id
-        - content
+          enum: [low, normal, high]
+          default: normal
+          description: Message priority
+        targets:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: List of target destination IDs
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
 
-    TestNotificationResponse:
+    NotificationSendResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        message_id:
+        notificationId:
           type: string
-        delivery_status:
+          format: uuid
+        status:
           type: string
-        timestamp:
+        message:
+          type: string
+        destinationsCount:
+          type: integer
+        estimated_delivery_time:
+          type: string
+
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        messageType:
+          type: string
+        content:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+        priority:
+          type: string
+        status:
+          type: string
+        errorMessage:
+          type: string
+        destinationsSent:
+          type: integer
+        destinationsFailed:
+          type: integer
+        totalDestinations:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        sentAt:
           type: string
           format: date-time
 
-    TestDestinationResponse:
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    NotificationCancelResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    NotificationRetryResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    NotificationDateRangeResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        count:
+          type: integer
+        date_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+
+    # Destination schemas
+    DestinationCreateRequest:
+      type: object
+      required:
+        - projectId
+        - botId
+        - type
+        - targets
+      properties:
+        projectId:
+          type: string
+          format: uuid
+          description: Project ID
+        botId:
+          type: string
+          format: uuid
+          description: Bot ID
+        type:
+          type: string
+          enum: [personal, group, channel]
+          description: Destination type
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+          description: List of targets
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+          description: Destination status
+
+    DestinationUpdateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [personal, group, channel]
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+        status:
+          type: string
+          enum: [active, inactive]
+
+    DestinationTarget:
+      type: object
+      required:
+        - type
+        - conversation_id
+        - display_name
+        - tenant_id
+      properties:
+        type:
+          type: string
+          enum: [personal, group, channel]
+        conversation_id:
+          type: string
+          description: Teams conversation ID
+        display_name:
+          type: string
+          description: Display name
+        tenant_id:
+          type: string
+          format: uuid
+          description: Teams tenant ID
+
+    DestinationTargetsUpdateRequest:
+      type: object
+      required:
+        - targets
+      properties:
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+
+    DestinationValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    DestinationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    # Bot schemas
+    BotCreateRequest:
+      type: object
+      required:
+        - name
+        - appId
+        - appPassword
+        - capabilities
+      properties:
+        name:
+          type: string
+          description: Bot name
+        appId:
+          type: string
+          description: Microsoft App ID
+        appPassword:
+          type: string
+          description: Microsoft App Password
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: Bot capabilities
+        status:
+          type: string
+          enum: [active, inactive, error]
+          default: active
+        description:
+          type: string
+          description: Bot description
+
+    BotUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        appId:
+          type: string
+        appPassword:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive, error]
+        description:
+          type: string
+
+    BotResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        appId:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BotListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BotResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    BotStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [active, inactive, error]
+
+    BotCapabilitiesUpdateRequest:
+      type: object
+      required:
+        - capabilities
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: string
+
+    BotTestResponse:
       type: object
       properties:
         success:
           type: boolean
-        connection_status:
+        message:
           type: string
-        response_time_ms:
-          type: integer
-        errorMessage:
-          type: string
+        details:
+          type: object
+          additionalProperties: true
 
-    ProvisionRequest:
+    # Billing schemas
+    UsageRecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        notificationCount:
+          type: integer
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    UsageRecordsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageRecordResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    UsageSummaryResponse:
+      type: object
+      properties:
+        totalNotifications:
+          type: integer
+        dailyAverage:
+          type: number
+        monthlyTotal:
+          type: integer
+        period:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+
+    BillingPlanCreateRequest:
+      type: object
+      required:
+        - name
+        - price
+        - notificationLimit
+      properties:
+        name:
+          type: string
+          description: Plan name
+        description:
+          type: string
+          description: Plan description
+        price:
+          type: number
+          description: Monthly price
+        notificationLimit:
+          type: integer
+          description: Monthly notification limit
+        features:
+          type: array
+          items:
+            type: string
+          description: Plan features
+
+    BillingPlanUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        notificationLimit:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+
+    BillingPlanResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        notificationLimit:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BillingPlansResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingPlanResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    CompanyBillingResponse:
       type: object
       properties:
         companyId:
           type: string
           format: uuid
-        createdBy:
+        planId:
           type: string
           format: uuid
-        project_name:
+        planName:
           type: string
-        destination_name:
+        currentUsage:
+          type: integer
+        monthlyLimit:
+          type: integer
+        billingEnabled:
+          type: boolean
+        nextBillingDate:
           type: string
-        conversation_id:
-          type: string
-      required:
-        - company_id
-        - created_by
+          format: date
 
-    ProvisionResponse:
+    CompanyBillingUpdateRequest:
       type: object
       properties:
-        success:
-          type: boolean
-        project:
-          $ref: "#/components/schemas/ProjectResponse"
-        destination:
-          $ref: "#/components/schemas/DestinationResponse"
-        notifyKey:
+        planId:
           type: string
+          format: uuid
+        billingEnabled:
+          type: boolean
 
-    ApiHealthResponse:
+    BillingAnalyticsResponse:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        activeCompanies:
+          type: integer
+        averageUsage:
+          type: number
+        topPlans:
+          type: array
+          items:
+            type: object
+            properties:
+              planName:
+                type: string
+              subscriberCount:
+                type: integer
+
+    # File schemas
+    FileUploadRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: File to upload
+        description:
+          type: string
+          description: File description
+        tags:
+          type: array
+          items:
+            type: string
+          description: File tags
+
+    MultipleFileUploadRequest:
+      type: object
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Files to upload
+        description:
+          type: string
+          description: Upload description
+
+    FileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        originalName:
+          type: string
+        size:
+          type: integer
+        mimeType:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    FileListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    MultipleFileUploadResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileResponse"
+        totalUploaded:
+          type: integer
+        failedUploads:
+          type: array
+          items:
+            type: string
+
+    FileValidationRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: File to validate
+
+    FileValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        fileInfo:
+          type: object
+          properties:
+            size:
+              type: integer
+            mimeType:
+              type: string
+            extension:
+              type: string
+
+    # Monitoring schemas
+    SystemHealthResponse:
       type: object
       properties:
         status:
           type: string
-          example: "healthy"
-        version:
-          type: string
-          example: "1.0.0"
+          enum: [healthy, degraded, unhealthy]
         timestamp:
           type: string
           format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+              responseTime:
+                type: number
+              lastCheck:
+                type: string
+                format: date-time
         uptime:
+          type: string
+        version:
+          type: string
+
+    PerformanceMetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        cpu:
+          type: object
+          properties:
+            usage:
+              type: number
+            cores:
+              type: integer
+        memory:
+          type: object
+          properties:
+            used:
+              type: integer
+            total:
+              type: integer
+            usage:
+              type: number
+        database:
+          type: object
+          properties:
+            connections:
+              type: integer
+            queryTime:
+              type: number
+        redis:
+          type: object
+          properties:
+            memory:
+              type: integer
+            keys:
+              type: integer
+            hitRate:
+              type: number
+
+    BusinessHealthResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        notifications:
+          type: object
+          properties:
+            totalSent:
+              type: integer
+            successRate:
+              type: number
+            averageDeliveryTime:
+              type: number
+        users:
+          type: object
+          properties:
+            active:
+              type: integer
+            total:
+              type: integer
+        companies:
+          type: object
+          properties:
+            active:
+              type: integer
+            total:
+              type: integer
+
+    AlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              message:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              resolved:
+                type: boolean
+        totalAlerts:
           type: integer
-        memory_usage:
+        criticalAlerts:
+          type: integer
+
+    DashboardResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        overview:
+          $ref: "#/components/schemas/BusinessHealthResponse"
+        performance:
+          $ref: "#/components/schemas/PerformanceMetricsResponse"
+        alerts:
+          $ref: "#/components/schemas/AlertsResponse"
+        charts:
+          type: object
+          additionalProperties: true
+
+    # Queue schemas
+    QueueStatsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        totalItems:
+          type: integer
+        pendingItems:
+          type: integer
+        processingItems:
+          type: integer
+        completedItems:
+          type: integer
+        failedItems:
+          type: integer
+        averageProcessingTime:
           type: number
-        cpu_usage:
+        throughput:
           type: number
+
+    QueueStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [running, paused, stopped, error]
+        workers:
+          type: integer
+        activeWorkers:
+          type: integer
+        queueSize:
+          type: integer
+        lastProcessed:
+          type: string
+          format: date-time
+
+    QueueClearResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        clearedItems:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+tags:
+  - name: System
+    description: System health and configuration endpoints
+  - name: External API
+    description: Public APIs for external clients
+  - name: Internal API - Companies
+    description: Company management APIs
+  - name: Internal API - Users
+    description: User management APIs
+  - name: Internal API - Projects
+    description: Project management APIs
+  - name: Internal API - Bots
+    description: Bot management APIs
+  - name: Internal API - Destinations
+    description: Destination management APIs
+  - name: Internal API - Notifications
+    description: Notification management APIs
+  - name: Internal API - Billing
+    description: Billing management APIs
+  - name: Internal API - Files
+    description: File management APIs
+  - name: Internal API - Monitoring
+    description: Monitoring and analytics APIs

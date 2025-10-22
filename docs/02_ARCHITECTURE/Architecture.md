@@ -109,7 +109,23 @@ flowchart TB
 - **認證**: JWT + API Key 雙重認證
 - **中間件**: 日誌、錯誤處理、速率限制
 
-### 5.2 業務邏輯層 (`internal/api/services`)
+### 5.2 共用函式庫層 (`libs/`)
+
+- **Token 管理** (`libs/token/`): Teams Token 快取和管理
+- **中間件** (`libs/middleware/`): 認證、日誌、錯誤處理、業務指標
+- **日誌系統** (`libs/logger/`): 結構化日誌記錄
+- **共用模型** (`libs/models/`): 跨模組共用的資料模型
+- **本地存儲** (`libs/storage/`): 本地檔案存儲
+- **錯誤處理** (`libs/errors/`): 統一的錯誤處理機制
+
+### 5.3 業務服務層 (`services/teamsnotification/`)
+
+- **Handlers** (`services/teamsnotification/handlers/`): HTTP 處理器
+- **Repositories** (`services/teamsnotification/repositories/`): 資料存取層
+- **Actor 系統** (`services/teamsnotification/actor/`): 異步通知處理
+- **Integration** (`services/teamsnotification/integration/`): 整合測試
+
+### 5.4 核心業務邏輯
 
 - **NotificationService**: 通知管理邏輯
 - **ProjectService**: 專案管理
@@ -117,14 +133,14 @@ flowchart TB
 - **BroadcastService**: 廣播服務
 - **ProvisionService**: 一鍵建立服務
 
-### 5.3 Actor 系統 (`internal/actor`)
+### 5.5 Actor 系統 (`services/teamsnotification/actor/`)
 
 - **NotificationActor**: 單一通知處理 Actor
 - **ActorPool**: Actor 池管理
 - **Redis 整合**: 使用 Redis 管理佇列和狀態
 - **重試機制**: 指數退避 + Teams Retry-After
 
-### 5.4 資料存取層 (`internal/api/repositories`)
+### 5.6 資料存取層
 
 - **Repository 模式**: 統一的資料存取介面
 - **支援**: PostgreSQL + Redis
@@ -392,23 +408,41 @@ repo-root/
 │   └── server/           # API 服務器
 │       └── main.go
 │
-├── internal/             # 內部共用，不對外公開
+├── libs/                 # 共用函式庫 (Refactored)
+│   ├── token/            # Token 管理
+│   │   └── token_manager.go
+│   ├── middleware/       # 中間件
+│   │   ├── auth.go
+│   │   ├── error.go
+│   │   ├── logging.go
+│   │   └── business_metrics.go
+│   ├── logger/           # 日誌系統
+│   │   └── logger.go
+│   ├── models/           # 共用模型
+│   │   └── models.go
+│   ├── storage/          # 本地存儲
+│   │   └── local_storage.go
+│   └── errors/           # 錯誤處理
+│       └── errors.go
+│
+├── services/             # 業務服務 (Refactored)
+│   └── teamsnotification/
+│       ├── server.go     # 服務器配置
+│       ├── handlers/     # HTTP 處理器
+│       ├── repositories/ # 資料存取層
+│       ├── actor/        # Actor 模式實作
+│       └── integration/  # 整合測試
+│
+├── internal/             # 內部共用，不對外公開 (Legacy)
 │   ├── api/              # API 層
 │   │   ├── handlers/     # HTTP 處理器
 │   │   ├── middleware/   # 中間件
 │   │   ├── repositories/ # 資料存取層
-│   │   ├── services/     # 業務邏輯層
-│   │   └── storage/      # 本地存儲
-│   ├── actor/            # Actor 模式實作
-│   │   ├── actor_pool.go
-│   │   ├── notification_actor.go
-│   │   ├── queue_consumer.go
-│   │   └── redis_circuit_breaker.go
-│   ├── database/         # 資料庫模型
-│   │   ├── models.go
-│   │   ├── schema.sql
-│   │   └── init.sql
-│   └── queue/            # 佇列管理（舊版）
+│   │   └── services/     # 業務邏輯層
+│   └── database/         # 資料庫模型
+│       ├── models.go
+│       ├── schema.sql
+│       └── init.sql
 │
 ├── api/                  # API 定義
 │   ├── proto/            # gRPC 定義
@@ -453,7 +487,15 @@ repo-root/
 
 ## 16. 更新日誌
 
-### v1.0.0
+### v1.2.0 (2025-10-21)
+
+- **目錄結構重構**: 將共用函式庫移至 `libs/` 目錄
+- **業務邏輯分離**: 將業務服務移至 `services/teamsnotification/` 目錄
+- **模組化設計**: 提升代碼可維護性和重用性
+- **OpenAPI 同步**: 完全同步 OpenAPI 規範與實際代碼
+- **文檔更新**: 更新架構文檔以反映新的目錄結構
+
+### v1.1.0
 
 - 實現統一配置管理
 - 添加錯誤處理架構
@@ -462,3 +504,10 @@ repo-root/
 - 實現 Two-loop Enqueue Design
 - 添加 Actor Pool 管理
 - 完善 Redis 隊列機制
+
+### v1.0.0
+
+- 初始版本發布
+- 基本 Teams 通知功能
+- PostgreSQL 和 Redis 整合
+- JWT 認證機制
