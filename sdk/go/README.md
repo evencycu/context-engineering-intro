@@ -17,6 +17,7 @@ go get github.com/teamsnotify/go-sdk
 package main
 
 import (
+    "context"
     "fmt"
     "log"
     "github.com/teamsnotify/go-sdk"
@@ -26,84 +27,65 @@ func main() {
     // Initialize the client
     client := sdk.NewClient("http://localhost:8080")
     
-    // Send a notification
-    resp, err := client.Notifications().Send(&sdk.SendNotificationRequest{
-        NotifyKey: "your-notify-key",
-        Message: "Hello from Go SDK!",
-        MessageType: "text",
-        Priority: "normal",
-        Targets: []string{"all"},
+    // Send a notification using external API
+    resp, err := client.ExternalAPI().ApiV1NotifyPost(context.Background(), sdk.ApiV1NotifyPostRequest{
+        ExternalNotifyRequest: sdk.ExternalNotifyRequest{
+            NotifyKey: "your-notify-key",
+            Message: "Hello from Go SDK!",
+            MessageType: "text",
+            Priority: "normal",
+            Targets: []string{"all"},
+        },
     })
     
     if err != nil {
         log.Fatal(err)
     }
     
-    fmt.Printf("Notification sent: %s\n", resp.NotificationID)
+    fmt.Printf("Notification sent: %s\n", resp.NotificationId)
 }
 ```
 
 ### External API Example
 
 ```go
-// Use external API (no authentication required)
-external := sdk.NewExternalClient("http://localhost:8080/api/v1")
-
 // Send notification via external API
-resp, err := external.SendNotification(&sdk.SendNotificationRequest{
-    NotifyKey: "your-notify-key",
-    Message: "Hello from external API!",
-    Targets: []string{"all"},
+resp, err := client.ExternalAPI().ApiV1NotifyPost(context.Background(), sdk.ApiV1NotifyPostRequest{
+    ExternalNotifyRequest: sdk.ExternalNotifyRequest{
+        NotifyKey: "your-notify-key",
+        Message: "Hello from external API!",
+        Targets: []string{"all"},
+    },
 })
 
 // Get project destinations
-dests, err := external.GetProjectDestinations("your-notify-key")
+dests, err := client.ExternalAPI().ApiV1DestinationsNotifyKeyGet(context.Background(), "your-notify-key")
 ```
 
-### Authentication
+### Internal API Example
 
 ```go
 // Create authenticated client
-client := sdk.NewClientWithAuth(
-    "http://localhost:8080",
-    "your-api-key",
-)
+client := sdk.NewClientWithAuth("http://localhost:8080", "your-api-key")
 
 // Use protected endpoints
-users, err := client.Users().List()
-projects, err := client.Projects().List()
+users, err := client.InternalAPIUsers().InternalV1UsersGet(context.Background())
+projects, err := client.InternalAPIProjects().InternalV1ProjectsGet(context.Background())
 ```
 
 ## API Reference
 
 ### External API
-
-- `SendNotification(req *SendNotificationRequest) (*SendNotificationResponse, error)`
-- `GetProjectDestinations(notifyKey string) (*ProjectDestinationsResponse, error)`
+- `ApiV1NotifyPost` - Send notification
+- `ApiV1DestinationsNotifyKeyGet` - Get project destinations
 
 ### Internal API
-
-#### Users
-- `List() ([]*User, error)`
-- `Get(id string) (*User, error)`
-- `Create(req *CreateUserRequest) (*User, error)`
-- `Update(id string, req *UpdateUserRequest) (*User, error)`
-- `Delete(id string) error`
-
-#### Projects
-- `List() ([]*Project, error)`
-- `Get(id string) (*Project, error)`
-- `Create(req *CreateProjectRequest) (*Project, error)`
-- `Update(id string, req *UpdateProjectRequest) (*Project, error)`
-- `Delete(id string) error`
-
-#### Notifications
-- `Send(req *SendNotificationRequest) (*SendNotificationResponse, error)`
-- `Get(id string) (*Notification, error)`
-- `List(query *NotificationQuery) ([]*Notification, error)`
-- `Cancel(id string) error`
+- Users: `InternalV1UsersGet`, `InternalV1UsersPost`, etc.
+- Projects: `InternalV1ProjectsGet`, `InternalV1ProjectsPost`, etc.
+- Notifications: `InternalV1NotificationsGet`, `InternalV1NotificationsPost`, etc.
+- Destinations: `InternalV1DestinationsGet`, `InternalV1DestinationsPost`, etc.
+- Bots: `InternalV1BotsPlatformGet`, `InternalV1BotsPlatformPost`, etc.
 
 ## License
 
 MIT License
-

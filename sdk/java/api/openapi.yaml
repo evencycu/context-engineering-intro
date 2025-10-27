@@ -1,0 +1,5346 @@
+openapi: 3.0.3
+info:
+  description: |
+    This specification documents the REST endpoints implemented in the Teams Notification Go service.
+    Includes all available routes for internal and external APIs.
+
+    ## API Structure
+    - **External APIs** (`/api/v1`): Public APIs for external clients
+    - **Internal APIs** (`/internal/v1`): Internal management APIs
+    - **System APIs**: Health, metrics, and configuration endpoints
+
+    ## Recent Updates (v1.0.0)
+    - **Unified Configuration**: Environment-based configuration system
+    - **Error Handling**: Standardized error responses with proper HTTP status codes
+    - **Token Management**: Redis-backed token caching for improved performance
+    - **Monitoring**: Enhanced health checks and system metrics
+    - **Logging**: Structured logging with configurable levels and formats
+  title: Teams Notification API (Go implementation)
+  version: 1.0.0
+servers:
+- description: Local development server
+  url: http://localhost:8080
+- description: Production server
+  url: https://api.teamsnotify.com
+tags:
+- description: System health and configuration endpoints
+  name: System
+- description: Public APIs for external clients
+  name: External API
+- description: Company management APIs
+  name: Internal API - Companies
+- description: User management APIs
+  name: Internal API - Users
+- description: Project management APIs
+  name: Internal API - Projects
+- description: Bot management APIs
+  name: Internal API - Bots
+- description: Destination management APIs
+  name: Internal API - Destinations
+- description: Notification management APIs
+  name: Internal API - Notifications
+- description: Billing management APIs
+  name: Internal API - Billing
+- description: File management APIs
+  name: Internal API - Files
+- description: Monitoring and analytics APIs
+  name: Internal API - Monitoring
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+          description: Health status
+      summary: Service health check
+      tags:
+      - System
+      x-accepts:
+      - application/json
+  /metrics:
+    get:
+      description: "Returns system metrics including token cache statistics, actor\
+        \ pool status, and performance indicators"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+          description: System metrics
+      summary: System metrics
+      tags:
+      - System
+      x-accepts:
+      - application/json
+  /config:
+    get:
+      description: Returns current system configuration (non-sensitive values only)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+          description: System configuration
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get system configuration
+      tags:
+      - System
+      x-accepts:
+      - application/json
+  /config/validate:
+    post:
+      description: Validates the current system configuration
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigValidationResponse"
+          description: Configuration validation result
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Validate system configuration
+      tags:
+      - System
+      x-accepts:
+      - application/json
+  /api/v1/notify:
+    post:
+      description: Send a notification to Teams using project notify key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalNotifyRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalNotifyResponse"
+          description: Notification sent successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Send notification (External API)
+      tags:
+      - External API
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /api/v1/destinations/{notifyKey}:
+    get:
+      description: Get destinations for a project using notify key
+      parameters:
+      - description: Project notify key
+        explode: false
+        in: path
+        name: notifyKey
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDestinationsResponse"
+          description: Project destinations
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project destinations (External API)
+      tags:
+      - External API
+      x-accepts:
+      - application/json
+  /api/v1/provision:
+    post:
+      description: Create a new project provision
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+          description: Project provision created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create project provision
+      tags:
+      - External API
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /api/v1/provision/{notifyKey}:
+    get:
+      description: Get project provision by notify key
+      parameters:
+      - description: Project notify key
+        explode: false
+        in: path
+        name: notifyKey
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+          description: Project provision details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project provision
+      tags:
+      - External API
+      x-accepts:
+      - application/json
+    put:
+      description: Update project provision by notify key
+      parameters:
+      - description: Project notify key
+        explode: false
+        in: path
+        name: notifyKey
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+          description: Project provision updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update project provision
+      tags:
+      - External API
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /api/v1/provision/{notifyKey}/enable:
+    post:
+      description: Enable project provision by notify key
+      parameters:
+      - description: Project notify key
+        explode: false
+        in: path
+        name: notifyKey
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+          description: Project provision enabled successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Enable project provision
+      tags:
+      - External API
+      x-accepts:
+      - application/json
+  /api/v1/provision/{notifyKey}/disable:
+    post:
+      description: Disable project provision by notify key
+      parameters:
+      - description: Project notify key
+        explode: false
+        in: path
+        name: notifyKey
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionResponse"
+          description: Project provision disabled successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Disable project provision
+      tags:
+      - External API
+      x-accepts:
+      - application/json
+  /api/v1/messages:
+    post:
+      description: Handle incoming Bot Framework Activity messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotFrameworkActivity"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+          description: Message processed successfully
+      summary: Handle Bot Framework messages
+      tags:
+      - External API
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /api/v1/messages/test:
+    post:
+      description: Send a test proactive message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProactiveTestRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+          description: Test message sent successfully
+      summary: Test proactive message
+      tags:
+      - External API
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/companies:
+    get:
+      description: Get a list of companies with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyListResponse"
+          description: List of companies
+      summary: List companies
+      tags:
+      - Internal API - Companies
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+          description: Company created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create company
+      tags:
+      - Internal API - Companies
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/companies/{id}:
+    delete:
+      description: Delete company by ID
+      parameters:
+      - description: Company ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Company deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete company
+      tags:
+      - Internal API - Companies
+      x-accepts:
+      - application/json
+    get:
+      description: Get company by ID
+      parameters:
+      - description: Company ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+          description: Company details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get company
+      tags:
+      - Internal API - Companies
+      x-accepts:
+      - application/json
+    put:
+      description: Update company by ID
+      parameters:
+      - description: Company ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+          description: Company updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update company
+      tags:
+      - Internal API - Companies
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/companies/{id}/status:
+    patch:
+      description: Update company status by ID
+      parameters:
+      - description: Company ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyStatusUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+          description: Company status updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update company status
+      tags:
+      - Internal API - Companies
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/companies/{id}/billing:
+    patch:
+      description: Update company billing status by ID
+      parameters:
+      - description: Company ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectBillingUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+          description: Company billing status updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update company billing status
+      tags:
+      - Internal API - Companies
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/users:
+    get:
+      description: Get a list of users with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+          description: List of users
+      summary: List users
+      tags:
+      - Internal API - Users
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: User created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create user
+      tags:
+      - Internal API - Users
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/users/{id}:
+    delete:
+      description: Delete user by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete user
+      tags:
+      - Internal API - Users
+      x-accepts:
+      - application/json
+    get:
+      description: Get user by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: User details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get user
+      tags:
+      - Internal API - Users
+      x-accepts:
+      - application/json
+    put:
+      description: Update user by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: User updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update user
+      tags:
+      - Internal API - Users
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/users/{id}/password:
+    patch:
+      description: Change user password by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: Password changed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Change user password
+      tags:
+      - Internal API - Users
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/users/company/{companyId}:
+    get:
+      description: Get users by company ID
+      parameters:
+      - explode: false
+        in: path
+        name: companyId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+          description: List of users in company
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get users by company
+      tags:
+      - Internal API - Users
+      x-accepts:
+      - application/json
+  /internal/v1/users/role/{role}:
+    get:
+      description: Get users by role
+      parameters:
+      - explode: false
+        in: path
+        name: role
+        required: true
+        schema:
+          enum:
+          - admin
+          - manager
+          - user
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+          description: List of users with role
+      summary: Get users by role
+      tags:
+      - Internal API - Users
+      x-accepts:
+      - application/json
+  /internal/v1/projects:
+    get:
+      description: Get a list of projects with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+          description: List of projects
+      summary: List projects
+      tags:
+      - Internal API - Projects
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new project
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+          description: Project created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create project
+      tags:
+      - Internal API - Projects
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/projects/{id}:
+    delete:
+      description: Delete project by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Project deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete project
+      tags:
+      - Internal API - Projects
+      x-accepts:
+      - application/json
+    get:
+      description: Get project by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+          description: Project details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project
+      tags:
+      - Internal API - Projects
+      x-accepts:
+      - application/json
+    put:
+      description: Update project by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+          description: Project updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update project
+      tags:
+      - Internal API - Projects
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/projects/{id}/limits:
+    patch:
+      description: Update project limits by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectLimitsUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+          description: Project limits updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update project limits
+      tags:
+      - Internal API - Projects
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/projects/company/{companyId}:
+    get:
+      description: Get projects by company ID
+      parameters:
+      - explode: false
+        in: path
+        name: companyId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+          description: List of projects in company
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get projects by company
+      tags:
+      - Internal API - Projects
+      x-accepts:
+      - application/json
+  /internal/v1/projects/key/{keyName}:
+    get:
+      description: Get project by notify key name
+      parameters:
+      - explode: false
+        in: path
+        name: keyName
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+          description: Project details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project by key name
+      tags:
+      - Internal API - Projects
+      x-accepts:
+      - application/json
+  /internal/v1/notifications:
+    get:
+      description: Get a list of notifications with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - pending
+          - sent
+          - failed
+          - cancelled
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+          description: List of notifications
+      summary: List notifications
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+    post:
+      description: Send a new notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationSendRequest"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSendResponse"
+          description: Notification queued successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Send notification
+      tags:
+      - Internal API - Notifications
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/{id}:
+    delete:
+      description: Cancel notification by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationCancelResponse"
+          description: Notification cancelled successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Cancel notification
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+    get:
+      description: Get notification by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+          description: Notification details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get notification
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/{id}/retry:
+    post:
+      description: Retry failed notification by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRetryResponse"
+          description: Notification retry initiated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Retry notification
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/project/{projectId}:
+    get:
+      description: Get notifications by project ID
+      parameters:
+      - explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+          description: List of notifications for project
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get notifications by project
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/sender/{senderId}:
+    get:
+      description: Get notifications by sender ID
+      parameters:
+      - explode: false
+        in: path
+        name: senderId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+          description: List of notifications by sender
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get notifications by sender
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/status/{status}:
+    get:
+      description: Get notifications by status
+      parameters:
+      - explode: false
+        in: path
+        name: status
+        required: true
+        schema:
+          enum:
+          - pending
+          - sent
+          - failed
+          - cancelled
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+          description: List of notifications with status
+      summary: Get notifications by status
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/notifications/date-range:
+    get:
+      description: Get notifications within date range
+      parameters:
+      - explode: true
+        in: query
+        name: start_date
+        required: true
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: end_date
+        required: true
+        schema:
+          format: date-time
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDateRangeResponse"
+          description: List of notifications in date range
+      summary: Get notifications by date range
+      tags:
+      - Internal API - Notifications
+      x-accepts:
+      - application/json
+  /internal/v1/destinations:
+    get:
+      description: Get a list of destinations with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+          description: List of destinations
+      summary: List destinations
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new destination
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DestinationCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationResponse"
+          description: Destination created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create destination
+      tags:
+      - Internal API - Destinations
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/{id}:
+    delete:
+      description: Delete destination by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Destination deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete destination
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+    get:
+      description: Get destination by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationResponse"
+          description: Destination details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get destination
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+    put:
+      description: Update destination by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DestinationUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationResponse"
+          description: Destination updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update destination
+      tags:
+      - Internal API - Destinations
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/{id}/targets:
+    patch:
+      description: Update destination targets by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DestinationTargetsUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationResponse"
+          description: Destination targets updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update destination targets
+      tags:
+      - Internal API - Destinations
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/{id}/validate:
+    post:
+      description: Validate destination targets by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationValidationResponse"
+          description: Destination targets validation result
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Validate destination targets
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/project/{projectId}:
+    get:
+      description: Get destinations by project ID
+      parameters:
+      - explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+          description: List of destinations for project
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get destinations by project
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/bot/{botId}:
+    get:
+      description: Get destinations by bot ID
+      parameters:
+      - explode: false
+        in: path
+        name: botId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+          description: List of destinations for bot
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get destinations by bot
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+  /internal/v1/destinations/search:
+    get:
+      description: Search destinations with filters
+      parameters:
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          enum:
+          - personal
+          - group
+          - channel
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - active
+          - inactive
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationListResponse"
+          description: Search results
+      summary: Search destinations
+      tags:
+      - Internal API - Destinations
+      x-accepts:
+      - application/json
+  /internal/v1/bots/platform:
+    get:
+      description: Get a list of Teams bot services
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotListResponse"
+          description: List of Teams bots
+      summary: List Teams bots
+      tags:
+      - Internal API - Bots
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new Teams bot service
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+          description: Bot created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create Teams bot
+      tags:
+      - Internal API - Bots
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/bots/platform/{id}:
+    delete:
+      description: Delete Teams bot by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Bot deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete Teams bot
+      tags:
+      - Internal API - Bots
+      x-accepts:
+      - application/json
+    get:
+      description: Get Teams bot by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+          description: Bot details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get Teams bot
+      tags:
+      - Internal API - Bots
+      x-accepts:
+      - application/json
+    put:
+      description: Update Teams bot by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+          description: Bot updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update Teams bot
+      tags:
+      - Internal API - Bots
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/bots/platform/{id}/status:
+    patch:
+      description: Update bot status by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotStatusUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+          description: Bot status updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update bot status
+      tags:
+      - Internal API - Bots
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/bots/platform/{id}/capabilities:
+    patch:
+      description: Update bot capabilities by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotCapabilitiesUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotResponse"
+          description: Bot capabilities updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update bot capabilities
+      tags:
+      - Internal API - Bots
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/bots/platform/{id}/test:
+    post:
+      description: Test bot connection by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotTestResponse"
+          description: Bot connection test result
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Test bot connection
+      tags:
+      - Internal API - Bots
+      x-accepts:
+      - application/json
+  /internal/v1/bots/status/{status}:
+    get:
+      description: Get bots by status
+      parameters:
+      - explode: false
+        in: path
+        name: status
+        required: true
+        schema:
+          enum:
+          - active
+          - inactive
+          - error
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotListResponse"
+          description: List of bots with status
+      summary: Get bots by status
+      tags:
+      - Internal API - Bots
+      x-accepts:
+      - application/json
+  /internal/v1/billing/usage:
+    get:
+      description: Get usage records with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: company_id
+        required: false
+        schema:
+          format: uuid
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: project_id
+        required: false
+        schema:
+          format: uuid
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+          description: List of usage records
+      summary: Get usage records
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+  /internal/v1/billing/usage/summary:
+    get:
+      description: Get usage summary statistics
+      parameters:
+      - explode: true
+        in: query
+        name: company_id
+        required: false
+        schema:
+          format: uuid
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: project_id
+        required: false
+        schema:
+          format: uuid
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: start_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: end_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageSummaryResponse"
+          description: Usage summary
+      summary: Get usage summary
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+  /internal/v1/billing/usage/company/{companyId}:
+    get:
+      description: Get usage records for a company
+      parameters:
+      - explode: false
+        in: path
+        name: companyId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+          description: Company usage records
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get company usage
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+  /internal/v1/billing/usage/project/{projectId}:
+    get:
+      description: Get usage records for a project
+      parameters:
+      - explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageRecordsResponse"
+          description: Project usage records
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project usage
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+  /internal/v1/billing/plans:
+    get:
+      description: Get a list of billing plans
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlansResponse"
+          description: List of billing plans
+      summary: List billing plans
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+    post:
+      description: Create a new billing plan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillingPlanCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+          description: Billing plan created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Create billing plan
+      tags:
+      - Internal API - Billing
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/billing/plans/{id}:
+    get:
+      description: Get billing plan by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+          description: Billing plan details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get billing plan
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+    put:
+      description: Update billing plan by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillingPlanUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanResponse"
+          description: Billing plan updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update billing plan
+      tags:
+      - Internal API - Billing
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/billing/project/{projectId}:
+    get:
+      description: Get project billing information
+      parameters:
+      - explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBillingResponse"
+          description: Project billing information
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get project billing
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+    put:
+      description: Update project billing information
+      parameters:
+      - explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectBillingUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBillingResponse"
+          description: Project billing updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Update project billing
+      tags:
+      - Internal API - Billing
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /internal/v1/billing/analytics/overview:
+    get:
+      description: Get billing analytics overview
+      parameters:
+      - explode: true
+        in: query
+        name: start_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: end_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingAnalyticsResponse"
+          description: Billing analytics overview
+      summary: Get billing analytics overview
+      tags:
+      - Internal API - Billing
+      x-accepts:
+      - application/json
+  /internal/v1/files:
+    get:
+      description: Get a list of files with pagination
+      parameters:
+      - description: Number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Search term
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+          description: List of files
+      summary: List files
+      tags:
+      - Internal API - Files
+      x-accepts:
+      - application/json
+  /internal/v1/files/upload:
+    post:
+      description: Upload a single file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/FileUploadRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileResponse"
+          description: File uploaded successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Upload file
+      tags:
+      - Internal API - Files
+      x-content-type: multipart/form-data
+      x-accepts:
+      - application/json
+  /internal/v1/files/upload/multiple:
+    post:
+      description: Upload multiple files
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MultipleFileUploadRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultipleFileUploadResponse"
+          description: Files uploaded successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+      summary: Upload multiple files
+      tags:
+      - Internal API - Files
+      x-content-type: multipart/form-data
+      x-accepts:
+      - application/json
+  /internal/v1/files/{id}:
+    delete:
+      description: Delete file by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: File deleted successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Delete file
+      tags:
+      - Internal API - Files
+      x-accepts:
+      - application/json
+    get:
+      description: Get file by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileResponse"
+          description: File details
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Get file
+      tags:
+      - Internal API - Files
+      x-accepts:
+      - application/json
+  /internal/v1/files/{id}/download:
+    get:
+      description: Download file by ID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: File content
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+      summary: Download file
+      tags:
+      - Internal API - Files
+      x-accepts:
+      - application/json
+      - application/octet-stream
+  /internal/v1/files/validate:
+    post:
+      description: Validate file before upload
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/FileValidationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileValidationResponse"
+          description: File validation result
+      summary: Validate file
+      tags:
+      - Internal API - Files
+      x-content-type: multipart/form-data
+      x-accepts:
+      - application/json
+  /internal/v1/monitoring/health:
+    get:
+      description: Get comprehensive system health status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemHealthResponse"
+          description: System health status
+      summary: Get system health
+      tags:
+      - Internal API - Monitoring
+      x-accepts:
+      - application/json
+  /internal/v1/monitoring/performance:
+    get:
+      description: Get system performance metrics
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceMetricsResponse"
+          description: Performance metrics
+      summary: Get performance metrics
+      tags:
+      - Internal API - Monitoring
+      x-accepts:
+      - application/json
+  /internal/v1/monitoring/business:
+    get:
+      description: Get business metrics and health indicators
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessHealthResponse"
+          description: Business health metrics
+      summary: Get business health
+      tags:
+      - Internal API - Monitoring
+      x-accepts:
+      - application/json
+  /internal/v1/monitoring/alerts:
+    get:
+      description: Get current alert status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertStatusResponse"
+          description: Alert status
+      summary: Get alert status
+      tags:
+      - Internal API - Monitoring
+      x-accepts:
+      - application/json
+  /internal/v1/monitoring/dashboard:
+    get:
+      description: Get comprehensive monitoring dashboard data
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+          description: Dashboard data
+      summary: Get monitoring dashboard
+      tags:
+      - Internal API - Monitoring
+      x-accepts:
+      - application/json
+  /internal/v1/queue/stats:
+    get:
+      description: Get queue statistics and status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatsResponse"
+          description: Queue statistics
+      summary: Get queue statistics
+      tags:
+      - Internal API - Queue
+      x-accepts:
+      - application/json
+  /internal/v1/queue/status:
+    get:
+      description: Get current queue status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatusResponse"
+          description: Queue status
+      summary: Get queue status
+      tags:
+      - Internal API - Queue
+      x-accepts:
+      - application/json
+  /internal/v1/queue/clear:
+    post:
+      description: Clear all items from the queue
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueClearResponse"
+          description: Queue cleared successfully
+      summary: Clear queue
+      tags:
+      - Internal API - Queue
+      x-accepts:
+      - application/json
+components:
+  parameters:
+    LimitParam:
+      description: Number of items to return
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 10
+        maximum: 100
+        minimum: 1
+        type: integer
+      style: form
+    OffsetParam:
+      description: Number of items to skip
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        minimum: 0
+        type: integer
+      style: form
+    SearchParam:
+      description: Search term
+      explode: true
+      in: query
+      name: search
+      required: false
+      schema:
+        type: string
+      style: form
+    CompanyIdParam:
+      description: Company ID
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+  responses:
+    BadRequestError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Bad request
+    UnauthorizedError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Unauthorized
+    NotFoundError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Not found
+    InternalServerError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Internal server error
+  schemas:
+    ErrorResponse:
+      example:
+        details: details
+        error: error
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        error:
+          description: Error message
+          type: string
+        details:
+          description: Detailed error information
+          type: string
+        timestamp:
+          description: Error timestamp
+          format: date-time
+          type: string
+      type: object
+    HealthResponse:
+      example:
+        version: version
+        status: healthy
+        timestamp: 2000-01-23T04:56:07.000+00:00
+        uptime: uptime
+      properties:
+        status:
+          enum:
+          - healthy
+          - unhealthy
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        version:
+          type: string
+        uptime:
+          type: string
+      type: object
+    MetricsResponse:
+      example:
+        system:
+          memory_usage: 0.8008281904610115
+          goroutines: 1
+          cpu_usage: 6.027456183070403
+          uptime: uptime
+        token_cache:
+          hits: 5
+          hit_rate: 2.3021358869347655
+          misses: 5
+          total_keys: 7
+        actor_pool:
+          queue_size: 4
+          total_actors: 2
+          idle_actors: 3
+          active_actors: 9
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        system:
+          $ref: "#/components/schemas/SystemMetrics"
+        token_cache:
+          $ref: "#/components/schemas/TokenCacheMetrics"
+        actor_pool:
+          $ref: "#/components/schemas/ActorPoolMetrics"
+      type: object
+    SystemMetrics:
+      example:
+        memory_usage: 0.8008281904610115
+        goroutines: 1
+        cpu_usage: 6.027456183070403
+        uptime: uptime
+      properties:
+        memory_usage:
+          type: number
+        cpu_usage:
+          type: number
+        goroutines:
+          type: integer
+        uptime:
+          type: string
+      type: object
+    TokenCacheMetrics:
+      example:
+        hits: 5
+        hit_rate: 2.3021358869347655
+        misses: 5
+        total_keys: 7
+      properties:
+        hits:
+          type: integer
+        misses:
+          type: integer
+        hit_rate:
+          type: number
+        total_keys:
+          type: integer
+      type: object
+    ActorPoolMetrics:
+      example:
+        queue_size: 4
+        total_actors: 2
+        idle_actors: 3
+        active_actors: 9
+      properties:
+        active_actors:
+          type: integer
+        idle_actors:
+          type: integer
+        total_actors:
+          type: integer
+        queue_size:
+          type: integer
+      type: object
+    ExternalNotifyRequest:
+      example:
+        metadata:
+          source: external
+          version: "1.0"
+        messageType: text
+        mentions:
+        - '@user1'
+        - '@user2'
+        notifyKey: my-project-key
+        message: Hello from external API
+        priority: normal
+        targets:
+        - all
+      properties:
+        notifyKey:
+          description: Project notify key
+          example: my-project-key
+          type: string
+        message:
+          description: Notification message
+          example: Hello from external API
+          type: string
+        messageType:
+          default: text
+          description: Type of message
+          enum:
+          - text
+          - file
+          - adaptive_card
+          type: string
+        priority:
+          default: normal
+          description: Message priority
+          enum:
+          - low
+          - normal
+          - high
+          type: string
+        targets:
+          description: "List of target emails, conversation IDs, or 'all'"
+          example:
+          - all
+          items:
+            type: string
+          type: array
+        mentions:
+          description: List of user mentions
+          example:
+          - '@user1'
+          - '@user2'
+          items:
+            type: string
+          type: array
+        metadata:
+          additionalProperties: true
+          description: Additional metadata
+          example:
+            source: external
+            version: "1.0"
+          type: object
+      required:
+      - message
+      - notifyKey
+      type: object
+    ExternalNotifyResponse:
+      example:
+        data:
+          destinationsCount: 0
+          estimated_delivery_time: estimated_delivery_time
+          notificationId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          message: message
+          status: status
+        success: true
+        error: error
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/NotifyResponse"
+        error:
+          type: string
+      type: object
+    NotifyResponse:
+      example:
+        destinationsCount: 0
+        estimated_delivery_time: estimated_delivery_time
+        notificationId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        message: message
+        status: status
+      properties:
+        notificationId:
+          format: uuid
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        destinationsCount:
+          type: integer
+        estimated_delivery_time:
+          type: string
+      type: object
+    CompanyCreateRequest:
+      example:
+        address: address
+        contactEmail: contactEmail
+        name: name
+        contactPhone: contactPhone
+        billingEnabled: false
+        status: active
+      properties:
+        name:
+          description: Company name
+          maxLength: 255
+          minLength: 2
+          type: string
+        contactEmail:
+          description: Contact email
+          format: email
+          type: string
+        contactPhone:
+          description: Contact phone number
+          type: string
+        address:
+          description: Company address
+          type: string
+        status:
+          default: active
+          enum:
+          - active
+          - inactive
+          - suspended
+          type: string
+        billingEnabled:
+          default: false
+          type: boolean
+      required:
+      - contactEmail
+      - name
+      type: object
+    CompanyUpdateRequest:
+      example:
+        address: address
+        contactEmail: contactEmail
+        name: name
+        contactPhone: contactPhone
+        billingEnabled: true
+        status: active
+      properties:
+        name:
+          maxLength: 255
+          minLength: 2
+          type: string
+        contactEmail:
+          format: email
+          type: string
+        contactPhone:
+          type: string
+        address:
+          type: string
+        status:
+          enum:
+          - active
+          - inactive
+          - suspended
+          type: string
+        billingEnabled:
+          type: boolean
+      type: object
+    CompanyResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        address: address
+        contactEmail: contactEmail
+        name: name
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        contactPhone: contactPhone
+        billingEnabled: true
+        status: status
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+        billingEnabled:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    CompanyListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          address: address
+          contactEmail: contactEmail
+          name: name
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          contactPhone: contactPhone
+          billingEnabled: true
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          address: address
+          contactEmail: contactEmail
+          name: name
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          contactPhone: contactPhone
+          billingEnabled: true
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/CompanyResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    CompanyStatusUpdateRequest:
+      example:
+        status: active
+      properties:
+        status:
+          enum:
+          - active
+          - inactive
+          - suspended
+          type: string
+      required:
+      - status
+      type: object
+    ProjectBillingUpdateRequest:
+      example:
+        nextBillingDate: 2000-01-23
+        billingCycle: monthly
+        paymentMethod: credit_card
+        billingStatus: active
+      properties:
+        paymentMethod:
+          enum:
+          - credit_card
+          - bank_transfer
+          - paypal
+          type: string
+        billingCycle:
+          enum:
+          - monthly
+          - yearly
+          type: string
+        nextBillingDate:
+          format: date
+          type: string
+        billingStatus:
+          enum:
+          - active
+          - suspended
+          - cancelled
+          type: string
+      type: object
+    PaginationResponse:
+      example:
+        total: 0
+        pages: 5
+        offset: 1
+        limit: 6
+      properties:
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        pages:
+          type: integer
+      type: object
+    BotFrameworkActivity:
+      example:
+        attachments:
+        - contentUrl: contentUrl
+          name: name
+          contentType: contentType
+        - contentUrl: contentUrl
+          name: name
+          contentType: contentType
+        recipient:
+          name: name
+          id: id
+        from:
+          name: name
+          id: id
+        id: id
+        text: text
+        type: type
+        channelId: channelId
+        conversation:
+          name: name
+          id: id
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        channelId:
+          type: string
+        from:
+          $ref: "#/components/schemas/ChannelAccount"
+        conversation:
+          $ref: "#/components/schemas/ConversationAccount"
+        recipient:
+          $ref: "#/components/schemas/ChannelAccount"
+        text:
+          type: string
+        attachments:
+          items:
+            $ref: "#/components/schemas/Attachment"
+          type: array
+      type: object
+    ChannelAccount:
+      example:
+        name: name
+        id: id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    ConversationAccount:
+      example:
+        name: name
+        id: id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    Attachment:
+      example:
+        contentUrl: contentUrl
+        name: name
+        contentType: contentType
+      properties:
+        contentType:
+          type: string
+        contentUrl:
+          type: string
+        name:
+          type: string
+      type: object
+    MessageResponse:
+      example:
+        success: true
+        message: message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      type: object
+    ProactiveTestRequest:
+      example:
+        conversationId: conversationId
+        message: message
+      properties:
+        conversationId:
+          description: Teams conversation ID
+          type: string
+        message:
+          description: Test message content
+          type: string
+      required:
+      - conversationId
+      - message
+      type: object
+    ProvisionCreateRequest:
+      example:
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        notifyKey: notifyKey
+        description: description
+        projectName: projectName
+      properties:
+        notifyKey:
+          description: Project notify key
+          type: string
+        companyId:
+          description: Company ID
+          format: uuid
+          type: string
+        projectName:
+          description: Project name
+          type: string
+        description:
+          description: Project description
+          type: string
+      required:
+      - companyId
+      - notifyKey
+      - projectName
+      type: object
+    ProvisionUpdateRequest:
+      example:
+        description: description
+        projectName: projectName
+        status: active
+      properties:
+        projectName:
+          type: string
+        description:
+          type: string
+        status:
+          enum:
+          - active
+          - inactive
+          type: string
+      type: object
+    ProvisionResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        notifyKey: notifyKey
+        description: description
+        projectName: projectName
+        status: status
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        notifyKey:
+          type: string
+        companyId:
+          format: uuid
+          type: string
+        projectName:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    ProjectDestinationsResponse:
+      example:
+        destinations:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          conversationId: conversationId
+          displayName: displayName
+          tenantId: tenantId
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          type: personal
+          status: status
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          conversationId: conversationId
+          displayName: displayName
+          tenantId: tenantId
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          type: personal
+          status: status
+        notifyKey: notifyKey
+      properties:
+        notifyKey:
+          type: string
+        destinations:
+          items:
+            $ref: "#/components/schemas/DestinationResponse"
+          type: array
+      type: object
+    DestinationResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        conversationId: conversationId
+        displayName: displayName
+        tenantId: tenantId
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        type: personal
+        status: status
+      properties:
+        id:
+          format: uuid
+          type: string
+        type:
+          enum:
+          - personal
+          - group
+          - channel
+          type: string
+        conversationId:
+          type: string
+        displayName:
+          type: string
+        tenantId:
+          type: string
+        status:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      type: object
+    ConfigResponse:
+      example:
+        features:
+          key: ""
+        environment: environment
+        version: version
+      properties:
+        environment:
+          type: string
+        version:
+          type: string
+        features:
+          additionalProperties: true
+          type: object
+      type: object
+    ConfigValidationResponse:
+      example:
+        valid: true
+        warnings:
+        - warnings
+        - warnings
+        errors:
+        - errors
+        - errors
+      properties:
+        valid:
+          type: boolean
+        errors:
+          items:
+            type: string
+          type: array
+        warnings:
+          items:
+            type: string
+          type: array
+      type: object
+    UserCreateRequest:
+      example:
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        password: password
+        role: admin
+        name: name
+        email: email
+      properties:
+        companyId:
+          description: Company ID
+          format: uuid
+          type: string
+        email:
+          description: User email
+          format: email
+          type: string
+        name:
+          description: User name
+          maxLength: 255
+          minLength: 2
+          type: string
+        role:
+          description: User role
+          enum:
+          - admin
+          - manager
+          - user
+          type: string
+        password:
+          description: User password
+          minLength: 8
+          type: string
+      required:
+      - companyId
+      - email
+      - name
+      - password
+      - role
+      type: object
+    UserUpdateRequest:
+      example:
+        role: admin
+        name: name
+        email: email
+      properties:
+        email:
+          format: email
+          type: string
+        name:
+          maxLength: 255
+          minLength: 2
+          type: string
+        role:
+          enum:
+          - admin
+          - manager
+          - user
+          type: string
+      type: object
+    UserResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        role: role
+        name: name
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        email: email
+        status: status
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        companyId:
+          format: uuid
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    UserListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: role
+          name: name
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          email: email
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: role
+          name: name
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          email: email
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/UserResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    ChangePasswordRequest:
+      example:
+        oldPassword: oldPassword
+        newPassword: newPassword
+      properties:
+        oldPassword:
+          description: Current password
+          type: string
+        newPassword:
+          description: New password
+          minLength: 8
+          type: string
+      required:
+      - newPassword
+      - oldPassword
+      type: object
+    ProjectCreateRequest:
+      example:
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        createdBy: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        dailyLimit: 0
+        notifyKey: notifyKey
+        description: description
+        priority: normal
+        monthlyLimit: 0
+      properties:
+        companyId:
+          description: Company ID
+          format: uuid
+          type: string
+        notifyKey:
+          description: Project notify key
+          type: string
+        description:
+          description: Project description
+          type: string
+        dailyLimit:
+          description: Daily notification limit
+          minimum: 0
+          type: integer
+        monthlyLimit:
+          description: Monthly notification limit
+          minimum: 0
+          type: integer
+        priority:
+          default: normal
+          description: Project priority
+          enum:
+          - low
+          - normal
+          - high
+          type: string
+        createdBy:
+          description: Creator user ID
+          format: uuid
+          type: string
+      required:
+      - companyId
+      - createdBy
+      - description
+      - notifyKey
+      type: object
+    ProjectUpdateRequest:
+      example:
+        dailyLimit: 0
+        notifyKey: notifyKey
+        description: description
+        priority: low
+        monthlyLimit: 0
+      properties:
+        notifyKey:
+          type: string
+        description:
+          type: string
+        dailyLimit:
+          minimum: 0
+          type: integer
+        monthlyLimit:
+          minimum: 0
+          type: integer
+        priority:
+          enum:
+          - low
+          - normal
+          - high
+          type: string
+      type: object
+    ProjectResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        dailyLimit: 0
+        notifyKey: notifyKey
+        description: description
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        priority: priority
+        monthlyLimit: 6
+        status: status
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        companyId:
+          format: uuid
+          type: string
+        notifyKey:
+          type: string
+        description:
+          type: string
+        dailyLimit:
+          type: integer
+        monthlyLimit:
+          type: integer
+        priority:
+          type: string
+        status:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    ProjectListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          dailyLimit: 0
+          notifyKey: notifyKey
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          priority: priority
+          monthlyLimit: 6
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          dailyLimit: 0
+          notifyKey: notifyKey
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          priority: priority
+          monthlyLimit: 6
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/ProjectResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    ProjectLimitsUpdateRequest:
+      example:
+        dailyLimit: 0
+        monthlyLimit: 0
+      properties:
+        dailyLimit:
+          minimum: 0
+          type: integer
+        monthlyLimit:
+          minimum: 0
+          type: integer
+      type: object
+    NotificationSendRequest:
+      example:
+        senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        metadata:
+          key: ""
+        messageType: text
+        mentions:
+        - mentions
+        - mentions
+        priority: normal
+        projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        targets:
+        - targets
+        - targets
+        content: content
+      properties:
+        projectId:
+          description: Project ID
+          format: uuid
+          type: string
+        senderId:
+          description: Sender user ID
+          format: uuid
+          type: string
+        messageType:
+          description: Type of message
+          enum:
+          - text
+          - file
+          - adaptive_card
+          type: string
+        content:
+          description: Message content
+          maxLength: 4000
+          type: string
+        mentions:
+          description: List of user mentions
+          items:
+            type: string
+          type: array
+        priority:
+          default: normal
+          description: Message priority
+          enum:
+          - low
+          - normal
+          - high
+          type: string
+        targets:
+          description: List of target destination IDs
+          items:
+            type: string
+          minItems: 1
+          type: array
+        metadata:
+          additionalProperties: true
+          description: Additional metadata
+          type: object
+      required:
+      - content
+      - messageType
+      - projectId
+      - targets
+      type: object
+    NotificationSendResponse:
+      example:
+        destinationsCount: 0
+        estimated_delivery_time: estimated_delivery_time
+        notificationId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        message: message
+        status: status
+      properties:
+        notificationId:
+          format: uuid
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        destinationsCount:
+          type: integer
+        estimated_delivery_time:
+          type: string
+      type: object
+    NotificationResponse:
+      example:
+        errorMessage: errorMessage
+        totalDestinations: 1
+        sentAt: 2000-01-23T04:56:07.000+00:00
+        priority: priority
+        content: content
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        messageType: messageType
+        mentions:
+        - mentions
+        - mentions
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        destinationsSent: 0
+        status: status
+        destinationsFailed: 6
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        projectId:
+          format: uuid
+          type: string
+        senderId:
+          format: uuid
+          type: string
+        messageType:
+          type: string
+        content:
+          type: string
+        mentions:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        status:
+          type: string
+        errorMessage:
+          type: string
+        destinationsSent:
+          type: integer
+        destinationsFailed:
+          type: integer
+        totalDestinations:
+          type: integer
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        sentAt:
+          format: date-time
+          type: string
+      type: object
+    NotificationListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - errorMessage: errorMessage
+          totalDestinations: 1
+          sentAt: 2000-01-23T04:56:07.000+00:00
+          priority: priority
+          content: content
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          messageType: messageType
+          mentions:
+          - mentions
+          - mentions
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          destinationsSent: 0
+          status: status
+          destinationsFailed: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - errorMessage: errorMessage
+          totalDestinations: 1
+          sentAt: 2000-01-23T04:56:07.000+00:00
+          priority: priority
+          content: content
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          messageType: messageType
+          mentions:
+          - mentions
+          - mentions
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          destinationsSent: 0
+          status: status
+          destinationsFailed: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    NotificationCancelResponse:
+      example:
+        message: message
+      properties:
+        message:
+          type: string
+      type: object
+    NotificationRetryResponse:
+      example:
+        message: message
+      properties:
+        message:
+          type: string
+      type: object
+    NotificationDateRangeResponse:
+      example:
+        date_range:
+          end_date: 2000-01-23T04:56:07.000+00:00
+          start_date: 2000-01-23T04:56:07.000+00:00
+        data:
+        - errorMessage: errorMessage
+          totalDestinations: 1
+          sentAt: 2000-01-23T04:56:07.000+00:00
+          priority: priority
+          content: content
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          messageType: messageType
+          mentions:
+          - mentions
+          - mentions
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          destinationsSent: 0
+          status: status
+          destinationsFailed: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - errorMessage: errorMessage
+          totalDestinations: 1
+          sentAt: 2000-01-23T04:56:07.000+00:00
+          priority: priority
+          content: content
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          senderId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          messageType: messageType
+          mentions:
+          - mentions
+          - mentions
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          destinationsSent: 0
+          status: status
+          destinationsFailed: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        count: 0
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+          type: array
+        count:
+          type: integer
+        date_range:
+          $ref: "#/components/schemas/NotificationDateRangeResponse_date_range"
+      type: object
+    DestinationCreateRequest:
+      example:
+        botId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        type: personal
+        projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        targets:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+        status: active
+      properties:
+        projectId:
+          description: Project ID
+          format: uuid
+          type: string
+        botId:
+          description: Bot ID
+          format: uuid
+          type: string
+        type:
+          description: Destination type
+          enum:
+          - personal
+          - group
+          - channel
+          type: string
+        targets:
+          description: List of targets
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+          type: array
+        status:
+          default: active
+          description: Destination status
+          enum:
+          - active
+          - inactive
+          type: string
+      required:
+      - botId
+      - projectId
+      - targets
+      - type
+      type: object
+    DestinationUpdateRequest:
+      example:
+        type: personal
+        targets:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+        status: active
+      properties:
+        type:
+          enum:
+          - personal
+          - group
+          - channel
+          type: string
+        targets:
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+          type: array
+        status:
+          enum:
+          - active
+          - inactive
+          type: string
+      type: object
+    DestinationTarget:
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        conversation_id: conversation_id
+        type: personal
+        display_name: display_name
+      properties:
+        type:
+          enum:
+          - personal
+          - group
+          - channel
+          type: string
+        conversation_id:
+          description: Teams conversation ID
+          type: string
+        display_name:
+          description: Display name
+          type: string
+        tenant_id:
+          description: Teams tenant ID
+          format: uuid
+          type: string
+      required:
+      - conversation_id
+      - display_name
+      - tenant_id
+      - type
+      type: object
+    DestinationTargetsUpdateRequest:
+      example:
+        targets:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          conversation_id: conversation_id
+          type: personal
+          display_name: display_name
+      properties:
+        targets:
+          items:
+            $ref: "#/components/schemas/DestinationTarget"
+          type: array
+      required:
+      - targets
+      type: object
+    DestinationValidationResponse:
+      example:
+        valid: true
+        warnings:
+        - warnings
+        - warnings
+        errors:
+        - errors
+        - errors
+      properties:
+        valid:
+          type: boolean
+        errors:
+          items:
+            type: string
+          type: array
+        warnings:
+          items:
+            type: string
+          type: array
+      type: object
+    DestinationListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          conversationId: conversationId
+          displayName: displayName
+          tenantId: tenantId
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          type: personal
+          status: status
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          conversationId: conversationId
+          displayName: displayName
+          tenantId: tenantId
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          type: personal
+          status: status
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/DestinationResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    BotCreateRequest:
+      example:
+        appPassword: appPassword
+        capabilities:
+        - capabilities
+        - capabilities
+        appId: appId
+        name: name
+        description: description
+        status: active
+      properties:
+        name:
+          description: Bot name
+          type: string
+        appId:
+          description: Microsoft App ID
+          type: string
+        appPassword:
+          description: Microsoft App Password
+          type: string
+        capabilities:
+          description: Bot capabilities
+          items:
+            type: string
+          type: array
+        status:
+          default: active
+          enum:
+          - active
+          - inactive
+          - error
+          type: string
+        description:
+          description: Bot description
+          type: string
+      required:
+      - appId
+      - appPassword
+      - capabilities
+      - name
+      type: object
+    BotUpdateRequest:
+      example:
+        appPassword: appPassword
+        capabilities:
+        - capabilities
+        - capabilities
+        appId: appId
+        name: name
+        description: description
+        status: active
+      properties:
+        name:
+          type: string
+        appId:
+          type: string
+        appPassword:
+          type: string
+        capabilities:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - active
+          - inactive
+          - error
+          type: string
+        description:
+          type: string
+      type: object
+    BotResponse:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        capabilities:
+        - capabilities
+        - capabilities
+        appId: appId
+        name: name
+        description: description
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        status: status
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        appId:
+          type: string
+        capabilities:
+          items:
+            type: string
+          type: array
+        status:
+          type: string
+        description:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    BotListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          capabilities:
+          - capabilities
+          - capabilities
+          appId: appId
+          name: name
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          capabilities:
+          - capabilities
+          - capabilities
+          appId: appId
+          name: name
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          status: status
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/BotResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    BotStatusUpdateRequest:
+      example:
+        status: active
+      properties:
+        status:
+          enum:
+          - active
+          - inactive
+          - error
+          type: string
+      required:
+      - status
+      type: object
+    BotCapabilitiesUpdateRequest:
+      example:
+        capabilities:
+        - capabilities
+        - capabilities
+      properties:
+        capabilities:
+          items:
+            type: string
+          type: array
+      required:
+      - capabilities
+      type: object
+    BotTestResponse:
+      example:
+        success: true
+        details:
+          key: ""
+        message: message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        details:
+          additionalProperties: true
+          type: object
+      type: object
+    UsageRecordResponse:
+      example:
+        date: 2000-01-23
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        notificationCount: 0
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        id:
+          format: uuid
+          type: string
+        companyId:
+          format: uuid
+          type: string
+        projectId:
+          format: uuid
+          type: string
+        notificationCount:
+          type: integer
+        date:
+          format: date
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      type: object
+    UsageRecordsResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - date: 2000-01-23
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notificationCount: 0
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - date: 2000-01-23
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          companyId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notificationCount: 0
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/UsageRecordResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    UsageSummaryResponse:
+      example:
+        totalNotifications: 0
+        monthlyTotal: 1
+        period:
+          endDate: 2000-01-23
+          startDate: 2000-01-23
+        dailyAverage: 6.027456183070403
+      properties:
+        totalNotifications:
+          type: integer
+        dailyAverage:
+          type: number
+        monthlyTotal:
+          type: integer
+        period:
+          $ref: "#/components/schemas/UsageSummaryResponse_period"
+      type: object
+    BillingPlanCreateRequest:
+      example:
+        features:
+        - features
+        - features
+        price: 0.8008281904610115
+        name: name
+        description: description
+        notificationLimit: 6
+      properties:
+        name:
+          description: Plan name
+          type: string
+        description:
+          description: Plan description
+          type: string
+        price:
+          description: Monthly price
+          type: number
+        notificationLimit:
+          description: Monthly notification limit
+          type: integer
+        features:
+          description: Plan features
+          items:
+            type: string
+          type: array
+      required:
+      - name
+      - notificationLimit
+      - price
+      type: object
+    BillingPlanUpdateRequest:
+      example:
+        features:
+        - features
+        - features
+        price: 0.8008281904610115
+        name: name
+        description: description
+        notificationLimit: 6
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        notificationLimit:
+          type: integer
+        features:
+          items:
+            type: string
+          type: array
+      type: object
+    BillingPlanResponse:
+      example:
+        features:
+        - features
+        - features
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        price: 0.8008281904610115
+        name: name
+        description: description
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        notificationLimit: 6
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        notificationLimit:
+          type: integer
+        features:
+          items:
+            type: string
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    BillingPlansResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - features:
+          - features
+          - features
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          price: 0.8008281904610115
+          name: name
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notificationLimit: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - features:
+          - features
+          - features
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          price: 0.8008281904610115
+          name: name
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notificationLimit: 6
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/BillingPlanResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    ProjectBillingResponse:
+      example:
+        nextBillingDate: 2000-01-23
+        currentUsage: 0
+        planName: planName
+        planId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        billingEnabled: true
+        projectId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        monthlyLimit: 6
+      properties:
+        projectId:
+          format: uuid
+          type: string
+        planId:
+          format: uuid
+          type: string
+        planName:
+          type: string
+        currentUsage:
+          type: integer
+        monthlyLimit:
+          type: integer
+        billingEnabled:
+          type: boolean
+        nextBillingDate:
+          format: date
+          type: string
+      type: object
+    BillingAnalyticsResponse:
+      example:
+        activeCompanies: 6
+        topPlans:
+        - subscriberCount: 5
+          planName: planName
+        - subscriberCount: 5
+          planName: planName
+        averageUsage: 1.4658129805029452
+        totalRevenue: 0.8008281904610115
+      properties:
+        totalRevenue:
+          type: number
+        activeCompanies:
+          type: integer
+        averageUsage:
+          type: number
+        topPlans:
+          items:
+            $ref: "#/components/schemas/BillingAnalyticsResponse_topPlans_inner"
+          type: array
+      type: object
+    FileUploadRequest:
+      properties:
+        file:
+          description: File to upload
+          format: binary
+          type: string
+        description:
+          description: File description
+          type: string
+        tags:
+          description: File tags
+          items:
+            type: string
+          type: array
+      required:
+      - file
+      type: object
+    MultipleFileUploadRequest:
+      properties:
+        files:
+          description: Files to upload
+          items:
+            format: binary
+            type: string
+          type: array
+        description:
+          description: Upload description
+          type: string
+      required:
+      - files
+      type: object
+    FileResponse:
+      example:
+        originalName: originalName
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        filename: filename
+        size: 0
+        description: description
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        mimeType: mimeType
+        url: url
+        tags:
+        - tags
+        - tags
+      properties:
+        id:
+          format: uuid
+          type: string
+        filename:
+          type: string
+        originalName:
+          type: string
+        size:
+          type: integer
+        mimeType:
+          type: string
+        description:
+          type: string
+        tags:
+          items:
+            type: string
+          type: array
+        url:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      type: object
+    FileListResponse:
+      example:
+        pagination:
+          total: 0
+          pages: 5
+          offset: 1
+          limit: 6
+        data:
+        - originalName: originalName
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          filename: filename
+          size: 0
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          mimeType: mimeType
+          url: url
+          tags:
+          - tags
+          - tags
+        - originalName: originalName
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          filename: filename
+          size: 0
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          mimeType: mimeType
+          url: url
+          tags:
+          - tags
+          - tags
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/FileResponse"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+      type: object
+    MultipleFileUploadResponse:
+      example:
+        totalUploaded: 0
+        files:
+        - originalName: originalName
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          filename: filename
+          size: 0
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          mimeType: mimeType
+          url: url
+          tags:
+          - tags
+          - tags
+        - originalName: originalName
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          filename: filename
+          size: 0
+          description: description
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          mimeType: mimeType
+          url: url
+          tags:
+          - tags
+          - tags
+        failedUploads:
+        - failedUploads
+        - failedUploads
+      properties:
+        files:
+          items:
+            $ref: "#/components/schemas/FileResponse"
+          type: array
+        totalUploaded:
+          type: integer
+        failedUploads:
+          items:
+            type: string
+          type: array
+      type: object
+    FileValidationRequest:
+      properties:
+        file:
+          description: File to validate
+          format: binary
+          type: string
+      required:
+      - file
+      type: object
+    FileValidationResponse:
+      example:
+        valid: true
+        warnings:
+        - warnings
+        - warnings
+        fileInfo:
+          extension: extension
+          size: 0
+          mimeType: mimeType
+        errors:
+        - errors
+        - errors
+      properties:
+        valid:
+          type: boolean
+        errors:
+          items:
+            type: string
+          type: array
+        warnings:
+          items:
+            type: string
+          type: array
+        fileInfo:
+          $ref: "#/components/schemas/FileValidationResponse_fileInfo"
+      type: object
+    SystemHealthResponse:
+      example:
+        services:
+          key:
+            lastCheck: 2000-01-23T04:56:07.000+00:00
+            responseTime: 0.8008281904610115
+            status: status
+        version: version
+        status: healthy
+        timestamp: 2000-01-23T04:56:07.000+00:00
+        uptime: uptime
+      properties:
+        status:
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        services:
+          additionalProperties:
+            $ref: "#/components/schemas/SystemHealthResponse_services_value"
+          type: object
+        uptime:
+          type: string
+        version:
+          type: string
+      type: object
+    PerformanceMetricsResponse:
+      example:
+        database:
+          queryTime: 7.061401241503109
+          connections: 2
+        memory:
+          total: 5
+          usage: 5.637376656633329
+          used: 1
+        cpu:
+          cores: 6
+          usage: 0.8008281904610115
+        redis:
+          memory: 9
+          keys: 3
+          hitRate: 2.027123023002322
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        cpu:
+          $ref: "#/components/schemas/PerformanceMetricsResponse_cpu"
+        memory:
+          $ref: "#/components/schemas/PerformanceMetricsResponse_memory"
+        database:
+          $ref: "#/components/schemas/PerformanceMetricsResponse_database"
+        redis:
+          $ref: "#/components/schemas/PerformanceMetricsResponse_redis"
+      type: object
+    BusinessHealthResponse:
+      example:
+        companies:
+          total: 5
+          active: 5
+        notifications:
+          successRate: 6.027456183070403
+          averageDeliveryTime: 1.4658129805029452
+          totalSent: 0
+        users:
+          total: 5
+          active: 5
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        notifications:
+          $ref: "#/components/schemas/BusinessHealthResponse_notifications"
+        users:
+          $ref: "#/components/schemas/BusinessHealthResponse_users"
+        companies:
+          $ref: "#/components/schemas/BusinessHealthResponse_users"
+      type: object
+    AlertsResponse:
+      example:
+        alerts:
+        - severity: low
+          id: id
+          message: message
+          timestamp: 2000-01-23T04:56:07.000+00:00
+          resolved: true
+        - severity: low
+          id: id
+          message: message
+          timestamp: 2000-01-23T04:56:07.000+00:00
+          resolved: true
+        totalAlerts: 0
+        criticalAlerts: 6
+      properties:
+        alerts:
+          items:
+            $ref: "#/components/schemas/AlertsResponse_alerts_inner"
+          type: array
+        totalAlerts:
+          type: integer
+        criticalAlerts:
+          type: integer
+      type: object
+    DashboardResponse:
+      example:
+        alerts:
+          alerts:
+          - severity: low
+            id: id
+            message: message
+            timestamp: 2000-01-23T04:56:07.000+00:00
+            resolved: true
+          - severity: low
+            id: id
+            message: message
+            timestamp: 2000-01-23T04:56:07.000+00:00
+            resolved: true
+          totalAlerts: 0
+          criticalAlerts: 6
+        overview:
+          companies:
+            total: 5
+            active: 5
+          notifications:
+            successRate: 6.027456183070403
+            averageDeliveryTime: 1.4658129805029452
+            totalSent: 0
+          users:
+            total: 5
+            active: 5
+          timestamp: 2000-01-23T04:56:07.000+00:00
+        charts:
+          key: ""
+        performance:
+          database:
+            queryTime: 7.061401241503109
+            connections: 2
+          memory:
+            total: 5
+            usage: 5.637376656633329
+            used: 1
+          cpu:
+            cores: 6
+            usage: 0.8008281904610115
+          redis:
+            memory: 9
+            keys: 3
+            hitRate: 2.027123023002322
+          timestamp: 2000-01-23T04:56:07.000+00:00
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        overview:
+          $ref: "#/components/schemas/BusinessHealthResponse"
+        performance:
+          $ref: "#/components/schemas/PerformanceMetricsResponse"
+        alerts:
+          $ref: "#/components/schemas/AlertsResponse"
+        charts:
+          additionalProperties: true
+          type: object
+      type: object
+    QueueStatsResponse:
+      example:
+        totalItems: 0
+        pendingItems: 6
+        completedItems: 5
+        failedItems: 5
+        throughput: 7.061401241503109
+        averageProcessingTime: 2.3021358869347655
+        timestamp: 2000-01-23T04:56:07.000+00:00
+        processingItems: 1
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        totalItems:
+          type: integer
+        pendingItems:
+          type: integer
+        processingItems:
+          type: integer
+        completedItems:
+          type: integer
+        failedItems:
+          type: integer
+        averageProcessingTime:
+          type: number
+        throughput:
+          type: number
+      type: object
+    QueueStatusResponse:
+      example:
+        queueSize: 1
+        lastProcessed: 2000-01-23T04:56:07.000+00:00
+        activeWorkers: 6
+        workers: 0
+        status: running
+      properties:
+        status:
+          enum:
+          - running
+          - paused
+          - stopped
+          - error
+          type: string
+        workers:
+          type: integer
+        activeWorkers:
+          type: integer
+        queueSize:
+          type: integer
+        lastProcessed:
+          format: date-time
+          type: string
+      type: object
+    QueueClearResponse:
+      example:
+        clearedItems: 0
+        message: message
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        message:
+          type: string
+        clearedItems:
+          type: integer
+        timestamp:
+          format: date-time
+          type: string
+      type: object
+    NotificationDateRangeResponse_date_range:
+      example:
+        end_date: 2000-01-23T04:56:07.000+00:00
+        start_date: 2000-01-23T04:56:07.000+00:00
+      properties:
+        start_date:
+          format: date-time
+          type: string
+        end_date:
+          format: date-time
+          type: string
+      type: object
+    UsageSummaryResponse_period:
+      example:
+        endDate: 2000-01-23
+        startDate: 2000-01-23
+      properties:
+        startDate:
+          format: date
+          type: string
+        endDate:
+          format: date
+          type: string
+      type: object
+    BillingAnalyticsResponse_topPlans_inner:
+      example:
+        subscriberCount: 5
+        planName: planName
+      properties:
+        planName:
+          type: string
+        subscriberCount:
+          type: integer
+      type: object
+    FileValidationResponse_fileInfo:
+      example:
+        extension: extension
+        size: 0
+        mimeType: mimeType
+      properties:
+        size:
+          type: integer
+        mimeType:
+          type: string
+        extension:
+          type: string
+      type: object
+    SystemHealthResponse_services_value:
+      example:
+        lastCheck: 2000-01-23T04:56:07.000+00:00
+        responseTime: 0.8008281904610115
+        status: status
+      properties:
+        status:
+          type: string
+        responseTime:
+          type: number
+        lastCheck:
+          format: date-time
+          type: string
+      type: object
+    PerformanceMetricsResponse_cpu:
+      example:
+        cores: 6
+        usage: 0.8008281904610115
+      properties:
+        usage:
+          type: number
+        cores:
+          type: integer
+      type: object
+    PerformanceMetricsResponse_memory:
+      example:
+        total: 5
+        usage: 5.637376656633329
+        used: 1
+      properties:
+        used:
+          type: integer
+        total:
+          type: integer
+        usage:
+          type: number
+      type: object
+    PerformanceMetricsResponse_database:
+      example:
+        queryTime: 7.061401241503109
+        connections: 2
+      properties:
+        connections:
+          type: integer
+        queryTime:
+          type: number
+      type: object
+    PerformanceMetricsResponse_redis:
+      example:
+        memory: 9
+        keys: 3
+        hitRate: 2.027123023002322
+      properties:
+        memory:
+          type: integer
+        keys:
+          type: integer
+        hitRate:
+          type: number
+      type: object
+    BusinessHealthResponse_notifications:
+      example:
+        successRate: 6.027456183070403
+        averageDeliveryTime: 1.4658129805029452
+        totalSent: 0
+      properties:
+        totalSent:
+          type: integer
+        successRate:
+          type: number
+        averageDeliveryTime:
+          type: number
+      type: object
+    BusinessHealthResponse_users:
+      example:
+        total: 5
+        active: 5
+      properties:
+        active:
+          type: integer
+        total:
+          type: integer
+      type: object
+    AlertsResponse_alerts_inner:
+      example:
+        severity: low
+        id: id
+        message: message
+        timestamp: 2000-01-23T04:56:07.000+00:00
+        resolved: true
+      properties:
+        id:
+          type: string
+        severity:
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          type: string
+        message:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        resolved:
+          type: boolean
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+

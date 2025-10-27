@@ -29,30 +29,37 @@ dependencies {
 ### Basic Example
 
 ```java
-import com.teamsnotify.sdk.Client;
-import com.teamsnotify.sdk.models.*;
-import com.teamsnotify.sdk.services.*;
+import org.openapitools.client.*;
+import org.openapitools.client.api.*;
+import org.openapitools.client.model.*;
+import java.util.*;
 
 public class Example {
     public static void main(String[] args) {
         // Initialize the client
-        Client client = new Client.Builder()
-            .baseUrl("http://localhost:8080")
-            .build();
+        ApiClient client = Configuration.getDefaultApiClient();
+        client.setBasePath("http://localhost:8080");
         
-        // Send a notification
-        SendNotificationRequest request = SendNotificationRequest.builder()
-            .notifyKey("your-notify-key")
-            .message("Hello from Java SDK!")
-            .messageType("text")
-            .priority("normal")
-            .targets(Arrays.asList("all"))
-            .build();
+        ExternalApiApi externalApi = new ExternalApiApi(client);
         
         try {
-            SendNotificationResponse response = client.notifications().send(request);
+            // Send a notification using external API
+            ExternalNotifyRequest request = new ExternalNotifyRequest();
+            request.setNotifyKey("your-notify-key");
+            request.setMessage("Hello from Java SDK!");
+            request.setMessageType("text");
+            request.setPriority("normal");
+            request.setTargets(Arrays.asList("all"));
+            
+            ExternalNotifyResponse response = externalApi.apiV1NotifyPost(request);
             System.out.println("Notification sent: " + response.getNotificationId());
-        } catch (Exception e) {
+            
+            // Get project destinations
+            ProjectDestinationsResponse dests = externalApi.apiV1DestinationsNotifyKeyGet("your-notify-key");
+            System.out.println("Found " + dests.getDestinations().size() + " destinations");
+            
+        } catch (ApiException e) {
+            System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -62,68 +69,47 @@ public class Example {
 ### External API Example
 
 ```java
-// Use external API (no authentication required)
-ExternalClient client = new ExternalClient.Builder()
-    .baseUrl("http://localhost:8080/api/v1")
-    .build();
-
 // Send notification via external API
-SendNotificationRequest request = SendNotificationRequest.builder()
-    .notifyKey("your-notify-key")
-    .message("Hello from external API!")
-    .targets(Arrays.asList("all"))
-    .build();
+ExternalNotifyRequest request = new ExternalNotifyRequest();
+request.setNotifyKey("your-notify-key");
+request.setMessage("Hello from external API!");
+request.setTargets(Arrays.asList("all"));
 
-SendNotificationResponse response = client.sendNotification(request);
+ExternalNotifyResponse response = externalApi.apiV1NotifyPost(request);
 
 // Get project destinations
-ProjectDestinationsResponse dests = client.getProjectDestinations("your-notify-key");
+ProjectDestinationsResponse dests = externalApi.apiV1DestinationsNotifyKeyGet("your-notify-key");
 ```
 
-### Authentication
+### Internal API Example
 
 ```java
 // Create authenticated client
-Client client = new Client.Builder()
-    .baseUrl("http://localhost:8080")
-    .apiKey("your-api-key")
-    .build();
+ApiClient client = Configuration.getDefaultApiClient();
+client.setBasePath("http://localhost:8080");
+client.setApiKey("your-api-key");
 
 // Use protected endpoints
-List<User> users = client.users().list();
-List<Project> projects = client.projects().list();
+InternalApiUsersApi usersApi = new InternalApiUsersApi(client);
+InternalApiProjectsApi projectsApi = new InternalApiProjectsApi(client);
+
+List<User> users = usersApi.internalV1UsersGet();
+List<Project> projects = projectsApi.internalV1ProjectsGet();
 ```
 
 ## API Reference
 
 ### External API
-
-- `SendNotification(SendNotificationRequest request)`
-- `GetProjectDestinations(String notifyKey)`
+- `apiV1NotifyPost` - Send notification
+- `apiV1DestinationsNotifyKeyGet` - Get project destinations
 
 ### Internal API
-
-#### Users
-- `List<List<User>>()`
-- `Get(String id)`
-- `Create(CreateUserRequest request)`
-- `Update(String id, UpdateUserRequest request)`
-- `Delete(String id)`
-
-#### Projects
-- `List<List<Project>>()`
-- `Get(String id)`
-- `Create(CreateProjectRequest request)`
-- `Update(String id, UpdateProjectRequest request)`
-- `Delete(String id)`
-
-#### Notifications
-- `Send(SendNotificationRequest request)`
-- `Get(String id)`
-- `List(NotificationQuery query)`
-- `Cancel(String id)`
+- Users: `internalV1UsersGet`, `internalV1UsersPost`, etc.
+- Projects: `internalV1ProjectsGet`, `internalV1ProjectsPost`, etc.
+- Notifications: `internalV1NotificationsGet`, `internalV1NotificationsPost`, etc.
+- Destinations: `internalV1DestinationsGet`, `internalV1DestinationsPost`, etc.
+- Bots: `internalV1BotsPlatformGet`, `internalV1BotsPlatformPost`, etc.
 
 ## License
 
 MIT License
-
