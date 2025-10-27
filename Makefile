@@ -202,6 +202,11 @@ help:
 	@echo "  docker-stop    - Stop server Docker container"
 	@echo "  docker-restart - Restart server Docker container"
 	@echo ""
+	@echo "SDK:"
+	@echo "  sdk-generate   - Generate Go and Java SDKs"
+	@echo "  sdk-clean      - Clean generated SDK files"
+	@echo "  sdk-help       - Show SDK management help"
+	@echo ""
 
 # Full E2E test suite
 test-full:
@@ -227,3 +232,17 @@ persistent-clean:
 	@echo "Cleaning persistent Docker data..."
 	@docker-compose -f scripts/docker/docker-compose-persistent.yml down -v
 	@docker volume rm teamsnotify_postgres_data teamsnotify_redis_data 2>/dev/null || true
+
+# SDK generation commands
+sdk-generate:
+	@echo "Generating SDKs from OpenAPI specification..."
+	@./sdk/generate.sh
+
+sdk-clean:
+	@echo "Cleaning generated SDK files..."
+	@rm -rf sdk/go sdk/java
+
+sdk-help:
+	@echo "SDK Management:"
+	@echo "  sdk-generate - Generate Go and Java SDKs"
+	@echo "  sdk-clean   - Clean generated SDK files"
