@@ -170,7 +170,83 @@
 
 ---
 
-### 2.3 Bot 訊息接收
+### 2.3 專案開通 (Provision)
+
+#### POST /api/v1/provision ✅
+
+**說明**: 一鍵建立專案和目的地（簡化流程）
+
+**優先級**: P0
+
+**認證**: 需要
+
+**請求範例**:
+```json
+{
+  "companyId": "550e8400-e29b-41d4-a716-446655440001",
+  "createdBy": "650e8400-e29b-41d4-a716-446655440001",
+  "project_name": "新專案",
+  "project_description": "專案描述",
+  "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+  "targets": [
+    {
+      "type": "channel",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+    },
+    {
+      "type": "personal",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+    }
+  ]
+}
+```
+
+**回應範例** (201 Created):
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
+    "projectName": "新專案",
+    "status": "active",
+    "destinationsCount": 1,
+    "createdAt": "2025-10-22T10:00:00Z"
+  }
+}
+```
+
+---
+
+#### GET /api/v1/provision/{notifyKey} ✅
+
+**說明**: 查詢專案開通狀態
+
+**優先級**: P0
+
+**認證**: 需要
+
+**回應範例**:
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectName": "新專案",
+    "projectDescription": "專案描述",
+    "status": "active",
+    "destinationsCount": 1,
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "createdAt": "2025-10-22T10:00:00Z"
+  }
+}
+```
+
+---
+
+### 2.4 Bot 訊息接收
 
 #### POST /api/v1/messages ✅
 
@@ -563,6 +639,8 @@
 | `/health` | GET | P0 | 健康檢查 |
 | `/api/v1/notify` | POST | P0 | 發送通知 |
 | `/api/v1/destinations/{notifyKey}` | GET | P0 | 查詢目的地 |
+| `/api/v1/provision` | POST | P0 | 一鍵建立專案 |
+| `/api/v1/provision/{notifyKey}` | GET | P0 | 查詢專案開通狀態 |
 | `/api/v1/messages` | POST | P0 | Bot 訊息接收 |
 | `/internal/v1/projects` | POST | P0 | 創建專案 |
 | `/internal/v1/projects/key/{keyName}` | GET | P0 | 查詢專案 |
@@ -572,7 +650,7 @@
 | `/internal/v1/notifications/{id}` | GET | P0 | 查詢通知 |
 | `/internal/v1/queue/stats` | GET | P0 | 佇列統計 |
 
-**總計**: 11 個核心端點
+**總計**: 13 個核心端點
 
 ### B. 資料庫表格 (最小需求)
 
@@ -597,7 +675,7 @@
 **文件結束**
 
 **最小需求總結**:
-- **核心端點**: 11 個
+- **核心端點**: 13 個
 - **資料表格**: 8 個
 - **開發時程**: 9 週
 - **預估工作量**: 2-3 人月
