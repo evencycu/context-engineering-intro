@@ -259,6 +259,45 @@ type RetryPolicy struct {
 
 ---
 
+## 8.1 腳本管理設計
+
+### 8.1.1 腳本架構
+
+**統一部署腳本**:
+- `scripts/deploy/docker/deploy.sh` - 主要部署腳本
+- 支援多種部署模式：`deploy-docker`、`deploy-local`、`deploy-quick`
+
+**Docker 管理功能**:
+```bash
+build_server_docker()  # 構建 Docker 映像
+stop_server_docker()    # 停止 Docker 容器
+start_server_docker()   # 啟動 Docker 容器
+```
+
+**Makefile 整合**:
+```bash
+make docker-build   # 構建 Docker 映像
+make docker-start   # 啟動 Docker 容器
+make docker-stop    # 停止 Docker 容器
+make docker-restart # 重啟 Docker 容器
+```
+
+### 8.1.2 腳本重構效益
+
+- **維護性**: 腳本數量從 34 個減少到 20 個
+- **一致性**: 統一通過 Makefile 管理所有操作
+- **可靠性**: 消除重複代碼，減少維護錯誤
+- **可擴展性**: 清晰的腳本架構便於未來擴展
+
+### 8.1.3 部署流程設計
+
+1. **開發階段**: 使用 Docker Compose 進行本地開發
+2. **測試階段**: 自動化測試驗證功能
+3. **部署階段**: CI/CD 管道自動部署到生產環境
+4. **監控階段**: 持續監控系統健康狀態
+
+---
+
 ## 9. 觀測性（Observability）
 
 ### 9.1 監控指標

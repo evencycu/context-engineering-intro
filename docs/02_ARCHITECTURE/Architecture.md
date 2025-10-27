@@ -485,7 +485,63 @@ repo-root/
 
 ---
 
+## 15.1 腳本架構與管理
+
+### 15.1.1 腳本重構成果
+
+#### 重複腳本消除
+
+在架構重構過程中，我們系統性地消除了重複腳本：
+
+**Build/Deploy 腳本整合**:
+- ✅ `scripts/deploy/docker/deploy.sh` - 統一部署腳本
+- ❌ `scripts/build/build.sh` - 已刪除（功能重複）
+- ❌ `scripts/deploy/docker/docker.sh` - 已刪除（功能重複）
+
+**測試腳本精簡**:
+- ✅ `scripts/test/api/simple_*.sh` - 保留核心測試腳本
+- ❌ 6個重複的測試腳本已刪除
+
+**工具腳本整合**:
+- ✅ `scripts/utils/` - 統一工具腳本
+- ❌ 5個重複的工具腳本已刪除
+
+#### Docker 功能增強
+
+**新增 Docker 管理函數**:
+```bash
+build_server_docker()  # 構建 Docker 映像
+stop_server_docker()   # 停止 Docker 容器  
+start_server_docker()  # 啟動 Docker 容器
+```
+
+**Makefile 整合**:
+```bash
+make docker-build   # 構建 Docker 映像
+make docker-start   # 啟動 Docker 容器
+make docker-stop    # 停止 Docker 容器
+make docker-restart # 重啟 Docker 容器
+```
+
+#### 架構效益
+
+- **維護性提升**: 腳本數量從 34 個減少到 20 個
+- **代碼重複消除**: 節省約 2663 行重複代碼
+- **統一管理**: 所有操作通過 Makefile 統一入口
+- **清晰職責**: 每個腳本都有明確的單一職責
+
+---
+
 ## 16. 更新日誌
+
+### v1.3.0 (2025-10-22)
+
+- **腳本重構**: 消除重複腳本，從 34 個減少到 20 個
+- **Docker 功能增強**: 新增 `docker-build`、`docker-start`、`docker-stop`、`docker-restart` 命令
+- **Makefile 整合**: 統一所有部署和管理命令
+- **資料庫連接修復**: 解決 Docker 容器連接主機資料庫的問題
+- **健康檢查**: 容器啟動後自動進行健康檢查
+- **文檔同步**: 更新所有文檔以反映當前腳本狀態
 
 ### v1.2.0 (2025-10-21)
 

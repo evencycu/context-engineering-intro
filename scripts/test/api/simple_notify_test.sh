@@ -184,8 +184,42 @@ else
     print_result 1 "指定目標通知發送失敗"
 fi
 
-# ==================== 測試 5: 低優先級通知 ====================
-print_header "測試 5: 低優先級通知"
+# ==================== 測試 5: Google Drive 連結分享 ====================
+print_header "測試 5: Google Drive 連結分享"
+echo -e "${BLUE}curl -X POST \"$BASE_URL/notify\" \\${NC}"
+echo -e "${BLUE}  -H \"Content-Type: application/json\" \\${NC}"
+echo -e "${BLUE}  -d '{...}'${NC}"
+
+RESPONSE=$(curl -s -X POST "$BASE_URL/notify" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notifyKey": "cfh-alert-gogo",
+    "message": "📎 重要文件分享\n\n請查看以下 Google Drive 連結：\nhttps://drive.google.com/file/d/1cpLlDyS_tKHFHoMXcRdLHGkSd6nID7nR/view?usp=drive_link\n\n請及時查看相關內容。",
+    "messageType": "text",
+    "priority": "normal",
+    "targets": ["all"],
+    "metadata": {
+      "source": "manual_notification",
+      "file_type": "google_drive",
+      "file_id": "1cpLlDyS_tKHFHoMXcRdLHGkSd6nID7nR",
+      "environment": "test"
+    }
+  }')
+
+echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
+
+GOOGLE_DRIVE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['notification_id'])" 2>/dev/null)
+STATUS=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['status'])" 2>/dev/null)
+DESTINATIONS_COUNT=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['destinations_count'])" 2>/dev/null)
+
+if [ -n "$GOOGLE_DRIVE_ID" ] && [ "$STATUS" = "pending" ] && [ "$DESTINATIONS_COUNT" -gt 0 ]; then
+    print_result 0 "Google Drive 連結分享成功 (ID: $GOOGLE_DRIVE_ID, Destinations: $DESTINATIONS_COUNT)"
+else
+    print_result 1 "Google Drive 連結分享失敗"
+fi
+
+# ==================== 測試 6: 低優先級通知 ====================
+print_header "測試 6: 低優先級通知"
 echo -e "${BLUE}curl -X POST \"$BASE_URL/notify\" \\${NC}"
 echo -e "${BLUE}  -H \"Content-Type: application/json\" \\${NC}"
 echo -e "${BLUE}  -d '{...}'${NC}"
@@ -217,8 +251,8 @@ else
     print_result 1 "低優先級通知發送失敗"
 fi
 
-# ==================== 測試 6: 錯誤的 notifyKey ====================
-print_header "測試 6: 錯誤的 notifyKey"
+# ==================== 測試 7: 錯誤的 notifyKey ====================
+print_header "測試 7: 錯誤的 notifyKey"
 echo -e "${BLUE}curl -X POST \"$BASE_URL/notify\" \\${NC}"
 echo -e "${BLUE}  -H \"Content-Type: application/json\" \\${NC}"
 echo -e "${BLUE}  -d '{...}'${NC}"
@@ -243,8 +277,8 @@ else
     print_result 1 "錯誤的 notifyKey 沒有正確處理"
 fi
 
-# ==================== 測試 7: 缺少必要欄位 ====================
-print_header "測試 7: 缺少必要欄位"
+# ==================== 測試 8: 缺少必要欄位 ====================
+print_header "測試 8: 缺少必要欄位"
 echo -e "${BLUE}curl -X POST \"$BASE_URL/notify\" \\${NC}"
 echo -e "${BLUE}  -H \"Content-Type: application/json\" \\${NC}"
 echo -e "${BLUE}  -d '{...}'${NC}"
@@ -268,8 +302,8 @@ else
     print_result 1 "缺少必要欄位沒有正確處理"
 fi
 
-# ==================== 測試 8: 獲取專案目標列表 ====================
-print_header "測試 8: 獲取專案目標列表"
+# ==================== 測試 9: 獲取專案目標列表 ====================
+print_header "測試 9: 獲取專案目標列表"
 echo -e "${BLUE}curl -X GET \"$BASE_URL/destinations/cfh-alert-gogo\" \\${NC}"
 echo -e "${BLUE}  -H \"Content-Type: application/json\"${NC}"
 

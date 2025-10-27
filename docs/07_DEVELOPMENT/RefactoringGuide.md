@@ -128,6 +128,74 @@ import "services/teamsnotification/repositories"
 
 ---
 
+## 4.1 腳本重構與整合
+
+### 4.1.1 腳本重複性消除
+
+在重構過程中，我們發現並消除了多個重複的腳本：
+
+#### 已刪除的重複腳本
+
+**Build/Deploy 重複腳本**:
+- ❌ `scripts/build/build.sh` (369行) - 功能被 `deploy.sh` 覆蓋
+- ❌ `scripts/deploy/docker/docker.sh` (548行) - 功能被 `deploy.sh` 覆蓋  
+- ❌ `scripts/local-test/start-docker.sh` (46行) - 功能被 `deploy.sh` 覆蓋
+
+**測試腳本重複**:
+- ❌ `scripts/test/api/comprehensive_api_test.sh` - 被 simple 測試覆蓋
+- ❌ `scripts/test/api/comprehensive_api_test_no_thirdparty.sh` - 被 simple 測試覆蓋
+- ❌ `scripts/test/api/api_test_automation.sh` - 被 simple 測試覆蓋
+- ❌ `scripts/test/api/test_api.sh` - 被 simple 測試覆蓋
+- ❌ `scripts/test/api/test-api.sh` - 被 simple 測試覆蓋
+- ❌ `scripts/test/api/simple_external_test.sh` - 被 `simple_notify_test.sh` 覆蓋
+
+**工具腳本重複**:
+- ❌ `scripts/build/gen.sh` - 功能重複
+- ❌ `scripts/build/lint.sh` - 功能重複
+- ❌ `scripts/test/golden.sh` - 功能重複
+- ❌ `scripts/test/deploy-ut.sh` - 功能重複
+- ❌ `scripts/test/e2e/generate_test_report.sh` - 被 utils 版本覆蓋
+
+#### 重構效益
+
+- **減少維護負擔**: 從 34 個腳本減少到 20 個
+- **消除重複代碼**: 節省約 2663 行重複代碼
+- **統一入口點**: 所有部署通過 `make deploy-*` 命令
+- **清晰職責**: 每個保留的腳本都有明確的單一職責
+
+### 4.1.2 新增 Docker 功能
+
+#### 新增的 Docker 函數
+
+在 `scripts/deploy/docker/deploy.sh` 中新增了以下函數：
+
+```bash
+# 新增的 Docker 管理函數
+build_server_docker()  # 構建 Docker 映像
+stop_server_docker()   # 停止 Docker 容器
+start_server_docker()  # 啟動 Docker 容器
+```
+
+#### Makefile 整合
+
+新增的 Makefile 命令：
+
+```bash
+# Docker 管理命令
+make docker-build   # 構建 Docker 映像
+make docker-start   # 啟動 Docker 容器
+make docker-stop    # 停止 Docker 容器
+make docker-restart # 重啟 Docker 容器
+```
+
+#### 修復的問題
+
+1. **資料庫連接問題**: 將 `localhost` 改為 `host.docker.internal`，讓容器能正確連接到主機的資料庫
+2. **容器名稱衝突**: 在啟動前先停止並移除現有容器
+3. **健康檢查**: 容器啟動後自動進行健康檢查
+
+---
+
 ## 5. 開發指南
 
 ### 5.1 新功能開發

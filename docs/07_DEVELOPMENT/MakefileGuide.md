@@ -59,6 +59,14 @@ make openapi-status # 檢查 OpenAPI 狀態
 make openapi-open   # 開啟 Swagger UI
 ```
 
+#### Docker 指令
+```bash
+make docker-build   # 構建 Docker 映像
+make docker-start   # 啟動 Docker 容器
+make docker-stop    # 停止 Docker 容器
+make docker-restart # 重啟 Docker 容器
+```
+
 #### 測試指令
 ```bash
 make test-e2e       # 端到端測試
@@ -141,6 +149,9 @@ make clean
 | `./scripts/deploy/docker/deploy.sh restart` | `make deploy-restart` | 重啟所有服務 |
 | `./scripts/deploy/docker/deploy.sh status` | `make deploy-status` | 檢查服務狀態 |
 | `./scripts/deploy/docker/deploy.sh logs` | `make deploy-logs` | 顯示服務日誌 |
+| `./scripts/deploy/docker/deploy.sh build-docker` | `make docker-build` | 構建 Docker 映像 |
+| `./scripts/deploy/docker/deploy.sh start-docker` | `make docker-start` | 啟動 Docker 容器 |
+| `./scripts/deploy/docker/deploy.sh stop-docker` | `make docker-stop` | 停止 Docker 容器 |
 | `./scripts/test/api/simple_*.sh` | `make test-api` | API 測試 |
 | `./scripts/openapi.sh start` | `make openapi-start` | 啟動 OpenAPI |
 | `./scripts/openapi.sh stop` | `make openapi-stop` | 停止 OpenAPI |

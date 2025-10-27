@@ -226,6 +226,55 @@ az containerapp create \
 
 ---
 
+## 5.1 本地部署方式
+
+### 5.1.1 Docker 容器部署（推薦）
+
+```bash
+# 構建 Docker 映像
+make docker-build
+
+# 啟動 Docker 容器
+make docker-start
+
+# 檢查容器狀態
+make deploy-status
+
+# 停止容器
+make docker-stop
+
+# 重啟容器
+make docker-restart
+```
+
+### 5.1.2 完整部署模式
+
+```bash
+# 完整 Docker 部署（包含資料庫和 Redis）
+make deploy-docker
+
+# 本地進程模式（開發用）
+make deploy-local
+
+# 快速重部署
+make deploy-quick
+```
+
+### 5.1.3 傳統 Docker Compose 方式
+
+```bash
+# 啟動所有服務
+docker compose -f scripts/docker/docker-compose.yml up -d
+
+# 查看日誌
+docker compose -f scripts/docker/docker-compose.yml logs -f
+
+# 停止服務
+docker compose -f scripts/docker/docker-compose.yml down
+```
+
+---
+
 ## 6. 設定檔管理
 
 ### 6.1 環境變數配置

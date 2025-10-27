@@ -107,6 +107,24 @@ deploy-logs:
 	@echo "Showing server logs..."
 	@./scripts/deploy/docker/deploy.sh logs
 
+# Docker commands
+docker-build:
+	@echo "Building server Docker image..."
+	@./scripts/deploy/docker/deploy.sh build-docker
+
+docker-stop:
+	@echo "Stopping server Docker container..."
+	@./scripts/deploy/docker/deploy.sh stop-docker
+
+docker-start:
+	@echo "Starting server Docker container..."
+	@./scripts/deploy/docker/deploy.sh start-docker
+
+docker-restart:
+	@echo "Restarting server Docker container..."
+	@./scripts/deploy/docker/deploy.sh stop-docker
+	@./scripts/deploy/docker/deploy.sh start-docker
+
 # OpenAPI Documentation
 openapi-start:
 	@echo "Starting OpenAPI server..."
@@ -178,20 +196,19 @@ help:
 	@echo "  test-api       - Run API tests"
 	@echo "  test-report    - Generate test reports"
 	@echo ""
+	@echo "Docker:"
+	@echo "  docker-build   - Build server Docker image"
+	@echo "  docker-start   - Start server Docker container"
+	@echo "  docker-stop    - Stop server Docker container"
+	@echo "  docker-restart - Restart server Docker container"
+	@echo ""
 
 # Full E2E test suite
 test-full:
 	@echo "Running full E2E test suite..."
 	./scripts/test/e2e/run_e2e_tests.sh run
 
-# Legacy deployment commands (kept for backward compatibility)
-dev-deploy:
-	@echo "Running development deployment..."
-	@./scripts/deploy/local/dev-deploy.sh
-
-deploy-persistent:
-	@echo "Deploying to persistent Docker..."
-	@./scripts/deploy/local/smart-deploy.sh persistent-docker
+# Legacy deployment commands removed - use deploy-local instead
 
 # Persistent Docker management
 persistent-up:

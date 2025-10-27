@@ -262,6 +262,97 @@ cleanup_images() {
     print_success "Docker images cleanup completed"
 }
 
+# Function to build server Docker image
+build_server_docker() {
+    print_status "Building server Docker image..."
+    
+    local image_name="teamsnotify-api-server"
+    local dockerfile="build/teamsnotification/Dockerfile"
+    
+    if [[ ! -f "$dockerfile" ]]; then
+        print_error "Dockerfile not found: $dockerfile"
+        return 1
+    fi
+    
+    # Build Docker image
+    docker build -f "$dockerfile" -t "$image_name" .
+    
+    if [[ $? -eq 0 ]]; then
+        print_success "Docker image built successfully: $image_name"
+    else
+        print_error "Failed to build Docker image"
+        return 1
+    fi
+}
+
+# Function to stop server Docker container
+stop_server_docker() {
+    print_status "Stopping server Docker container..."
+    
+    local container_name="teamsnotify-api-server"
+    
+    # Stop and remove existing container
+    if docker ps -a --format "table {{.Names}}" | grep -q "^$container_name$"; then
+        print_status "Stopping container: $container_name"
+        docker stop "$container_name" >/dev/null 2>&1 || true
+        docker rm "$container_name" >/dev/null 2>&1 || true
+        print_success "Container stopped and removed: $container_name"
+    else
+        print_warning "Container not found: $container_name"
+    fi
+}
+
+# Function to start server Docker container
+start_server_docker() {
+    print_status "Starting server Docker container..."
+    
+    local container_name="teamsnotify-api-server"
+    local image_name="teamsnotify-api-server"
+    
+    # Check if image exists
+    if ! docker images --format "table {{.Repository}}" | grep -q "^$image_name$"; then
+        print_error "Docker image not found: $image_name"
+        print_status "Please run 'build_server_docker' first"
+        return 1
+    fi
+    
+    # Start container
+    docker run -d \
+        --name "$container_name" \
+        -p "$SERVER_PORT:8080" \
+        -e DATABASE_URL="postgresql://teamsnotify:teamsnotify123@host.docker.internal:5432/$DATABASE_NAME?sslmode=disable" \
+        -e REDIS_URL="redis://host.docker.internal:6379" \
+        -e TEAMS_BOT_APP_ID="${TEAMS_BOT_APP_ID:-844146d7-4ac9-4e4d-a463-d6e027714e81}" \
+        -e TEAMS_TENANT_ID="${TEAMS_TENANT_ID:-051cece0-e4dc-4aed-b471-bf29824e1ee6}" \
+        -e TEAMS_BOT_APP_PASSWORD="${TEAMS_BOT_APP_PASSWORD:-HVW8Q~-HmVPi_W0EzIFPbZiL4G1czV8WBMUjQdfy}" \
+        --restart unless-stopped \
+        "$image_name"
+    
+    if [[ $? -eq 0 ]]; then
+        print_success "Docker container started: $container_name"
+        
+        # Wait for container to be ready
+        print_status "Waiting for container to be ready..."
+        sleep 5
+        
+        # Test container health
+        for i in {1..10}; do
+            if curl -s http://localhost:$SERVER_PORT/health >/dev/null 2>&1; then
+                print_success "Container health check passed"
+                break
+            fi
+            if [[ $i -eq 10 ]]; then
+                print_warning "Container health check failed after 10 attempts"
+                print_status "Check container logs: docker logs $container_name"
+            fi
+            sleep 1
+        done
+    else
+        print_error "Failed to start Docker container"
+        return 1
+    fi
+}
+
 # Function to show service status
 show_status() {
     print_status "Service Status:"
@@ -416,6 +507,11 @@ Basic Commands:
     logs            - Show server logs
     help            - Show this help message
 
+Docker Commands:
+    build-docker    - Build server Docker image
+    stop-docker     - Stop server Docker container
+    start-docker    - Start server Docker container
+
 Options:
     --clean         - Clean Docker images before deployment
     --test          - Run feature tests after deployment
@@ -435,6 +531,9 @@ Examples:
     $0 server           # Deploy server only
     $0 restart          # Restart all services
     $0 status           # Check status
+    $0 build-docker     # Build Docker image
+    $0 start-docker     # Start Docker container
+    $0 stop-docker      # Stop Docker container
 
 EOF
 }
@@ -526,6 +625,17 @@ main() {
             ;;
         logs)
             show_logs
+            ;;
+        build-docker)
+            check_prerequisites
+            build_server_docker
+            ;;
+        stop-docker)
+            stop_server_docker
+            ;;
+        start-docker)
+            check_prerequisites
+            start_server_docker
             ;;
         help|--help|-h)
             show_help

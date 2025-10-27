@@ -228,21 +228,32 @@ The project includes comprehensive testing for:
 
 ## 🐳 Docker Commands
 
+### Docker 容器管理
+
 ```bash
-# Build Docker image
-make docker-build
+# Docker 映像和容器管理
+make docker-build   # 構建 Docker 映像
+make docker-start   # 啟動 Docker 容器
+make docker-stop    # 停止 Docker 容器
+make docker-restart # 重啟 Docker 容器
 
-# Run in Docker container
-make docker-run
+# 傳統 Docker Compose 方式
+docker compose -f scripts/docker/docker-compose.yml up -d
+docker compose -f scripts/docker/docker-compose.yml logs -f
+docker compose -f scripts/docker/docker-compose.yml down
+```
 
-# Start full environment
-docker compose -f deployments/docker/docker-compose.yml up -d
+### Docker 部署模式
 
-# View logs
-docker compose -f deployments/docker/docker-compose.yml logs -f teams-notify-server
+```bash
+# 完整 Docker 部署（推薦）
+make deploy-docker
 
-# Stop services
-docker compose -f deployments/docker/docker-compose.yml down
+# 本地進程模式（開發用）
+make deploy-local
+
+# 快速重部署
+make deploy-quick
 ```
 
 ## 📊 Monitoring and Admin Tools
