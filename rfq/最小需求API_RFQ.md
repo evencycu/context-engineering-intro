@@ -1,9 +1,10 @@
 # Teams Notification API - 最小需求 RFQ
+
 # Minimal Requirements RFQ
 
-**RFQ 編號**: RFQ-2025-TEAMS-NOTIFY-MINIMAL-001  
-**版本**: v1.0  
-**日期**: 2025年10月22日  
+**RFQ 編號**: RFQ-2025-TEAMS-NOTIFY-MINIMAL-001
+**版本**: v1.0
+**日期**: 2025年10月28日
 **類型**: 最小可行產品 (MVP)
 
 ---
@@ -34,12 +35,59 @@
 **認證**: 不需要
 
 **回應範例**:
+
 ```json
 {
   "status": "healthy",
   "timestamp": "2025-10-22T10:00:00Z",
   "uptime": "72h30m15s",
   "version": "v1.0.0"
+}
+```
+
+---
+
+### 1.2 系統指標
+
+#### GET /metrics ✅
+
+**說明**: 系統運行指標端點
+
+**優先級**: P0
+
+**認證**: 不需要
+
+**回應範例**:
+
+```json
+{
+  "timestamp": "2025-10-22T10:00:00Z",
+  "system": {
+    "uptime": "72h30m15s",
+    "version": "v1.0.0",
+    "go_version": "1.21.0",
+    "memory_usage": "45.2MB",
+    "cpu_usage": "12.5%"
+  },
+  "api": {
+    "total_requests": 15420,
+    "successful_requests": 15230,
+    "failed_requests": 190,
+    "average_response_time": "245ms"
+  },
+  "notifications": {
+    "total_sent": 8930,
+    "pending": 45,
+    "failed": 12,
+    "average_delivery_time": "8.2s"
+  },
+  "queue": {
+    "total_items": 150,
+    "pending_items": 50,
+    "processing_items": 10,
+    "completed_items": 85,
+    "failed_items": 5
+  }
 }
 ```
 
@@ -58,6 +106,7 @@
 **認證**: 不需要（使用 notifyKey 認證）
 
 **請求範例**:
+
 ```json
 {
   "notifyKey": "my-project-key",
@@ -74,6 +123,7 @@
 ```
 
 **欄位說明**:
+
 - `notifyKey` (必填): 專案識別碼
 - `message` (必填): 訊息內容，最長 4000 字元
 - `messageType` (選填): text | file | adaptive_card，預設 text
@@ -86,6 +136,7 @@
 - `metadata` (選填): 自訂資料
 
 **回應範例** (202 Accepted):
+
 ```json
 {
   "success": true,
@@ -102,6 +153,7 @@
 ```
 
 **錯誤回應** (400/404):
+
 ```json
 {
   "success": false,
@@ -111,9 +163,180 @@
 
 ---
 
-### 2.2 目的地查詢
+### 2.2 專案開通 (Provision)
 
-#### GET /api/v1/destinations/{notifyKey} ✅
+#### POST /api/v1/provision ✅
+
+**說明**: 一鍵建立專案和目的地（簡化流程）
+
+**優先級**: P0
+
+**認證**: 需要
+
+**請求範例**:
+
+```json
+{
+  "companyId": "550e8400-e29b-41d4-a716-446655440001",
+  "createdBy": "650e8400-e29b-41d4-a716-446655440001",
+  "project_name": "新專案",
+  "project_description": "專案描述",
+  "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+  "targets": [
+    {
+      "type": "channel",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+    },
+    {
+      "type": "personal",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+    }
+  ]
+}
+```
+
+**回應範例** (201 Created):
+
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
+    "projectName": "新專案",
+    "status": "active",
+    "destinationsCount": 1,
+    "createdAt": "2025-10-22T10:00:00Z"
+  }
+}
+```
+
+---
+
+### 2.3   查詢Provision
+
+#### GET /api/v1/provision/ ✅
+
+**說明**: 查詢專案開通狀態
+
+**優先級**: P0
+
+**認證**: 需要
+
+**回應範例**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectName": "新專案",
+    "projectDescription": "專案描述",
+    "status": "active",
+    "destinationsCount": 1,
+    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+    "createdAt": "2025-10-22T10:00:00Z"
+  }
+}
+```
+
+---
+
+### 2.4 更新 Provision
+
+#### PUT /api/v1/provision/{notifyKey} ✅
+
+**說明**: 更新專案開通設定
+
+**優先級**: P0
+
+**認證**: 需要
+
+**請求範例**:
+
+```json
+{
+  "project_name": "更新後的專案名稱",
+  "project_description": "更新後的專案描述",
+  "targets": [
+    {
+      "type": "channel",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+    },
+    {
+      "type": "personal",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
+    },
+    {
+      "type": "groupchat",
+      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
+      "conversation_id": "19:f26a8d8a235f430db87a404491cd2ffc@thread.v2"
+    }
+  ]
+}
+```
+
+**回應範例** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
+    "projectName": "更新後的專案名稱",
+    "projectDescription": "更新後的專案描述",
+    "status": "active",
+    "destinationsCount": 3,
+    "updatedAt": "2025-10-22T11:00:00Z"
+  }
+}
+```
+
+---
+
+### 2.5 刪除 Provision
+
+#### DELETE /api/v1/provision/{notifyKey} ✅
+
+**說明**: 刪除專案開通設定（軟刪除，設為 inactive 狀態）
+
+**優先級**: P0
+
+**認證**: 需要
+
+**回應範例** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
+    "projectId": "750e8400-e29b-41d4-a716-446655440001",
+    "status": "inactive",
+    "deletedAt": "2025-10-22T12:00:00Z"
+  }
+}
+```
+
+**錯誤回應** (404 Not Found):
+
+```json
+{
+  "success": false,
+  "error": "project not found for notify_key: invalid-key-12345"
+}
+```
+
+---
+
+### 2.6 目的地查詢
+
+#### GET /api/v1/destinations/ ✅
 
 **說明**: 查詢專案的所有目的地
 
@@ -122,6 +345,7 @@
 **認證**: 不需要
 
 **回應範例**:
+
 ```json
 {
   "success": true,
@@ -167,83 +391,6 @@
   ]
 }
 ```
-
----
-
-### 2.3 專案開通 (Provision)
-
-#### POST /api/v1/provision ✅
-
-**說明**: 一鍵建立專案和目的地（簡化流程）
-
-**優先級**: P0
-
-**認證**: 需要
-
-**請求範例**:
-```json
-{
-  "companyId": "550e8400-e29b-41d4-a716-446655440001",
-  "createdBy": "650e8400-e29b-41d4-a716-446655440001",
-  "project_name": "新專案",
-  "project_description": "專案描述",
-  "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
-  "targets": [
-    {
-      "type": "channel",
-      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
-      "conversation_id": "19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
-    },
-    {
-      "type": "personal",
-      "tenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
-      "conversation_id": "a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
-    }
-  ]
-}
-```
-
-**回應範例** (201 Created):
-```json
-{
-  "success": true,
-  "data": {
-    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
-    "projectId": "750e8400-e29b-41d4-a716-446655440001",
-    "projectName": "新專案",
-    "status": "active",
-    "destinationsCount": 1,
-    "createdAt": "2025-10-22T10:00:00Z"
-  }
-}
-```
-
----
-
-#### GET /api/v1/provision/{notifyKey} ✅
-
-**說明**: 查詢專案開通狀態
-
-**優先級**: P0
-
-**認證**: 需要
-
-**回應範例**:
-```json
-{
-  "success": true,
-  "data": {
-    "notifyKey": "5984f00fe2c5007ea0edb4e9b6269a4abf304e71070ee05ef05575bfacda5e38",
-    "projectName": "新專案",
-    "projectDescription": "專案描述",
-    "status": "active",
-    "destinationsCount": 1,
-    "teamsTenantId": "051cece0-e4dc-4aed-b471-bf29824e1ee6",
-    "createdAt": "2025-10-22T10:00:00Z"
-  }
-}
-```
-
 ---
 
 ### 2.4 Bot 訊息接收
@@ -257,6 +404,7 @@
 **認證**: Bot Framework Token
 
 **請求範例** (Bot Framework Activity):
+
 ```json
 {
   "type": "message",
@@ -275,6 +423,7 @@
 ```
 
 **回應範例**:
+
 ```json
 {
   "success": true,
@@ -297,6 +446,7 @@
 **認證**: 需要
 
 **請求範例**:
+
 ```json
 {
   "companyId": "550e8400-e29b-41d4-a716-446655440001",
@@ -310,6 +460,7 @@
 ```
 
 **回應範例** (201 Created):
+
 ```json
 {
   "id": "750e8400-e29b-41d4-a716-446655440001",
@@ -327,7 +478,7 @@
 
 ---
 
-#### GET /internal/v1/projects/key/{keyName} ✅
+#### GET /internal/v1/projects/key/ ✅
 
 **說明**: 依 Notify Key 查詢專案
 
@@ -348,6 +499,7 @@
 **認證**: 需要 (Admin only)
 
 **請求範例**:
+
 ```json
 {
   "name": "My Teams Bot",
@@ -382,6 +534,7 @@
 **認證**: 需要
 
 **請求範例**:
+
 ```json
 {
   "projectId": "750e8400-e29b-41d4-a716-446655440001",
@@ -404,7 +557,7 @@
 
 ---
 
-#### GET /internal/v1/destinations/project/{projectId} ✅
+#### GET /internal/v1/destinations/project/ ✅
 
 **說明**: 依專案查詢目的地
 
@@ -416,7 +569,7 @@
 
 ### 3.4 通知管理
 
-#### GET /internal/v1/notifications/{id} ✅
+#### GET /internal/v1/notifications/ ✅
 
 **說明**: 查詢單一通知
 
@@ -425,6 +578,7 @@
 **認證**: 需要
 
 **回應範例**:
+
 ```json
 {
   "id": "uuid",
@@ -456,6 +610,7 @@
 **認證**: 不需要（建議限制 IP）
 
 **回應範例**:
+
 ```json
 {
   "timestamp": "2025-10-22T10:00:00Z",
@@ -634,28 +789,31 @@
 
 ### A. 最小需求端點清單
 
-| 端點 | 方法 | 優先級 | 說明 |
-|------|------|--------|------|
-| `/health` | GET | P0 | 健康檢查 |
-| `/api/v1/notify` | POST | P0 | 發送通知 |
-| `/api/v1/destinations/{notifyKey}` | GET | P0 | 查詢目的地 |
-| `/api/v1/provision` | POST | P0 | 一鍵建立專案 |
-| `/api/v1/provision/{notifyKey}` | GET | P0 | 查詢專案開通狀態 |
-| `/api/v1/messages` | POST | P0 | Bot 訊息接收 |
-| `/internal/v1/projects` | POST | P0 | 創建專案 |
-| `/internal/v1/projects/key/{keyName}` | GET | P0 | 查詢專案 |
-| `/internal/v1/bots/platform` | POST/GET | P0 | Bot 管理 |
-| `/internal/v1/destinations` | POST | P0 | 創建目的地 |
-| `/internal/v1/destinations/project/{projectId}` | GET | P0 | 查詢目的地 |
-| `/internal/v1/notifications/{id}` | GET | P0 | 查詢通知 |
-| `/internal/v1/queue/stats` | GET | P0 | 佇列統計 |
+| 端點                                              | 方法     | 優先級 | 說明             |
+| ------------------------------------------------- | -------- | ------ | ---------------- |
+| `/health`                                       | GET      | P0     | 健康檢查         |
+| `/metrics`                                      | GET      | P0     | 系統指標         |
+| `/api/v1/notify`                                | POST     | P0     | 發送通知         |
+| `/api/v1/destinations/{notifyKey}`              | GET      | P0     | 查詢目的地       |
+| `/api/v1/provision`                             | POST     | P0     | 一鍵建立專案     |
+| `/api/v1/provision/{notifyKey}`                 | GET      | P0     | 查詢專案開通狀態 |
+| `/api/v1/provision/{notifyKey}`                 | PUT      | P0     | 更新專案開通設定 |
+| `/api/v1/provision/{notifyKey}`                 | DELETE   | P0     | 刪除專案開通設定 |
+| `/api/v1/messages`                              | POST     | P0     | Bot 訊息接收     |
+| `/internal/v1/projects`                         | POST     | P0     | 創建專案         |
+| `/internal/v1/projects/key/{keyName}`           | GET      | P0     | 查詢專案         |
+| `/internal/v1/bots/platform`                    | POST/GET | P0     | Bot 管理         |
+| `/internal/v1/destinations`                     | POST     | P0     | 創建目的地       |
+| `/internal/v1/destinations/project/{projectId}` | GET      | P0     | 查詢目的地       |
+| `/internal/v1/notifications/{id}`               | GET      | P0     | 查詢通知         |
+| `/internal/v1/queue/stats`                      | GET      | P0     | 佇列統計         |
 
-**總計**: 13 個核心端點
+**總計**: 16 個核心端點
 
 ### B. 資料庫表格 (最小需求)
 
 - companies
-- users  
+- users
 - projects
 - teams_bots
 - destinations
@@ -675,9 +833,11 @@
 **文件結束**
 
 **最小需求總結**:
-- **核心端點**: 13 個
+
+- **核心端點**: 16 個
 - **資料表格**: 8 個
 - **開發時程**: 9 週
 - **預估工作量**: 2-3 人月
 
 如有任何問題，請聯絡：it-rfq@company.com
+

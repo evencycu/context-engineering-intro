@@ -19,12 +19,57 @@ import (
 )
 
 
+type InternalAPIQueueAPI interface {
+
+	/*
+	InternalV1QueueClearPost Clear queue
+
+	Clear all items from the queue
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1QueueClearPostRequest
+	*/
+	InternalV1QueueClearPost(ctx context.Context) ApiInternalV1QueueClearPostRequest
+
+	// InternalV1QueueClearPostExecute executes the request
+	//  @return QueueClearResponse
+	InternalV1QueueClearPostExecute(r ApiInternalV1QueueClearPostRequest) (*QueueClearResponse, *http.Response, error)
+
+	/*
+	InternalV1QueueStatsGet Get queue statistics
+
+	Get queue statistics and status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1QueueStatsGetRequest
+	*/
+	InternalV1QueueStatsGet(ctx context.Context) ApiInternalV1QueueStatsGetRequest
+
+	// InternalV1QueueStatsGetExecute executes the request
+	//  @return QueueStatsResponse
+	InternalV1QueueStatsGetExecute(r ApiInternalV1QueueStatsGetRequest) (*QueueStatsResponse, *http.Response, error)
+
+	/*
+	InternalV1QueueStatusGet Get queue status
+
+	Get current queue status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1QueueStatusGetRequest
+	*/
+	InternalV1QueueStatusGet(ctx context.Context) ApiInternalV1QueueStatusGetRequest
+
+	// InternalV1QueueStatusGetExecute executes the request
+	//  @return QueueStatusResponse
+	InternalV1QueueStatusGetExecute(r ApiInternalV1QueueStatusGetRequest) (*QueueStatusResponse, *http.Response, error)
+}
+
 // InternalAPIQueueAPIService InternalAPIQueueAPI service
 type InternalAPIQueueAPIService service
 
 type ApiInternalV1QueueClearPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIQueueAPIService
+	ApiService InternalAPIQueueAPI
 }
 
 func (r ApiInternalV1QueueClearPostRequest) Execute() (*QueueClearResponse, *http.Response, error) {
@@ -123,7 +168,7 @@ func (a *InternalAPIQueueAPIService) InternalV1QueueClearPostExecute(r ApiIntern
 
 type ApiInternalV1QueueStatsGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIQueueAPIService
+	ApiService InternalAPIQueueAPI
 }
 
 func (r ApiInternalV1QueueStatsGetRequest) Execute() (*QueueStatsResponse, *http.Response, error) {
@@ -222,7 +267,7 @@ func (a *InternalAPIQueueAPIService) InternalV1QueueStatsGetExecute(r ApiInterna
 
 type ApiInternalV1QueueStatusGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIQueueAPIService
+	ApiService InternalAPIQueueAPI
 }
 
 func (r ApiInternalV1QueueStatusGetRequest) Execute() (*QueueStatusResponse, *http.Response, error) {

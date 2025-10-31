@@ -29,11 +29,11 @@ func TestRepository_Interfaces(t *testing.T) {
 	assert.Nil(t, notifRepo) // 應該為 nil，因為沒有實現
 }
 
-func TestDatabase_Models_Basic(t *testing.T) {
+func Testmodels_Models_Basic(t *testing.T) {
 	// 測試數據庫模型的基本功能
 
 	// 測試 Company 模型
-	company := database.Company{
+	company := models.Company{
 		Name:           "Test Company",
 		ContactEmail:   "test@example.com",
 		ContactPhone:   "1234567890",
@@ -50,7 +50,7 @@ func TestDatabase_Models_Basic(t *testing.T) {
 	assert.True(t, company.BillingEnabled)
 
 	// 測試 User 模型
-	user := database.User{
+	user := models.User{
 		Email:     "test@example.com",
 		Name:      "Test User",
 		Role:      "admin",

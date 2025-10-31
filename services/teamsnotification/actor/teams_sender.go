@@ -16,7 +16,7 @@ type teamsSender struct {
 
 // TeamsSender defines the interface for sending messages to Teams
 type TeamsSender interface {
-	Send(ctx context.Context, nd *database.NotificationDestination) (*SendResult, error)
+	Send(ctx context.Context, nd *models.NotificationDestination) (*SendResult, error)
 }
 
 // NewTeamsSender creates a new Teams sender
@@ -25,7 +25,7 @@ func NewTeamsSender() TeamsSender {
 }
 
 // Send sends a notification to Teams
-func (ts *teamsSender) Send(ctx context.Context, nd *database.NotificationDestination) (*SendResult, error) {
+func (ts *teamsSender) Send(ctx context.Context, nd *models.NotificationDestination) (*SendResult, error) {
 	log.Printf("TeamsSender: Sending notification_dest %s to conversation %s", nd.ID, *nd.ConversationID)
 
 	// TODO: Implement actual Teams API call here

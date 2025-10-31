@@ -20,12 +20,146 @@ import (
 )
 
 
+type ExternalAPIAPI interface {
+
+	/*
+	ApiV1DestinationsNotifyKeyGet Get project destinations (External API)
+
+	Get destinations for a project using notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param notifyKey Project notify key
+	@return ApiApiV1DestinationsNotifyKeyGetRequest
+	*/
+	ApiV1DestinationsNotifyKeyGet(ctx context.Context, notifyKey string) ApiApiV1DestinationsNotifyKeyGetRequest
+
+	// ApiV1DestinationsNotifyKeyGetExecute executes the request
+	//  @return ProjectDestinationsResponse
+	ApiV1DestinationsNotifyKeyGetExecute(r ApiApiV1DestinationsNotifyKeyGetRequest) (*ProjectDestinationsResponse, *http.Response, error)
+
+	/*
+	ApiV1MessagesPost Handle Bot Framework messages
+
+	Handle incoming Bot Framework Activity messages
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiV1MessagesPostRequest
+	*/
+	ApiV1MessagesPost(ctx context.Context) ApiApiV1MessagesPostRequest
+
+	// ApiV1MessagesPostExecute executes the request
+	//  @return MessageResponse
+	ApiV1MessagesPostExecute(r ApiApiV1MessagesPostRequest) (*MessageResponse, *http.Response, error)
+
+	/*
+	ApiV1MessagesTestPost Test proactive message
+
+	Send a test proactive message
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiV1MessagesTestPostRequest
+	*/
+	ApiV1MessagesTestPost(ctx context.Context) ApiApiV1MessagesTestPostRequest
+
+	// ApiV1MessagesTestPostExecute executes the request
+	//  @return MessageResponse
+	ApiV1MessagesTestPostExecute(r ApiApiV1MessagesTestPostRequest) (*MessageResponse, *http.Response, error)
+
+	/*
+	ApiV1NotifyPost Send notification (External API)
+
+	Send a notification to Teams using project notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiV1NotifyPostRequest
+	*/
+	ApiV1NotifyPost(ctx context.Context) ApiApiV1NotifyPostRequest
+
+	// ApiV1NotifyPostExecute executes the request
+	//  @return ExternalNotifyResponse
+	ApiV1NotifyPostExecute(r ApiApiV1NotifyPostRequest) (*ExternalNotifyResponse, *http.Response, error)
+
+	/*
+	ApiV1ProvisionNotifyKeyDisablePost Disable project provision
+
+	Disable project provision by notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param notifyKey Project notify key
+	@return ApiApiV1ProvisionNotifyKeyDisablePostRequest
+	*/
+	ApiV1ProvisionNotifyKeyDisablePost(ctx context.Context, notifyKey string) ApiApiV1ProvisionNotifyKeyDisablePostRequest
+
+	// ApiV1ProvisionNotifyKeyDisablePostExecute executes the request
+	//  @return ProvisionResponse
+	ApiV1ProvisionNotifyKeyDisablePostExecute(r ApiApiV1ProvisionNotifyKeyDisablePostRequest) (*ProvisionResponse, *http.Response, error)
+
+	/*
+	ApiV1ProvisionNotifyKeyEnablePost Enable project provision
+
+	Enable project provision by notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param notifyKey Project notify key
+	@return ApiApiV1ProvisionNotifyKeyEnablePostRequest
+	*/
+	ApiV1ProvisionNotifyKeyEnablePost(ctx context.Context, notifyKey string) ApiApiV1ProvisionNotifyKeyEnablePostRequest
+
+	// ApiV1ProvisionNotifyKeyEnablePostExecute executes the request
+	//  @return ProvisionResponse
+	ApiV1ProvisionNotifyKeyEnablePostExecute(r ApiApiV1ProvisionNotifyKeyEnablePostRequest) (*ProvisionResponse, *http.Response, error)
+
+	/*
+	ApiV1ProvisionNotifyKeyGet Get project provision
+
+	Get project provision by notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param notifyKey Project notify key
+	@return ApiApiV1ProvisionNotifyKeyGetRequest
+	*/
+	ApiV1ProvisionNotifyKeyGet(ctx context.Context, notifyKey string) ApiApiV1ProvisionNotifyKeyGetRequest
+
+	// ApiV1ProvisionNotifyKeyGetExecute executes the request
+	//  @return ProvisionResponse
+	ApiV1ProvisionNotifyKeyGetExecute(r ApiApiV1ProvisionNotifyKeyGetRequest) (*ProvisionResponse, *http.Response, error)
+
+	/*
+	ApiV1ProvisionNotifyKeyPut Update project provision
+
+	Update project provision by notify key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param notifyKey Project notify key
+	@return ApiApiV1ProvisionNotifyKeyPutRequest
+	*/
+	ApiV1ProvisionNotifyKeyPut(ctx context.Context, notifyKey string) ApiApiV1ProvisionNotifyKeyPutRequest
+
+	// ApiV1ProvisionNotifyKeyPutExecute executes the request
+	//  @return ProvisionResponse
+	ApiV1ProvisionNotifyKeyPutExecute(r ApiApiV1ProvisionNotifyKeyPutRequest) (*ProvisionResponse, *http.Response, error)
+
+	/*
+	ApiV1ProvisionPost Create project provision
+
+	Create a new project provision
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiV1ProvisionPostRequest
+	*/
+	ApiV1ProvisionPost(ctx context.Context) ApiApiV1ProvisionPostRequest
+
+	// ApiV1ProvisionPostExecute executes the request
+	//  @return ProvisionResponse
+	ApiV1ProvisionPostExecute(r ApiApiV1ProvisionPostRequest) (*ProvisionResponse, *http.Response, error)
+}
+
 // ExternalAPIAPIService ExternalAPIAPI service
 type ExternalAPIAPIService service
 
 type ApiApiV1DestinationsNotifyKeyGetRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	notifyKey string
 }
 
@@ -138,7 +272,7 @@ func (a *ExternalAPIAPIService) ApiV1DestinationsNotifyKeyGetExecute(r ApiApiV1D
 
 type ApiApiV1MessagesPostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	botFrameworkActivity *BotFrameworkActivity
 }
 
@@ -248,7 +382,7 @@ func (a *ExternalAPIAPIService) ApiV1MessagesPostExecute(r ApiApiV1MessagesPostR
 
 type ApiApiV1MessagesTestPostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	proactiveTestRequest *ProactiveTestRequest
 }
 
@@ -358,7 +492,7 @@ func (a *ExternalAPIAPIService) ApiV1MessagesTestPostExecute(r ApiApiV1MessagesT
 
 type ApiApiV1NotifyPostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	externalNotifyRequest *ExternalNotifyRequest
 }
 
@@ -489,7 +623,7 @@ func (a *ExternalAPIAPIService) ApiV1NotifyPostExecute(r ApiApiV1NotifyPostReque
 
 type ApiApiV1ProvisionNotifyKeyDisablePostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	notifyKey string
 }
 
@@ -602,7 +736,7 @@ func (a *ExternalAPIAPIService) ApiV1ProvisionNotifyKeyDisablePostExecute(r ApiA
 
 type ApiApiV1ProvisionNotifyKeyEnablePostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	notifyKey string
 }
 
@@ -715,7 +849,7 @@ func (a *ExternalAPIAPIService) ApiV1ProvisionNotifyKeyEnablePostExecute(r ApiAp
 
 type ApiApiV1ProvisionNotifyKeyGetRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	notifyKey string
 }
 
@@ -828,7 +962,7 @@ func (a *ExternalAPIAPIService) ApiV1ProvisionNotifyKeyGetExecute(r ApiApiV1Prov
 
 type ApiApiV1ProvisionNotifyKeyPutRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	notifyKey string
 	provisionUpdateRequest *ProvisionUpdateRequest
 }
@@ -963,7 +1097,7 @@ func (a *ExternalAPIAPIService) ApiV1ProvisionNotifyKeyPutExecute(r ApiApiV1Prov
 
 type ApiApiV1ProvisionPostRequest struct {
 	ctx context.Context
-	ApiService *ExternalAPIAPIService
+	ApiService ExternalAPIAPI
 	provisionCreateRequest *ProvisionCreateRequest
 }
 

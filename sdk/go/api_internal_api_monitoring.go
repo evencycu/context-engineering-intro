@@ -19,12 +19,85 @@ import (
 )
 
 
+type InternalAPIMonitoringAPI interface {
+
+	/*
+	InternalV1MonitoringAlertsGet Get alert status
+
+	Get current alert status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1MonitoringAlertsGetRequest
+	*/
+	InternalV1MonitoringAlertsGet(ctx context.Context) ApiInternalV1MonitoringAlertsGetRequest
+
+	// InternalV1MonitoringAlertsGetExecute executes the request
+	//  @return AlertStatusResponse
+	InternalV1MonitoringAlertsGetExecute(r ApiInternalV1MonitoringAlertsGetRequest) (*AlertStatusResponse, *http.Response, error)
+
+	/*
+	InternalV1MonitoringBusinessGet Get business health
+
+	Get business metrics and health indicators
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1MonitoringBusinessGetRequest
+	*/
+	InternalV1MonitoringBusinessGet(ctx context.Context) ApiInternalV1MonitoringBusinessGetRequest
+
+	// InternalV1MonitoringBusinessGetExecute executes the request
+	//  @return BusinessHealthResponse
+	InternalV1MonitoringBusinessGetExecute(r ApiInternalV1MonitoringBusinessGetRequest) (*BusinessHealthResponse, *http.Response, error)
+
+	/*
+	InternalV1MonitoringDashboardGet Get monitoring dashboard
+
+	Get comprehensive monitoring dashboard data
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1MonitoringDashboardGetRequest
+	*/
+	InternalV1MonitoringDashboardGet(ctx context.Context) ApiInternalV1MonitoringDashboardGetRequest
+
+	// InternalV1MonitoringDashboardGetExecute executes the request
+	//  @return DashboardResponse
+	InternalV1MonitoringDashboardGetExecute(r ApiInternalV1MonitoringDashboardGetRequest) (*DashboardResponse, *http.Response, error)
+
+	/*
+	InternalV1MonitoringHealthGet Get system health
+
+	Get comprehensive system health status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1MonitoringHealthGetRequest
+	*/
+	InternalV1MonitoringHealthGet(ctx context.Context) ApiInternalV1MonitoringHealthGetRequest
+
+	// InternalV1MonitoringHealthGetExecute executes the request
+	//  @return SystemHealthResponse
+	InternalV1MonitoringHealthGetExecute(r ApiInternalV1MonitoringHealthGetRequest) (*SystemHealthResponse, *http.Response, error)
+
+	/*
+	InternalV1MonitoringPerformanceGet Get performance metrics
+
+	Get system performance metrics
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1MonitoringPerformanceGetRequest
+	*/
+	InternalV1MonitoringPerformanceGet(ctx context.Context) ApiInternalV1MonitoringPerformanceGetRequest
+
+	// InternalV1MonitoringPerformanceGetExecute executes the request
+	//  @return PerformanceMetricsResponse
+	InternalV1MonitoringPerformanceGetExecute(r ApiInternalV1MonitoringPerformanceGetRequest) (*PerformanceMetricsResponse, *http.Response, error)
+}
+
 // InternalAPIMonitoringAPIService InternalAPIMonitoringAPI service
 type InternalAPIMonitoringAPIService service
 
 type ApiInternalV1MonitoringAlertsGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIMonitoringAPIService
+	ApiService InternalAPIMonitoringAPI
 }
 
 func (r ApiInternalV1MonitoringAlertsGetRequest) Execute() (*AlertStatusResponse, *http.Response, error) {
@@ -123,7 +196,7 @@ func (a *InternalAPIMonitoringAPIService) InternalV1MonitoringAlertsGetExecute(r
 
 type ApiInternalV1MonitoringBusinessGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIMonitoringAPIService
+	ApiService InternalAPIMonitoringAPI
 }
 
 func (r ApiInternalV1MonitoringBusinessGetRequest) Execute() (*BusinessHealthResponse, *http.Response, error) {
@@ -222,7 +295,7 @@ func (a *InternalAPIMonitoringAPIService) InternalV1MonitoringBusinessGetExecute
 
 type ApiInternalV1MonitoringDashboardGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIMonitoringAPIService
+	ApiService InternalAPIMonitoringAPI
 }
 
 func (r ApiInternalV1MonitoringDashboardGetRequest) Execute() (*DashboardResponse, *http.Response, error) {
@@ -321,7 +394,7 @@ func (a *InternalAPIMonitoringAPIService) InternalV1MonitoringDashboardGetExecut
 
 type ApiInternalV1MonitoringHealthGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIMonitoringAPIService
+	ApiService InternalAPIMonitoringAPI
 }
 
 func (r ApiInternalV1MonitoringHealthGetRequest) Execute() (*SystemHealthResponse, *http.Response, error) {
@@ -420,7 +493,7 @@ func (a *InternalAPIMonitoringAPIService) InternalV1MonitoringHealthGetExecute(r
 
 type ApiInternalV1MonitoringPerformanceGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIMonitoringAPIService
+	ApiService InternalAPIMonitoringAPI
 }
 
 func (r ApiInternalV1MonitoringPerformanceGetRequest) Execute() (*PerformanceMetricsResponse, *http.Response, error) {

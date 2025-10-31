@@ -19,12 +19,69 @@ import (
 )
 
 
+type SystemAPI interface {
+
+	/*
+	ConfigGet Get system configuration
+
+	Returns current system configuration (non-sensitive values only)
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiConfigGetRequest
+	*/
+	ConfigGet(ctx context.Context) ApiConfigGetRequest
+
+	// ConfigGetExecute executes the request
+	//  @return ConfigResponse
+	ConfigGetExecute(r ApiConfigGetRequest) (*ConfigResponse, *http.Response, error)
+
+	/*
+	ConfigValidatePost Validate system configuration
+
+	Validates the current system configuration
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiConfigValidatePostRequest
+	*/
+	ConfigValidatePost(ctx context.Context) ApiConfigValidatePostRequest
+
+	// ConfigValidatePostExecute executes the request
+	//  @return ConfigValidationResponse
+	ConfigValidatePostExecute(r ApiConfigValidatePostRequest) (*ConfigValidationResponse, *http.Response, error)
+
+	/*
+	HealthGet Service health check
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiHealthGetRequest
+	*/
+	HealthGet(ctx context.Context) ApiHealthGetRequest
+
+	// HealthGetExecute executes the request
+	//  @return HealthResponse
+	HealthGetExecute(r ApiHealthGetRequest) (*HealthResponse, *http.Response, error)
+
+	/*
+	MetricsGet System metrics
+
+	Returns system metrics including token cache statistics, actor pool status, and performance indicators
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiMetricsGetRequest
+	*/
+	MetricsGet(ctx context.Context) ApiMetricsGetRequest
+
+	// MetricsGetExecute executes the request
+	//  @return MetricsResponse
+	MetricsGetExecute(r ApiMetricsGetRequest) (*MetricsResponse, *http.Response, error)
+}
+
 // SystemAPIService SystemAPI service
 type SystemAPIService service
 
 type ApiConfigGetRequest struct {
 	ctx context.Context
-	ApiService *SystemAPIService
+	ApiService SystemAPI
 }
 
 func (r ApiConfigGetRequest) Execute() (*ConfigResponse, *http.Response, error) {
@@ -133,7 +190,7 @@ func (a *SystemAPIService) ConfigGetExecute(r ApiConfigGetRequest) (*ConfigRespo
 
 type ApiConfigValidatePostRequest struct {
 	ctx context.Context
-	ApiService *SystemAPIService
+	ApiService SystemAPI
 }
 
 func (r ApiConfigValidatePostRequest) Execute() (*ConfigValidationResponse, *http.Response, error) {
@@ -242,7 +299,7 @@ func (a *SystemAPIService) ConfigValidatePostExecute(r ApiConfigValidatePostRequ
 
 type ApiHealthGetRequest struct {
 	ctx context.Context
-	ApiService *SystemAPIService
+	ApiService SystemAPI
 }
 
 func (r ApiHealthGetRequest) Execute() (*HealthResponse, *http.Response, error) {
@@ -339,7 +396,7 @@ func (a *SystemAPIService) HealthGetExecute(r ApiHealthGetRequest) (*HealthRespo
 
 type ApiMetricsGetRequest struct {
 	ctx context.Context
-	ApiService *SystemAPIService
+	ApiService SystemAPI
 }
 
 func (r ApiMetricsGetRequest) Execute() (*MetricsResponse, *http.Response, error) {

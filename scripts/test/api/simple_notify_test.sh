@@ -156,6 +156,7 @@ echo -e "${BLUE}  -d '{...}'${NC}"
 PERSONAL_CONV_ID="a:12mhoHc_sRnffmXHY2H5EvR6MyvmkXiLI5pQ54k3o04gnTMip5k5XPJfrVzA0f8j0mt27QzqCW-Dn5EmRXZa14ckeenzWBArx_V0biX160RcnYMeg5rRzJ6isYrYx-TZR"
 GROUPCHAT_CONV_ID="19:f26a8d8a235f430db87a404491cd2ffc@thread.v2"
 CHANNEL_CONV_ID="19:lg5lz80dPDcE8OtOolOHKsNZYIZI0IslJnnGDBV2H5A1@thread.tacv2"
+EXTRA_GROUPCHAT_CONV_ID="19:3a6943ad620946199a061ce2b87ea8b9@thread.v2"
 
 RESPONSE=$(curl -s -X POST "$BASE_URL/notify" \
   -H "Content-Type: application/json" \
@@ -164,7 +165,7 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/notify" \
     "message": "這是一條指定目標的測試通知",
     "messageType": "text",
     "priority": "normal",
-    "targets": ["'"$PERSONAL_CONV_ID"'", "'"$GROUPCHAT_CONV_ID"'", "'"$CHANNEL_CONV_ID"'"],
+    "targets": ["'"$PERSONAL_CONV_ID"'", "'"$GROUPCHAT_CONV_ID"'", "'"$CHANNEL_CONV_ID"'", "'"$EXTRA_GROUPCHAT_CONV_ID"'"],
     "metadata": {
       "source": "external_test",
       "target_type": "specific",

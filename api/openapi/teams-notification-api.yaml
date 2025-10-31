@@ -2120,6 +2120,37 @@ components:
           additionalProperties: true
           description: Additional metadata
           example: { "source": "external", "version": "1.0" }
+        attachments:
+          type: array
+          description: Bot Framework attachments array. For Adaptive Card, set contentType to application/vnd.microsoft.card.adaptive and put card JSON in content.
+          items:
+            type: object
+            properties:
+              contentType:
+                type: string
+                example: application/vnd.microsoft.card.adaptive
+              contentUrl:
+                type: string
+                nullable: true
+              name:
+                type: string
+                nullable: true
+              thumbnailUrl:
+                type: string
+                nullable: true
+              content:
+                type: object
+                additionalProperties: true
+          example:
+            - contentType: application/vnd.microsoft.card.adaptive
+              content:
+                $schema: "http://adaptivecards.io/schemas/adaptive-card.json"
+                type: AdaptiveCard
+                version: "1.3"
+                body:
+                  - type: TextBlock
+                    text: "Hello from Adaptive Card"
+                    wrap: true
 
     ExternalNotifyResponse:
       type: object

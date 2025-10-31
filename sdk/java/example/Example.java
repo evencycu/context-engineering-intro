@@ -10,9 +10,9 @@ public class Example {
         // Initialize the client
         ApiClient client = Configuration.getDefaultApiClient();
         client.setBasePath("http://localhost:8080");
-        
+
         ExternalApiApi externalApi = new ExternalApiApi(client);
-        
+
         try {
             // Send a notification using external API
             ExternalNotifyRequest request = new ExternalNotifyRequest();
@@ -21,14 +21,14 @@ public class Example {
             request.setMessageType("text");
             request.setPriority("normal");
             request.setTargets(Arrays.asList("all"));
-            
+
             ExternalNotifyResponse response = externalApi.apiV1NotifyPost(request);
             System.out.println("Notification sent: " + response.getNotificationId());
-            
+
             // Get project destinations
             ProjectDestinationsResponse dests = externalApi.apiV1DestinationsNotifyKeyGet("cfh-alert-gogo");
             System.out.println("Found " + dests.getDestinations().size() + " destinations");
-            
+
         } catch (ApiException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();

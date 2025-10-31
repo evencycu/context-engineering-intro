@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Repository interface defines common database operations
+// Repository interface defines common models operations
 type Repository[T any] interface {
 	Create(ctx context.Context, entity *T) error
 	GetByID(ctx context.Context, id uuid.UUID) (*T, error)
@@ -23,56 +23,56 @@ type Repository[T any] interface {
 
 // CompanyRepository defines company-specific operations
 type CompanyRepository interface {
-	Repository[database.Company]
-	GetByEmail(ctx context.Context, email string) (*database.Company, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Company, error)
+	Repository[models.Company]
+	GetByEmail(ctx context.Context, email string) (*models.Company, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Company, error)
 }
 
 // BotRepository defines bot-specific operations
 type BotRepository interface {
-	Repository[database.TeamsBot]
-	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
+	Repository[models.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*models.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*models.TeamsBot, error)
 }
 
 // DestinationRepository defines destination-specific operations
 type DestinationRepository interface {
-	Repository[database.Destination]
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error)
-	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Destination, error)
-	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error)
-	SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error)
+	Repository[models.Destination]
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Destination, error)
+	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*models.Destination, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Destination, error)
+	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*models.Destination, error)
+	SearchDestinations(ctx context.Context, query string) ([]*models.Destination, error)
 }
 
 // NotificationRepository defines notification-specific operations
 type NotificationRepository interface {
-	Repository[database.Notification]
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error)
-	GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Notification, error)
-	GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error)
-	UpdateStatus(ctx context.Context, notificationID uuid.UUID, status database.NotificationStatus, errorMessage string) error
+	Repository[models.Notification]
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Notification, error)
+	GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*models.Notification, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Notification, error)
+	GetByDateRange(ctx context.Context, start, end time.Time) ([]*models.Notification, error)
+	UpdateStatus(ctx context.Context, notificationID uuid.UUID, status models.NotificationStatus, errorMessage string) error
 }
 
 // NotificationDestinationRepository defines operations for notification_destinations
 type NotificationDestinationRepository interface {
-	Create(ctx context.Context, entity *database.NotificationDestination) error
-	CreateBatch(ctx context.Context, entities []*database.NotificationDestination) error
-	Update(ctx context.Context, entity *database.NotificationDestination) error
+	Create(ctx context.Context, entity *models.NotificationDestination) error
+	CreateBatch(ctx context.Context, entities []*models.NotificationDestination) error
+	Update(ctx context.Context, entity *models.NotificationDestination) error
 	UpdateStatusAndRetry(ctx context.Context, id uuid.UUID, status string, retryCount int, nextRetryAt *time.Time, failureReason string, errorMessage string, retryAfter *int) error
 	MarkSent(ctx context.Context, id uuid.UUID, teamsMessageID string, sentAt time.Time) error
-	GetByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
-	GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*database.NotificationDestination, error)
-	GetRetryReady(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
-	GetPending(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.NotificationDestination, error)
+	GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*models.NotificationDestination, error)
+	GetRetryReady(ctx context.Context, limit int) ([]*models.NotificationDestination, error)
+	GetPending(ctx context.Context, limit int) ([]*models.NotificationDestination, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 // BaseRepository provides common repository functionality
 type BaseRepository struct {
-	// This will be implemented with actual database connection
+	// This will be implemented with actual models connection
 	// For now, it's a placeholder
 }
 
@@ -119,11 +119,11 @@ func NewCompanyRepository(db *sqlx.DB) CompanyRepository {
 
 // UserRepository defines the interface for user operations
 type UserRepository interface {
-	Repository[database.User]
-	GetByEmail(ctx context.Context, email string) (*database.User, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.User, error)
-	GetByRole(ctx context.Context, role string) ([]*database.User, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.User, error)
+	Repository[models.User]
+	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.User, error)
+	GetByRole(ctx context.Context, role string) ([]*models.User, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.User, error)
 }
 
 // userRepository implements UserRepository
@@ -137,7 +137,7 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 }
 
 // Create creates a new user
-func (r *userRepository) Create(ctx context.Context, entity *database.User) error {
+func (r *userRepository) Create(ctx context.Context, entity *models.User) error {
 	query := `INSERT INTO users (id, company_id, email, name, password_hash, role, status, api_key_hash, api_key_expires_at, last_login_at, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 	_, err := r.db.ExecContext(ctx, query,
@@ -148,8 +148,8 @@ func (r *userRepository) Create(ctx context.Context, entity *database.User) erro
 }
 
 // GetByID retrieves a user by ID
-func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.User, error) {
-	var user database.User
+func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	var user models.User
 	query := `SELECT * FROM users WHERE id = $1`
 	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
@@ -159,7 +159,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.U
 }
 
 // Update updates an existing user
-func (r *userRepository) Update(ctx context.Context, entity *database.User) error {
+func (r *userRepository) Update(ctx context.Context, entity *models.User) error {
 	query := `UPDATE users SET company_id = $2, email = $3, name = $4, password_hash = $5, 
 			  role = $6, status = $7, api_key_hash = $8, api_key_expires_at = $9, last_login_at = $10, updated_at = $11 
 			  WHERE id = $1`
@@ -178,8 +178,8 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves users with pagination
-func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*database.User, error) {
-	var users []*database.User
+func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*models.User, error) {
+	var users []*models.User
 	query := `SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	err := r.db.SelectContext(ctx, &users, query, limit, offset)
 	return users, err
@@ -194,8 +194,8 @@ func (r *userRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // GetByEmail retrieves a user by email
-func (r *userRepository) GetByEmail(ctx context.Context, email string) (*database.User, error) {
-	var user database.User
+func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
 	query := `SELECT * FROM users WHERE email = $1`
 	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
@@ -205,24 +205,24 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*databas
 }
 
 // GetByCompanyID retrieves users by company ID
-func (r *userRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.User, error) {
-	var users []*database.User
+func (r *userRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.User, error) {
+	var users []*models.User
 	query := `SELECT * FROM users WHERE company_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &users, query, companyID)
 	return users, err
 }
 
 // GetByRole retrieves users by role
-func (r *userRepository) GetByRole(ctx context.Context, role string) ([]*database.User, error) {
-	var users []*database.User
+func (r *userRepository) GetByRole(ctx context.Context, role string) ([]*models.User, error) {
+	var users []*models.User
 	query := `SELECT * FROM users WHERE role = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &users, query, role)
 	return users, err
 }
 
 // GetByStatus retrieves users by status
-func (r *userRepository) GetByStatus(ctx context.Context, status string) ([]*database.User, error) {
-	var users []*database.User
+func (r *userRepository) GetByStatus(ctx context.Context, status string) ([]*models.User, error) {
+	var users []*models.User
 	query := `SELECT * FROM users WHERE status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &users, query, status)
 	return users, err
@@ -233,7 +233,7 @@ type companyRepository struct {
 	db *sqlx.DB
 }
 
-func (r *companyRepository) Create(ctx context.Context, entity *database.Company) error {
+func (r *companyRepository) Create(ctx context.Context, entity *models.Company) error {
 	query := `INSERT INTO companies (id, name, contact_email, contact_phone, address, status, billing_enabled, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	_, err := r.db.ExecContext(ctx, query,
@@ -242,8 +242,8 @@ func (r *companyRepository) Create(ctx context.Context, entity *database.Company
 	return err
 }
 
-func (r *companyRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Company, error) {
-	var company database.Company
+func (r *companyRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Company, error) {
+	var company models.Company
 	query := `SELECT * FROM companies WHERE id = $1`
 	err := r.db.GetContext(ctx, &company, query, id)
 	if err != nil {
@@ -252,7 +252,7 @@ func (r *companyRepository) GetByID(ctx context.Context, id uuid.UUID) (*databas
 	return &company, nil
 }
 
-func (r *companyRepository) Update(ctx context.Context, entity *database.Company) error {
+func (r *companyRepository) Update(ctx context.Context, entity *models.Company) error {
 	query := `UPDATE companies SET name = $2, contact_email = $3, contact_phone = $4, 
 			  address = $5, status = $6, billing_enabled = $7, updated_at = $8 
 			  WHERE id = $1`
@@ -268,8 +268,8 @@ func (r *companyRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (r *companyRepository) List(ctx context.Context, limit, offset int) ([]*database.Company, error) {
-	var companies []*database.Company
+func (r *companyRepository) List(ctx context.Context, limit, offset int) ([]*models.Company, error) {
+	var companies []*models.Company
 	query := `SELECT * FROM companies ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	err := r.db.SelectContext(ctx, &companies, query, limit, offset)
 	return companies, err
@@ -282,8 +282,8 @@ func (r *companyRepository) Count(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-func (r *companyRepository) GetByEmail(ctx context.Context, email string) (*database.Company, error) {
-	var company database.Company
+func (r *companyRepository) GetByEmail(ctx context.Context, email string) (*models.Company, error) {
+	var company models.Company
 	query := `SELECT * FROM companies WHERE contact_email = $1`
 	err := r.db.GetContext(ctx, &company, query, email)
 	if err != nil {
@@ -292,8 +292,8 @@ func (r *companyRepository) GetByEmail(ctx context.Context, email string) (*data
 	return &company, nil
 }
 
-func (r *companyRepository) GetByStatus(ctx context.Context, status string) ([]*database.Company, error) {
-	var companies []*database.Company
+func (r *companyRepository) GetByStatus(ctx context.Context, status string) ([]*models.Company, error) {
+	var companies []*models.Company
 	query := `SELECT * FROM companies WHERE status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &companies, query, status)
 	return companies, err
@@ -301,11 +301,11 @@ func (r *companyRepository) GetByStatus(ctx context.Context, status string) ([]*
 
 // ProjectRepository defines the interface for project operations
 type ProjectRepository interface {
-	Repository[database.Project]
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.Project, error)
-	GetByKeyName(ctx context.Context, keyName string) (*database.Project, error)
-	GetByNotifyKey(ctx context.Context, notifyKey string) (*database.Project, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Project, error)
+	Repository[models.Project]
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.Project, error)
+	GetByKeyName(ctx context.Context, keyName string) (*models.Project, error)
+	GetByNotifyKey(ctx context.Context, notifyKey string) (*models.Project, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Project, error)
 }
 
 // projectRepository implements ProjectRepository
@@ -319,7 +319,7 @@ func NewProjectRepository(db *sqlx.DB) ProjectRepository {
 }
 
 // Create creates a new project
-func (r *projectRepository) Create(ctx context.Context, entity *database.Project) error {
+func (r *projectRepository) Create(ctx context.Context, entity *models.Project) error {
 	query := `INSERT INTO projects (id, company_id, notify_key, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	_, err := r.db.ExecContext(ctx, query,
@@ -330,8 +330,8 @@ func (r *projectRepository) Create(ctx context.Context, entity *database.Project
 }
 
 // GetByID retrieves a project by ID
-func (r *projectRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Project, error) {
-	var project database.Project
+func (r *projectRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Project, error) {
+	var project models.Project
 	query := `SELECT * FROM projects WHERE id = $1`
 	err := r.db.GetContext(ctx, &project, query, id)
 	if err != nil {
@@ -341,7 +341,7 @@ func (r *projectRepository) GetByID(ctx context.Context, id uuid.UUID) (*databas
 }
 
 // Update updates an existing project
-func (r *projectRepository) Update(ctx context.Context, entity *database.Project) error {
+func (r *projectRepository) Update(ctx context.Context, entity *models.Project) error {
 	query := `UPDATE projects SET company_id = $2, notify_key = $3, description = $4, 
 			  status = $5, daily_limit = $6, monthly_limit = $7, priority = $8, updated_at = $9 
 			  WHERE id = $1`
@@ -359,8 +359,8 @@ func (r *projectRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves projects with pagination
-func (r *projectRepository) List(ctx context.Context, limit, offset int) ([]*database.Project, error) {
-	var projects []*database.Project
+func (r *projectRepository) List(ctx context.Context, limit, offset int) ([]*models.Project, error) {
+	var projects []*models.Project
 	query := `SELECT * FROM projects ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	err := r.db.SelectContext(ctx, &projects, query, limit, offset)
 	return projects, err
@@ -375,16 +375,16 @@ func (r *projectRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // GetByCompanyID retrieves projects by company ID
-func (r *projectRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.Project, error) {
-	var projects []*database.Project
+func (r *projectRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.Project, error) {
+	var projects []*models.Project
 	query := `SELECT * FROM projects WHERE company_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &projects, query, companyID)
 	return projects, err
 }
 
 // GetByKeyName retrieves a project by key name
-func (r *projectRepository) GetByKeyName(ctx context.Context, keyName string) (*database.Project, error) {
-	var project database.Project
+func (r *projectRepository) GetByKeyName(ctx context.Context, keyName string) (*models.Project, error) {
+	var project models.Project
 	query := `SELECT * FROM projects WHERE notify_key = $1`
 	err := r.db.GetContext(ctx, &project, query, keyName)
 	if err != nil {
@@ -394,8 +394,8 @@ func (r *projectRepository) GetByKeyName(ctx context.Context, keyName string) (*
 }
 
 // GetByNotifyKey retrieves a project by notify_key
-func (r *projectRepository) GetByNotifyKey(ctx context.Context, notifyKey string) (*database.Project, error) {
-	var project database.Project
+func (r *projectRepository) GetByNotifyKey(ctx context.Context, notifyKey string) (*models.Project, error) {
+	var project models.Project
 	query := `SELECT * FROM projects WHERE notify_key = $1`
 	err := r.db.GetContext(ctx, &project, query, notifyKey)
 	if err != nil {
@@ -405,8 +405,8 @@ func (r *projectRepository) GetByNotifyKey(ctx context.Context, notifyKey string
 }
 
 // GetByStatus retrieves projects by status
-func (r *projectRepository) GetByStatus(ctx context.Context, status string) ([]*database.Project, error) {
-	var projects []*database.Project
+func (r *projectRepository) GetByStatus(ctx context.Context, status string) ([]*models.Project, error) {
+	var projects []*models.Project
 	query := `SELECT * FROM projects WHERE status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &projects, query, status)
 	return projects, err
@@ -414,11 +414,11 @@ func (r *projectRepository) GetByStatus(ctx context.Context, status string) ([]*
 
 // TeamsBotRepository defines the interface for bot operations
 type TeamsBotRepository interface {
-	Repository[database.TeamsBot]
-	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
+	Repository[models.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*models.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.TeamsBot, error)
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*models.TeamsBot, error)
 }
 
 // teamsBotRepository implements TeamsBotRepository
@@ -432,7 +432,7 @@ func NewTeamsBotRepository(db *sqlx.DB) TeamsBotRepository {
 }
 
 // Create creates a new platform bot
-func (r *teamsBotRepository) Create(ctx context.Context, entity *database.TeamsBot) error {
+func (r *teamsBotRepository) Create(ctx context.Context, entity *models.TeamsBot) error {
 	query := `INSERT INTO teams_bots (id, type, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) 
 			  VALUES ($1, 'platform', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
@@ -454,8 +454,8 @@ func (r *teamsBotRepository) Create(ctx context.Context, entity *database.TeamsB
 }
 
 // GetByID retrieves a platform bot by ID
-func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.TeamsBot, error) {
-	var bot database.TeamsBot
+func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.TeamsBot, error) {
+	var bot models.TeamsBot
 	var capabilitiesJSON []byte
 	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
 			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
@@ -475,7 +475,7 @@ func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*databa
 		if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
 		}
-		capabilitiesObj := database.JSONBObject(capabilities)
+		capabilitiesObj := models.JSONBObject(capabilities)
 		bot.Capabilities = &capabilitiesObj
 	}
 
@@ -483,7 +483,7 @@ func (r *teamsBotRepository) GetByID(ctx context.Context, id uuid.UUID) (*databa
 }
 
 // Update updates an existing platform bot
-func (r *teamsBotRepository) Update(ctx context.Context, entity *database.TeamsBot) error {
+func (r *teamsBotRepository) Update(ctx context.Context, entity *models.TeamsBot) error {
 	query := `UPDATE teams_bots SET name = $2, description = $3, app_id = $4, app_password_hash = $5, 
 			  tenant_id = $6, status = $7, webhook_url = $8, capabilities = $9, rate_limit_per_minute = $10, 
 			  max_concurrent_requests = $11, updated_at = $12 
@@ -514,7 +514,7 @@ func (r *teamsBotRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves platform bots with pagination
-func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*database.TeamsBot, error) {
+func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*models.TeamsBot, error) {
 	query := `SELECT id, created_at, updated_at, name, description, app_id, app_password_hash, 
 			  tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests 
 			  FROM teams_bots WHERE type = 'platform' ORDER BY created_at DESC LIMIT $1 OFFSET $2`
@@ -524,9 +524,9 @@ func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*da
 	}
 	defer rows.Close()
 
-	var bots []*database.TeamsBot
+	var bots []*models.TeamsBot
 	for rows.Next() {
-		var bot database.TeamsBot
+		var bot models.TeamsBot
 		var capabilitiesJSON []byte
 		err := rows.Scan(
 			&bot.ID, &bot.CreatedAt, &bot.UpdatedAt, &bot.Name, &bot.Description,
@@ -543,7 +543,7 @@ func (r *teamsBotRepository) List(ctx context.Context, limit, offset int) ([]*da
 			if err := json.Unmarshal(capabilitiesJSON, &capabilities); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal capabilities: %w", err)
 			}
-			capabilitiesObj := database.JSONBObject(capabilities)
+			capabilitiesObj := models.JSONBObject(capabilities)
 			bot.Capabilities = &capabilitiesObj
 		}
 
@@ -562,8 +562,8 @@ func (r *teamsBotRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // GetByAppID retrieves a bot by app ID (any type)
-func (r *teamsBotRepository) GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error) {
-	var bot database.TeamsBot
+func (r *teamsBotRepository) GetByAppID(ctx context.Context, appID string) (*models.TeamsBot, error) {
+	var bot models.TeamsBot
 	query := `SELECT * FROM teams_bots WHERE app_id = $1`
 	err := r.db.GetContext(ctx, &bot, query, appID)
 	if err != nil {
@@ -573,24 +573,24 @@ func (r *teamsBotRepository) GetByAppID(ctx context.Context, appID string) (*dat
 }
 
 // GetByStatus retrieves platform bots by status
-func (r *teamsBotRepository) GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error) {
-	var bots []*database.TeamsBot
+func (r *teamsBotRepository) GetByStatus(ctx context.Context, status string) ([]*models.TeamsBot, error) {
+	var bots []*models.TeamsBot
 	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, status)
 	return bots, err
 }
 
 // GetByCompanyID retrieves platform bots by company ID
-func (r *teamsBotRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error) {
-	var bots []*database.TeamsBot
+func (r *teamsBotRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.TeamsBot, error) {
+	var bots []*models.TeamsBot
 	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND company_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, companyID)
 	return bots, err
 }
 
 // GetByTenantID retrieves platform bots by tenant ID
-func (r *teamsBotRepository) GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error) {
-	var bots []*database.TeamsBot
+func (r *teamsBotRepository) GetByTenantID(ctx context.Context, tenantID string) ([]*models.TeamsBot, error) {
+	var bots []*models.TeamsBot
 	query := `SELECT * FROM teams_bots WHERE type = 'platform' AND tenant_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &bots, query, tenantID)
 	return bots, err
@@ -598,13 +598,13 @@ func (r *teamsBotRepository) GetByTenantID(ctx context.Context, tenantID string)
 
 // BotInstallationRepository defines operations for bot_installations
 type BotInstallationRepository interface {
-	Upsert(ctx context.Context, entity *database.BotInstallation) error
-	GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error)
-	GetByConversationType(ctx context.Context, conversationType string, status string) ([]*database.BotInstallation, error)
-	GetByConversationID(ctx context.Context, conversationID string) (*database.BotInstallation, error)
-	GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error)
-	GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error)
-	GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*database.BotInstallation, error)
+	Upsert(ctx context.Context, entity *models.BotInstallation) error
+	GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string) ([]*models.BotInstallation, error)
+	GetByConversationType(ctx context.Context, conversationType string, status string) ([]*models.BotInstallation, error)
+	GetByConversationID(ctx context.Context, conversationID string) (*models.BotInstallation, error)
+	GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string) ([]*models.BotInstallation, error)
+	GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*models.BotInstallation, error)
+	GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*models.BotInstallation, error)
 	UpdateActivity(ctx context.Context, id uuid.UUID) error
 	MarkAsStale(ctx context.Context, id uuid.UUID) error
 	MarkAsUninstalled(ctx context.Context, id uuid.UUID) error
@@ -620,7 +620,7 @@ func NewBotInstallationRepository(db *sqlx.DB) BotInstallationRepository {
 }
 
 // Upsert inserts or updates a bot installation record based on unique keys
-func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database.BotInstallation) error {
+func (r *botInstallationRepository) Upsert(ctx context.Context, entity *models.BotInstallation) error {
 	metadataJSON, err := json.Marshal(entity.Metadata)
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata: %w", err)
@@ -680,7 +680,7 @@ func (r *botInstallationRepository) Upsert(ctx context.Context, entity *database
 }
 
 // GetByBotAndTenant retrieves installations for a specific bot and tenant
-func (r *botInstallationRepository) GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetByBotAndTenant(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string) ([]*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -690,13 +690,13 @@ func (r *botInstallationRepository) GetByBotAndTenant(ctx context.Context, botID
         ORDER BY installed_at DESC
     `
 
-	var installations []*database.BotInstallation
+	var installations []*models.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, botID, botType, tenantID)
 	return installations, err
 }
 
 // GetByConversationType retrieves installations by conversation type and status
-func (r *botInstallationRepository) GetByConversationType(ctx context.Context, conversationType string, status string) ([]*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetByConversationType(ctx context.Context, conversationType string, status string) ([]*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -706,13 +706,13 @@ func (r *botInstallationRepository) GetByConversationType(ctx context.Context, c
         ORDER BY installed_at DESC
     `
 
-	var installations []*database.BotInstallation
+	var installations []*models.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, conversationType, status)
 	return installations, err
 }
 
 // GetByConversationID retrieves installation by conversation ID
-func (r *botInstallationRepository) GetByConversationID(ctx context.Context, conversationID string) (*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetByConversationID(ctx context.Context, conversationID string) (*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -721,7 +721,7 @@ func (r *botInstallationRepository) GetByConversationID(ctx context.Context, con
         WHERE conversation_id = $1
     `
 
-	var installation database.BotInstallation
+	var installation models.BotInstallation
 	err := r.db.GetContext(ctx, &installation, query, conversationID)
 	if err != nil {
 		return nil, err
@@ -730,7 +730,7 @@ func (r *botInstallationRepository) GetByConversationID(ctx context.Context, con
 }
 
 // GetActiveInstallations retrieves active installations for a bot and tenant
-func (r *botInstallationRepository) GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string) ([]*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetActiveInstallations(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string) ([]*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -740,13 +740,13 @@ func (r *botInstallationRepository) GetActiveInstallations(ctx context.Context, 
         ORDER BY installed_at DESC
     `
 
-	var installations []*database.BotInstallation
+	var installations []*models.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, botID, botType, tenantID)
 	return installations, err
 }
 
 // GetActiveInstallationsByTenant retrieves all active installations for a tenant
-func (r *botInstallationRepository) GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetActiveInstallationsByTenant(ctx context.Context, tenantID string) ([]*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -756,13 +756,13 @@ func (r *botInstallationRepository) GetActiveInstallationsByTenant(ctx context.C
         ORDER BY installed_at DESC
     `
 
-	var installations []*database.BotInstallation
+	var installations []*models.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, tenantID)
 	return installations, err
 }
 
 // GetActivePersonalByEmail retrieves active personal installations for a tenant by email
-func (r *botInstallationRepository) GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*database.BotInstallation, error) {
+func (r *botInstallationRepository) GetActivePersonalByEmail(ctx context.Context, tenantID string, email string) ([]*models.BotInstallation, error) {
 	query := `
         SELECT id, bot_id, bot_type, teams_tenant_id, conversation_type, conversation_id, service_url,
                recipient_id, recipient_name, from_id, from_name, from_aad_object_id,
@@ -775,7 +775,7 @@ func (r *botInstallationRepository) GetActivePersonalByEmail(ctx context.Context
         ORDER BY installed_at DESC
     `
 
-	var installations []*database.BotInstallation
+	var installations []*models.BotInstallation
 	err := r.db.SelectContext(ctx, &installations, query, tenantID, email)
 	return installations, err
 }
@@ -815,7 +815,7 @@ type destinationRepository struct {
 }
 
 // Create creates a new destination
-func (r *destinationRepository) Create(ctx context.Context, entity *database.Destination) error {
+func (r *destinationRepository) Create(ctx context.Context, entity *models.Destination) error {
 	// Marshal targets to JSONB
 	targetsJSON, err := json.Marshal(entity.Targets)
 	if err != nil {
@@ -834,8 +834,8 @@ func (r *destinationRepository) Create(ctx context.Context, entity *database.Des
 }
 
 // GetByID retrieves a destination by ID
-func (r *destinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
-	var destination database.Destination
+func (r *destinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Destination, error) {
+	var destination models.Destination
 	query := `SELECT * FROM destinations WHERE id = $1`
 	err := r.db.GetContext(ctx, &destination, query, id)
 	if err != nil {
@@ -845,7 +845,7 @@ func (r *destinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*dat
 }
 
 // Update updates a destination
-func (r *destinationRepository) Update(ctx context.Context, entity *database.Destination) error {
+func (r *destinationRepository) Update(ctx context.Context, entity *models.Destination) error {
 	// Marshal targets to JSONB
 	targetsJSON, err := json.Marshal(entity.Targets)
 	if err != nil {
@@ -874,8 +874,8 @@ func (r *destinationRepository) Delete(ctx context.Context, id uuid.UUID) error 
 }
 
 // List retrieves destinations with pagination
-func (r *destinationRepository) List(ctx context.Context, limit, offset int) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) List(ctx context.Context, limit, offset int) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	query := `SELECT * FROM destinations ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	err := r.db.SelectContext(ctx, &destinations, query, limit, offset)
 	return destinations, err
@@ -890,40 +890,40 @@ func (r *destinationRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // GetByProjectID retrieves destinations by project ID
-func (r *destinationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	query := `SELECT * FROM destinations WHERE project_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &destinations, query, projectID)
 	return destinations, err
 }
 
 // GetByBotID retrieves destinations by bot ID
-func (r *destinationRepository) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	query := `SELECT * FROM destinations WHERE bot_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &destinations, query, botID)
 	return destinations, err
 }
 
 // GetByStatus retrieves destinations by status
-func (r *destinationRepository) GetByStatus(ctx context.Context, status string) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) GetByStatus(ctx context.Context, status string) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	query := `SELECT * FROM destinations WHERE status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &destinations, query, status)
 	return destinations, err
 }
 
 // GetByValidationStatus retrieves destinations by validation status
-func (r *destinationRepository) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	query := `SELECT * FROM destinations WHERE validation_status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &destinations, query, validationStatus)
 	return destinations, err
 }
 
 // SearchDestinations searches destinations by name or description
-func (r *destinationRepository) SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error) {
-	var destinations []*database.Destination
+func (r *destinationRepository) SearchDestinations(ctx context.Context, query string) ([]*models.Destination, error) {
+	var destinations []*models.Destination
 	sql := `SELECT * FROM destinations WHERE name ILIKE $1 OR description ILIKE $1 ORDER BY created_at DESC`
 	searchQuery := "%" + query + "%"
 	err := r.db.SelectContext(ctx, &destinations, sql, searchQuery)
@@ -944,27 +944,16 @@ type notificationRepository struct {
 }
 
 // Create creates a new notification
-func (r *notificationRepository) Create(ctx context.Context, entity *database.Notification) error {
+func (r *notificationRepository) Create(ctx context.Context, entity *models.Notification) error {
 	// Marshal JSONB fields
 	mentionsJSON, err := json.Marshal([]string(entity.Mentions))
 	if err != nil {
 		return fmt.Errorf("failed to marshal mentions: %w", err)
 	}
 
-	var attachmentJSON []byte
-	if entity.Attachment != nil {
-		attachmentJSON, err = json.Marshal(*entity.Attachment)
-		if err != nil {
-			return fmt.Errorf("failed to marshal attachment: %w", err)
-		}
-	}
-
-	var adaptiveCardJSON []byte
-	if entity.AdaptiveCard != nil {
-		adaptiveCardJSON, err = json.Marshal(*entity.AdaptiveCard)
-		if err != nil {
-			return fmt.Errorf("failed to marshal adaptive_card: %w", err)
-		}
+	attachmentsJSON, err := json.Marshal([]map[string]any(entity.Attachments))
+	if err != nil {
+		return fmt.Errorf("failed to marshal attachments: %w", err)
 	}
 
 	metadataJSON, err := json.Marshal(map[string]any(entity.Metadata))
@@ -972,31 +961,26 @@ func (r *notificationRepository) Create(ctx context.Context, entity *database.No
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
 
-	query := `INSERT INTO notifications (id, project_id, sender_id, message_type, content, mentions, attachment, adaptive_card, priority, status, error_message, metadata, sent_at, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+	query := `INSERT INTO notifications (id, project_id, sender_id, message_type, content, mentions, attachments, priority, status, error_message, metadata, sent_at, created_at, updated_at) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	// Handle nil values for JSONB fields
-	var attachmentJSONValue interface{} = attachmentJSON
-	if len(attachmentJSON) == 0 {
-		attachmentJSONValue = nil
-	}
-
-	var adaptiveCardJSONValue interface{} = adaptiveCardJSON
-	if len(adaptiveCardJSON) == 0 {
-		adaptiveCardJSONValue = nil
+	var attachmentsJSONValue interface{} = attachmentsJSON
+	if len(attachmentsJSON) == 0 {
+		attachmentsJSONValue = []byte("[]")
 	}
 
 	_, err = r.db.ExecContext(ctx, query,
 		entity.ID, entity.ProjectID, entity.SenderID, entity.MessageType, entity.Content,
-		mentionsJSON, attachmentJSONValue, adaptiveCardJSONValue, entity.Priority, entity.Status,
+		mentionsJSON, attachmentsJSONValue, entity.Priority, entity.Status,
 		entity.ErrorMessage, metadataJSON, entity.SentAt, entity.CreatedAt, entity.UpdatedAt)
 
 	return err
 }
 
 // GetByID retrieves a notification by ID
-func (r *notificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
-	var notification database.Notification
+func (r *notificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Notification, error) {
+	var notification models.Notification
 	query := `SELECT * FROM notifications WHERE id = $1`
 	err := r.db.GetContext(ctx, &notification, query, id)
 	if err != nil {
@@ -1006,27 +990,16 @@ func (r *notificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*da
 }
 
 // Update updates a notification
-func (r *notificationRepository) Update(ctx context.Context, entity *database.Notification) error {
+func (r *notificationRepository) Update(ctx context.Context, entity *models.Notification) error {
 	// Marshal JSONB fields
 	mentionsJSON, err := json.Marshal([]string(entity.Mentions))
 	if err != nil {
 		return fmt.Errorf("failed to marshal mentions: %w", err)
 	}
 
-	var attachmentJSON []byte
-	if entity.Attachment != nil {
-		attachmentJSON, err = json.Marshal(*entity.Attachment)
-		if err != nil {
-			return fmt.Errorf("failed to marshal attachment: %w", err)
-		}
-	}
-
-	var adaptiveCardJSON []byte
-	if entity.AdaptiveCard != nil {
-		adaptiveCardJSON, err = json.Marshal(*entity.AdaptiveCard)
-		if err != nil {
-			return fmt.Errorf("failed to marshal adaptive_card: %w", err)
-		}
+	attachmentsJSON, err := json.Marshal([]map[string]any(entity.Attachments))
+	if err != nil {
+		return fmt.Errorf("failed to marshal attachments: %w", err)
 	}
 
 	metadataJSON, err := json.Marshal(map[string]any(entity.Metadata))
@@ -1035,25 +1008,20 @@ func (r *notificationRepository) Update(ctx context.Context, entity *database.No
 	}
 
 	query := `UPDATE notifications SET 
-			  project_id = $2, sender_id = $3, message_type = $4, content = $5, 
-			  mentions = $6, attachment = $7, adaptive_card = $8, priority = $9, 
-			  status = $10, error_message = $11, metadata = $12, sent_at = $13, updated_at = $14
-			  WHERE id = $1`
+              project_id = $2, sender_id = $3, message_type = $4, content = $5, 
+              mentions = $6, attachments = $7, priority = $8, 
+              status = $9, error_message = $10, metadata = $11, sent_at = $12, updated_at = $13
+              WHERE id = $1`
 
 	// Handle nil values for JSONB fields
-	var attachmentJSONValue interface{} = attachmentJSON
-	if len(attachmentJSON) == 0 {
-		attachmentJSONValue = nil
-	}
-
-	var adaptiveCardJSONValue interface{} = adaptiveCardJSON
-	if len(adaptiveCardJSON) == 0 {
-		adaptiveCardJSONValue = nil
+	var attachmentsJSONValue interface{} = attachmentsJSON
+	if len(attachmentsJSON) == 0 {
+		attachmentsJSONValue = []byte("[]")
 	}
 
 	_, err = r.db.ExecContext(ctx, query,
 		entity.ID, entity.ProjectID, entity.SenderID, entity.MessageType, entity.Content,
-		mentionsJSON, attachmentJSONValue, adaptiveCardJSONValue, entity.Priority, entity.Status,
+		mentionsJSON, attachmentsJSONValue, entity.Priority, entity.Status,
 		entity.ErrorMessage, metadataJSON, entity.SentAt, entity.UpdatedAt)
 
 	return err
@@ -1067,8 +1035,8 @@ func (r *notificationRepository) Delete(ctx context.Context, id uuid.UUID) error
 }
 
 // List retrieves notifications with pagination
-func (r *notificationRepository) List(ctx context.Context, limit, offset int) ([]*database.Notification, error) {
-	var notifications []*database.Notification
+func (r *notificationRepository) List(ctx context.Context, limit, offset int) ([]*models.Notification, error) {
+	var notifications []*models.Notification
 	query := `SELECT * FROM notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 	err := r.db.SelectContext(ctx, &notifications, query, limit, offset)
 	return notifications, err
@@ -1096,7 +1064,7 @@ type notificationDestinationRepository struct {
 }
 
 // Create inserts a notification_destination record
-func (r *notificationDestinationRepository) Create(ctx context.Context, entity *database.NotificationDestination) error {
+func (r *notificationDestinationRepository) Create(ctx context.Context, entity *models.NotificationDestination) error {
 	query := `INSERT INTO notification_destinations (
         id, notification_id, destination_id, priority, conversation_id, bot_id, bot_type, status,
         error_message, teams_message_id, sent_at, retry_count, max_retries,
@@ -1119,7 +1087,7 @@ func (r *notificationDestinationRepository) Create(ctx context.Context, entity *
 }
 
 // CreateBatch inserts multiple notification_destination records
-func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, entities []*database.NotificationDestination) error {
+func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, entities []*models.NotificationDestination) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -1158,7 +1126,7 @@ func (r *notificationDestinationRepository) CreateBatch(ctx context.Context, ent
 }
 
 // Update updates a notification_destination record
-func (r *notificationDestinationRepository) Update(ctx context.Context, entity *database.NotificationDestination) error {
+func (r *notificationDestinationRepository) Update(ctx context.Context, entity *models.NotificationDestination) error {
 	query := `UPDATE notification_destinations SET 
         destination_id = $2, priority = $3, conversation_id = $4, bot_id = $5, bot_type = $6, status = $7,
         error_message = $8, teams_message_id = $9, sent_at = $10, retry_count = $11, max_retries = $12,
@@ -1193,16 +1161,16 @@ func (r *notificationDestinationRepository) MarkSent(ctx context.Context, id uui
 }
 
 // GetByNotificationID retrieves destinations for a notification
-func (r *notificationDestinationRepository) GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*database.NotificationDestination, error) {
-	var rows []*database.NotificationDestination
+func (r *notificationDestinationRepository) GetByNotificationID(ctx context.Context, notificationID uuid.UUID) ([]*models.NotificationDestination, error) {
+	var rows []*models.NotificationDestination
 	query := `SELECT * FROM notification_destinations WHERE notification_id = $1 ORDER BY created_at ASC`
 	err := r.db.SelectContext(ctx, &rows, query, notificationID)
 	return rows, err
 }
 
 // GetByID retrieves a notification destination by ID
-func (r *notificationDestinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error) {
-	var row database.NotificationDestination
+func (r *notificationDestinationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.NotificationDestination, error) {
+	var row models.NotificationDestination
 	query := `SELECT * FROM notification_destinations WHERE id = $1`
 	err := r.db.GetContext(ctx, &row, query, id)
 	if err != nil {
@@ -1212,8 +1180,8 @@ func (r *notificationDestinationRepository) GetByID(ctx context.Context, id uuid
 }
 
 // GetRetryReady retrieves retry-ready destinations
-func (r *notificationDestinationRepository) GetRetryReady(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
-	var rows []*database.NotificationDestination
+func (r *notificationDestinationRepository) GetRetryReady(ctx context.Context, limit int) ([]*models.NotificationDestination, error) {
+	var rows []*models.NotificationDestination
 	query := `SELECT * FROM notification_destinations 
               WHERE status IN ('pending','failed') 
                 AND (next_retry_at IS NULL OR next_retry_at <= NOW())
@@ -1225,8 +1193,8 @@ func (r *notificationDestinationRepository) GetRetryReady(ctx context.Context, l
 }
 
 // GetPending retrieves pending destinations without retry logic (for enqueue worker)
-func (r *notificationDestinationRepository) GetPending(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
-	var rows []*database.NotificationDestination
+func (r *notificationDestinationRepository) GetPending(ctx context.Context, limit int) ([]*models.NotificationDestination, error) {
+	var rows []*models.NotificationDestination
 	query := `SELECT * FROM notification_destinations
               WHERE status = 'pending'
               ORDER BY created_at ASC
@@ -1243,39 +1211,39 @@ func (r *notificationDestinationRepository) UpdateStatus(ctx context.Context, id
 }
 
 // GetByProjectID retrieves notifications by project ID
-func (r *notificationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error) {
-	var notifications []*database.Notification
+func (r *notificationRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Notification, error) {
+	var notifications []*models.Notification
 	query := `SELECT * FROM notifications WHERE project_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &notifications, query, projectID)
 	return notifications, err
 }
 
 // GetBySenderID retrieves notifications by sender ID
-func (r *notificationRepository) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error) {
-	var notifications []*database.Notification
+func (r *notificationRepository) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*models.Notification, error) {
+	var notifications []*models.Notification
 	query := `SELECT * FROM notifications WHERE sender_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &notifications, query, senderID)
 	return notifications, err
 }
 
 // GetByStatus retrieves notifications by status
-func (r *notificationRepository) GetByStatus(ctx context.Context, status string) ([]*database.Notification, error) {
-	var notifications []*database.Notification
+func (r *notificationRepository) GetByStatus(ctx context.Context, status string) ([]*models.Notification, error) {
+	var notifications []*models.Notification
 	query := `SELECT * FROM notifications WHERE status = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &notifications, query, status)
 	return notifications, err
 }
 
 // GetByDateRange retrieves notifications by date range
-func (r *notificationRepository) GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error) {
-	var notifications []*database.Notification
+func (r *notificationRepository) GetByDateRange(ctx context.Context, start, end time.Time) ([]*models.Notification, error) {
+	var notifications []*models.Notification
 	query := `SELECT * FROM notifications WHERE created_at BETWEEN $1 AND $2 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &notifications, query, start, end)
 	return notifications, err
 }
 
 // UpdateStatus updates the status of a notification
-func (r *notificationRepository) UpdateStatus(ctx context.Context, notificationID uuid.UUID, status database.NotificationStatus, errorMessage string) error {
+func (r *notificationRepository) UpdateStatus(ctx context.Context, notificationID uuid.UUID, status models.NotificationStatus, errorMessage string) error {
 	query := `UPDATE notifications SET status = $1, error_message = $2, updated_at = NOW() WHERE id = $3`
 	_, err := r.db.ExecContext(ctx, query, string(status), errorMessage, notificationID)
 	return err

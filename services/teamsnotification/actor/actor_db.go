@@ -4,20 +4,20 @@ import (
 	"context"
 	"time"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 )
 
-// ActorDB defines the database operations needed by actors
+// ActorDB defines the models operations needed by actors
 type ActorDB interface {
 	UpdateNotificationDestination(ctx context.Context, id uuid.UUID, update *NotificationDestinationUpdate) error
-	GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error)
-	GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error)
-	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
-	GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.TeamsBot, error)
-	GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error)
-	GetProjectByID(ctx context.Context, id uuid.UUID) (*database.Project, error)
+	GetBotInstallation(ctx context.Context, conversationID string) (*models.BotInstallation, error)
+	GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*models.NotificationDestination, error)
+	GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*models.NotificationDestination, error)
+	GetTeamsBot(ctx context.Context, botID uuid.UUID) (*models.TeamsBot, error)
+	GetNotificationByID(ctx context.Context, id uuid.UUID) (*models.Notification, error)
+	GetProjectByID(ctx context.Context, id uuid.UUID) (*models.Project, error)
 }
 
 // actorDB implements ActorDB interface for actors
@@ -95,31 +95,31 @@ func (db *actorDB) UpdateNotificationDestination(ctx context.Context, id uuid.UU
 }
 
 // GetBotInstallation gets a bot installation by conversation ID
-func (db *actorDB) GetBotInstallation(ctx context.Context, conversationID string) (*database.BotInstallation, error) {
+func (db *actorDB) GetBotInstallation(ctx context.Context, conversationID string) (*models.BotInstallation, error) {
 	return db.botInstallationRepo.GetByConversationID(ctx, conversationID)
 }
 
 // GetNotificationDestinationByID gets a notification destination by ID
-func (db *actorDB) GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*database.NotificationDestination, error) {
+func (db *actorDB) GetNotificationDestinationByID(ctx context.Context, id uuid.UUID) (*models.NotificationDestination, error) {
 	return db.notificationDestRepo.GetByID(ctx, id)
 }
 
 // GetRetryReadyNotificationDestinations gets retry-ready notification destinations
-func (db *actorDB) GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*database.NotificationDestination, error) {
+func (db *actorDB) GetRetryReadyNotificationDestinations(ctx context.Context, limit int) ([]*models.NotificationDestination, error) {
 	return db.notificationDestRepo.GetRetryReady(ctx, limit)
 }
 
 // GetTeamsBot gets a teams bot by ID
-func (db *actorDB) GetTeamsBot(ctx context.Context, botID uuid.UUID) (*database.TeamsBot, error) {
+func (db *actorDB) GetTeamsBot(ctx context.Context, botID uuid.UUID) (*models.TeamsBot, error) {
 	return db.teamsBotRepo.GetByID(ctx, botID)
 }
 
 // GetNotificationByID gets a notification by ID
-func (db *actorDB) GetNotificationByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
+func (db *actorDB) GetNotificationByID(ctx context.Context, id uuid.UUID) (*models.Notification, error) {
 	return db.notificationRepo.GetByID(ctx, id)
 }
 
 // GetProjectByID gets a project by ID
-func (db *actorDB) GetProjectByID(ctx context.Context, id uuid.UUID) (*database.Project, error) {
+func (db *actorDB) GetProjectByID(ctx context.Context, id uuid.UUID) (*models.Project, error) {
 	return db.projectRepo.GetByID(ctx, id)
 }

@@ -81,7 +81,7 @@ func NewServer(cfg Config) *Server {
 	// 4. CORS (after rate limiting)
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "http://localhost:8082", "https://yourdomain.com"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -102,6 +102,10 @@ func NewServer(cfg Config) *Server {
 			"timestamp": time.Now().UTC(),
 			"version":   "1.0.0",
 		})
+	})
+	// Explicitly support HEAD for Docker HEALTHCHECK (wget --spider issues HEAD)
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
 	})
 
 	// System endpoints are now handled by the system handler under /api/v1

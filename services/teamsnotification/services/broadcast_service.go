@@ -11,17 +11,17 @@ import (
 	"strings"
 	"time"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 )
 
 // BroadcastService handles sending messages to multiple Teams targets
 type BroadcastService interface {
-	SendToAllActive(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, message string) (*BroadcastResult, error)
-	SendToScope(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, scope string, message string) (*BroadcastResult, error)
-	SendToDestinations(ctx context.Context, destinationIDs []*database.Destination, targets []string, message string) (*BroadcastResult, error)
-	SendToTargets(ctx context.Context, targets []database.TeamsTarget, message string) (*BroadcastResult, error)
+	SendToAllActive(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string, message string) (*BroadcastResult, error)
+	SendToScope(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string, scope string, message string) (*BroadcastResult, error)
+	SendToDestinations(ctx context.Context, destinationIDs []*models.Destination, targets []string, message string) (*BroadcastResult, error)
+	SendToTargets(ctx context.Context, targets []models.TeamsTarget, message string) (*BroadcastResult, error)
 }
 
 type broadcastService struct {
@@ -68,7 +68,7 @@ func NewBroadcastService(
 }
 
 // SendToAllActive sends a message to all active installations for a bot and tenant
-func (s *broadcastService) SendToAllActive(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, message string) (*BroadcastResult, error) {
+func (s *broadcastService) SendToAllActive(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string, message string) (*BroadcastResult, error) {
 	start := time.Now()
 
 	// Get all active installations
@@ -130,7 +130,7 @@ func (s *broadcastService) SendToAllActive(ctx context.Context, botID uuid.UUID,
 }
 
 // SendToScope sends a message to all active installations of a specific scope
-func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, botType database.BotType, tenantID string, scope string, message string) (*BroadcastResult, error) {
+func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, botType models.BotType, tenantID string, scope string, message string) (*BroadcastResult, error) {
 	start := time.Now()
 
 	// Get installations by scope
@@ -140,7 +140,7 @@ func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, bot
 	}
 
 	// Filter by bot and tenant
-	filtered := make([]*database.BotInstallation, 0)
+	filtered := make([]*models.BotInstallation, 0)
 	for _, inst := range installations {
 		if inst.BotID == botID && inst.BotType == botType && inst.TeamsTenantID == tenantID {
 			filtered = append(filtered, inst)
@@ -196,7 +196,7 @@ func (s *broadcastService) SendToScope(ctx context.Context, botID uuid.UUID, bot
 }
 
 // SendToDestinations sends a message to specific destinations
-func (s *broadcastService) SendToDestinations(ctx context.Context, destinations []*database.Destination, targets []string, message string) (*BroadcastResult, error) {
+func (s *broadcastService) SendToDestinations(ctx context.Context, destinations []*models.Destination, targets []string, message string) (*BroadcastResult, error) {
 	start := time.Now()
 
 	if len(destinations) == 0 {
@@ -221,7 +221,7 @@ func (s *broadcastService) SendToDestinations(ctx context.Context, destinations 
 	}
 
 	// Convert destinations to targets and send
-	allTargets := make([]database.TeamsTarget, 0)
+	allTargets := make([]models.TeamsTarget, 0)
 	log.Printf("Targets map: %v, sendToAll: %v", targetsMap, sendToAll)
 	for _, dest := range destinations {
 		if sendToAll {
@@ -254,7 +254,7 @@ func (s *broadcastService) SendToDestinations(ctx context.Context, destinations 
 }
 
 // SendToTargets sends a message to specific Teams targets
-func (s *broadcastService) SendToTargets(ctx context.Context, targets []database.TeamsTarget, message string) (*BroadcastResult, error) {
+func (s *broadcastService) SendToTargets(ctx context.Context, targets []models.TeamsTarget, message string) (*BroadcastResult, error) {
 	start := time.Now()
 
 	if len(targets) == 0 {
@@ -268,7 +268,7 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 	}
 
 	// Basic validation and early failures
-	validated := make([]database.TeamsTarget, 0, len(targets))
+	validated := make([]models.TeamsTarget, 0, len(targets))
 	earlyResults := make([]TargetResult, 0)
 	for _, t := range targets {
 		t.Type = strings.TrimSpace(t.Type)
@@ -355,7 +355,7 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 			}
 		}
 		log.Printf("Matching target: type=%s, conversation_id=%s", target.Type, target.ConversationID)
-		var matchedInstallation *database.BotInstallation
+		var matchedInstallation *models.BotInstallation
 		for _, inst := range installations {
 			log.Printf("Checking installation: type=%s, conversation_id=%s", inst.ConversationType, inst.ConversationID)
 			if s.matchesTarget(inst, target) {
@@ -415,7 +415,7 @@ func (s *broadcastService) SendToTargets(ctx context.Context, targets []database
 }
 
 // sendToInstallation sends a message to a specific installation
-func (s *broadcastService) sendToInstallation(ctx context.Context, inst *database.BotInstallation, appID, appPassword, message string) TargetResult {
+func (s *broadcastService) sendToInstallation(ctx context.Context, inst *models.BotInstallation, appID, appPassword, message string) TargetResult {
 	start := time.Now()
 	log.Printf("sendToInstallation: Starting for installation %s, conversation %s", inst.ID, inst.ConversationID)
 
@@ -612,7 +612,7 @@ func (s *broadcastService) getConnectorToken(ctx context.Context, tenantID, appI
 }
 
 // matchesTarget checks if an installation matches a target
-func (s *broadcastService) matchesTarget(inst *database.BotInstallation, target database.TeamsTarget) bool {
+func (s *broadcastService) matchesTarget(inst *models.BotInstallation, target models.TeamsTarget) bool {
 	// Map target.Type to conversation_type used in DB
 	desiredType := ""
 	switch target.Type {

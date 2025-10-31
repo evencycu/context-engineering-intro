@@ -12,15 +12,15 @@ import (
 
 // FileRepository defines the interface for file operations
 type FileRepository interface {
-	Create(ctx context.Context, entity *database.File) error
-	GetByID(ctx context.Context, id uuid.UUID) (*database.File, error)
-	Update(ctx context.Context, entity *database.File) error
+	Create(ctx context.Context, entity *models.File) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.File, error)
+	Update(ctx context.Context, entity *models.File) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	List(ctx context.Context, req *ListFilesRequest) ([]*database.File, int64, error)
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.File, error)
-	GetExpiredFiles(ctx context.Context) ([]*database.File, error)
-	GetByTags(ctx context.Context, tags []string) ([]*database.File, error)
-	GetPublicFiles(ctx context.Context) ([]*database.File, error)
+	List(ctx context.Context, req *ListFilesRequest) ([]*models.File, int64, error)
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.File, error)
+	GetExpiredFiles(ctx context.Context) ([]*models.File, error)
+	GetByTags(ctx context.Context, tags []string) ([]*models.File, error)
+	GetPublicFiles(ctx context.Context) ([]*models.File, error)
 }
 
 // ListFilesRequest represents a request to list files
@@ -44,7 +44,7 @@ func NewFileRepository(db *sqlx.DB) FileRepository {
 	return &fileRepository{db: db}
 }
 
-func (r *fileRepository) Create(ctx context.Context, entity *database.File) error {
+func (r *fileRepository) Create(ctx context.Context, entity *models.File) error {
 	query := `INSERT INTO files (
 		id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
@@ -60,12 +60,12 @@ func (r *fileRepository) Create(ctx context.Context, entity *database.File) erro
 	return err
 }
 
-func (r *fileRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.File, error) {
+func (r *fileRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.File, error) {
 	query := `SELECT id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
 		FROM files WHERE id = $1`
 
-	var file database.File
+	var file models.File
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 		&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,
@@ -77,7 +77,7 @@ func (r *fileRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.F
 	return &file, nil
 }
 
-func (r *fileRepository) Update(ctx context.Context, entity *database.File) error {
+func (r *fileRepository) Update(ctx context.Context, entity *models.File) error {
 	query := `UPDATE files SET
 		file_name = $2, file_size = $3, content_type = $4, file_key = $5, file_url = $6,
 		description = $7, tags = $8, is_public = $9, expires_at = $10, updated_at = $11
@@ -97,7 +97,7 @@ func (r *fileRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (r *fileRepository) List(ctx context.Context, req *ListFilesRequest) ([]*database.File, int64, error) {
+func (r *fileRepository) List(ctx context.Context, req *ListFilesRequest) ([]*models.File, int64, error) {
 	// Build WHERE clause
 	whereClause := "WHERE 1=1"
 	args := []interface{}{}
@@ -167,9 +167,9 @@ func (r *fileRepository) List(ctx context.Context, req *ListFilesRequest) ([]*da
 	}
 	defer rows.Close()
 
-	var files []*database.File
+	var files []*models.File
 	for rows.Next() {
-		var file database.File
+		var file models.File
 		err := rows.Scan(
 			&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 			&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,
@@ -184,7 +184,7 @@ func (r *fileRepository) List(ctx context.Context, req *ListFilesRequest) ([]*da
 	return files, total, nil
 }
 
-func (r *fileRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.File, error) {
+func (r *fileRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.File, error) {
 	query := `SELECT id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
 		FROM files WHERE project_id = $1 ORDER BY created_at DESC`
@@ -195,9 +195,9 @@ func (r *fileRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID
 	}
 	defer rows.Close()
 
-	var files []*database.File
+	var files []*models.File
 	for rows.Next() {
-		var file database.File
+		var file models.File
 		err := rows.Scan(
 			&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 			&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,
@@ -212,7 +212,7 @@ func (r *fileRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID
 	return files, nil
 }
 
-func (r *fileRepository) GetExpiredFiles(ctx context.Context) ([]*database.File, error) {
+func (r *fileRepository) GetExpiredFiles(ctx context.Context) ([]*models.File, error) {
 	query := `SELECT id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
 		FROM files WHERE expires_at IS NOT NULL AND expires_at < $1`
@@ -223,9 +223,9 @@ func (r *fileRepository) GetExpiredFiles(ctx context.Context) ([]*database.File,
 	}
 	defer rows.Close()
 
-	var files []*database.File
+	var files []*models.File
 	for rows.Next() {
-		var file database.File
+		var file models.File
 		err := rows.Scan(
 			&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 			&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,
@@ -240,7 +240,7 @@ func (r *fileRepository) GetExpiredFiles(ctx context.Context) ([]*database.File,
 	return files, nil
 }
 
-func (r *fileRepository) GetByTags(ctx context.Context, tags []string) ([]*database.File, error) {
+func (r *fileRepository) GetByTags(ctx context.Context, tags []string) ([]*models.File, error) {
 	query := `SELECT id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
 		FROM files WHERE tags && $1 ORDER BY created_at DESC`
@@ -251,9 +251,9 @@ func (r *fileRepository) GetByTags(ctx context.Context, tags []string) ([]*datab
 	}
 	defer rows.Close()
 
-	var files []*database.File
+	var files []*models.File
 	for rows.Next() {
-		var file database.File
+		var file models.File
 		err := rows.Scan(
 			&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 			&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,
@@ -268,7 +268,7 @@ func (r *fileRepository) GetByTags(ctx context.Context, tags []string) ([]*datab
 	return files, nil
 }
 
-func (r *fileRepository) GetPublicFiles(ctx context.Context) ([]*database.File, error) {
+func (r *fileRepository) GetPublicFiles(ctx context.Context) ([]*models.File, error) {
 	query := `SELECT id, project_id, file_name, file_size, content_type, file_key, file_url,
 		description, tags, is_public, expires_at, created_at, updated_at
 		FROM files WHERE is_public = true ORDER BY created_at DESC`
@@ -279,9 +279,9 @@ func (r *fileRepository) GetPublicFiles(ctx context.Context) ([]*database.File, 
 	}
 	defer rows.Close()
 
-	var files []*database.File
+	var files []*models.File
 	for rows.Next() {
-		var file database.File
+		var file models.File
 		err := rows.Scan(
 			&file.ID, &file.ProjectID, &file.FileName, &file.FileSize, &file.ContentType,
 			&file.FileKey, &file.FileURL, &file.Description, &file.Tags, &file.IsPublic,

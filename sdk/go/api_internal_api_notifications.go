@@ -21,12 +21,147 @@ import (
 )
 
 
+type InternalAPINotificationsAPI interface {
+
+	/*
+	InternalV1NotificationsDateRangeGet Get notifications by date range
+
+	Get notifications within date range
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1NotificationsDateRangeGetRequest
+	*/
+	InternalV1NotificationsDateRangeGet(ctx context.Context) ApiInternalV1NotificationsDateRangeGetRequest
+
+	// InternalV1NotificationsDateRangeGetExecute executes the request
+	//  @return NotificationDateRangeResponse
+	InternalV1NotificationsDateRangeGetExecute(r ApiInternalV1NotificationsDateRangeGetRequest) (*NotificationDateRangeResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsGet List notifications
+
+	Get a list of notifications with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1NotificationsGetRequest
+	*/
+	InternalV1NotificationsGet(ctx context.Context) ApiInternalV1NotificationsGetRequest
+
+	// InternalV1NotificationsGetExecute executes the request
+	//  @return NotificationListResponse
+	InternalV1NotificationsGetExecute(r ApiInternalV1NotificationsGetRequest) (*NotificationListResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsIdDelete Cancel notification
+
+	Cancel notification by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1NotificationsIdDeleteRequest
+	*/
+	InternalV1NotificationsIdDelete(ctx context.Context, id string) ApiInternalV1NotificationsIdDeleteRequest
+
+	// InternalV1NotificationsIdDeleteExecute executes the request
+	//  @return NotificationCancelResponse
+	InternalV1NotificationsIdDeleteExecute(r ApiInternalV1NotificationsIdDeleteRequest) (*NotificationCancelResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsIdGet Get notification
+
+	Get notification by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1NotificationsIdGetRequest
+	*/
+	InternalV1NotificationsIdGet(ctx context.Context, id string) ApiInternalV1NotificationsIdGetRequest
+
+	// InternalV1NotificationsIdGetExecute executes the request
+	//  @return NotificationResponse
+	InternalV1NotificationsIdGetExecute(r ApiInternalV1NotificationsIdGetRequest) (*NotificationResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsIdRetryPost Retry notification
+
+	Retry failed notification by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1NotificationsIdRetryPostRequest
+	*/
+	InternalV1NotificationsIdRetryPost(ctx context.Context, id string) ApiInternalV1NotificationsIdRetryPostRequest
+
+	// InternalV1NotificationsIdRetryPostExecute executes the request
+	//  @return NotificationRetryResponse
+	InternalV1NotificationsIdRetryPostExecute(r ApiInternalV1NotificationsIdRetryPostRequest) (*NotificationRetryResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsPost Send notification
+
+	Send a new notification
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1NotificationsPostRequest
+	*/
+	InternalV1NotificationsPost(ctx context.Context) ApiInternalV1NotificationsPostRequest
+
+	// InternalV1NotificationsPostExecute executes the request
+	//  @return NotificationSendResponse
+	InternalV1NotificationsPostExecute(r ApiInternalV1NotificationsPostRequest) (*NotificationSendResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsProjectProjectIdGet Get notifications by project
+
+	Get notifications by project ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param projectId
+	@return ApiInternalV1NotificationsProjectProjectIdGetRequest
+	*/
+	InternalV1NotificationsProjectProjectIdGet(ctx context.Context, projectId string) ApiInternalV1NotificationsProjectProjectIdGetRequest
+
+	// InternalV1NotificationsProjectProjectIdGetExecute executes the request
+	//  @return NotificationListResponse
+	InternalV1NotificationsProjectProjectIdGetExecute(r ApiInternalV1NotificationsProjectProjectIdGetRequest) (*NotificationListResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsSenderSenderIdGet Get notifications by sender
+
+	Get notifications by sender ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param senderId
+	@return ApiInternalV1NotificationsSenderSenderIdGetRequest
+	*/
+	InternalV1NotificationsSenderSenderIdGet(ctx context.Context, senderId string) ApiInternalV1NotificationsSenderSenderIdGetRequest
+
+	// InternalV1NotificationsSenderSenderIdGetExecute executes the request
+	//  @return NotificationListResponse
+	InternalV1NotificationsSenderSenderIdGetExecute(r ApiInternalV1NotificationsSenderSenderIdGetRequest) (*NotificationListResponse, *http.Response, error)
+
+	/*
+	InternalV1NotificationsStatusStatusGet Get notifications by status
+
+	Get notifications by status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param status
+	@return ApiInternalV1NotificationsStatusStatusGetRequest
+	*/
+	InternalV1NotificationsStatusStatusGet(ctx context.Context, status string) ApiInternalV1NotificationsStatusStatusGetRequest
+
+	// InternalV1NotificationsStatusStatusGetExecute executes the request
+	//  @return NotificationListResponse
+	InternalV1NotificationsStatusStatusGetExecute(r ApiInternalV1NotificationsStatusStatusGetRequest) (*NotificationListResponse, *http.Response, error)
+}
+
 // InternalAPINotificationsAPIService InternalAPINotificationsAPI service
 type InternalAPINotificationsAPIService service
 
 type ApiInternalV1NotificationsDateRangeGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	startDate *time.Time
 	endDate *time.Time
 }
@@ -145,7 +280,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsDateRangeGet
 
 type ApiInternalV1NotificationsGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -289,7 +424,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsGetExecute(r
 
 type ApiInternalV1NotificationsIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	id string
 }
 
@@ -402,7 +537,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsIdDeleteExec
 
 type ApiInternalV1NotificationsIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	id string
 }
 
@@ -515,7 +650,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsIdGetExecute
 
 type ApiInternalV1NotificationsIdRetryPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	id string
 }
 
@@ -639,7 +774,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsIdRetryPostE
 
 type ApiInternalV1NotificationsPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	notificationSendRequest *NotificationSendRequest
 }
 
@@ -759,7 +894,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsPostExecute(
 
 type ApiInternalV1NotificationsProjectProjectIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	projectId string
 }
 
@@ -872,7 +1007,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsProjectProje
 
 type ApiInternalV1NotificationsSenderSenderIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	senderId string
 }
 
@@ -985,7 +1120,7 @@ func (a *InternalAPINotificationsAPIService) InternalV1NotificationsSenderSender
 
 type ApiInternalV1NotificationsStatusStatusGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPINotificationsAPIService
+	ApiService InternalAPINotificationsAPI
 	status string
 }
 

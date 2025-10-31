@@ -20,12 +20,132 @@ import (
 )
 
 
+type InternalAPIProjectsAPI interface {
+
+	/*
+	InternalV1ProjectsCompanyCompanyIdGet Get projects by company
+
+	Get projects by company ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param companyId
+	@return ApiInternalV1ProjectsCompanyCompanyIdGetRequest
+	*/
+	InternalV1ProjectsCompanyCompanyIdGet(ctx context.Context, companyId string) ApiInternalV1ProjectsCompanyCompanyIdGetRequest
+
+	// InternalV1ProjectsCompanyCompanyIdGetExecute executes the request
+	//  @return ProjectListResponse
+	InternalV1ProjectsCompanyCompanyIdGetExecute(r ApiInternalV1ProjectsCompanyCompanyIdGetRequest) (*ProjectListResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsGet List projects
+
+	Get a list of projects with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1ProjectsGetRequest
+	*/
+	InternalV1ProjectsGet(ctx context.Context) ApiInternalV1ProjectsGetRequest
+
+	// InternalV1ProjectsGetExecute executes the request
+	//  @return ProjectListResponse
+	InternalV1ProjectsGetExecute(r ApiInternalV1ProjectsGetRequest) (*ProjectListResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsIdDelete Delete project
+
+	Delete project by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1ProjectsIdDeleteRequest
+	*/
+	InternalV1ProjectsIdDelete(ctx context.Context, id string) ApiInternalV1ProjectsIdDeleteRequest
+
+	// InternalV1ProjectsIdDeleteExecute executes the request
+	InternalV1ProjectsIdDeleteExecute(r ApiInternalV1ProjectsIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1ProjectsIdGet Get project
+
+	Get project by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1ProjectsIdGetRequest
+	*/
+	InternalV1ProjectsIdGet(ctx context.Context, id string) ApiInternalV1ProjectsIdGetRequest
+
+	// InternalV1ProjectsIdGetExecute executes the request
+	//  @return ProjectResponse
+	InternalV1ProjectsIdGetExecute(r ApiInternalV1ProjectsIdGetRequest) (*ProjectResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsIdLimitsPatch Update project limits
+
+	Update project limits by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1ProjectsIdLimitsPatchRequest
+	*/
+	InternalV1ProjectsIdLimitsPatch(ctx context.Context, id string) ApiInternalV1ProjectsIdLimitsPatchRequest
+
+	// InternalV1ProjectsIdLimitsPatchExecute executes the request
+	//  @return ProjectResponse
+	InternalV1ProjectsIdLimitsPatchExecute(r ApiInternalV1ProjectsIdLimitsPatchRequest) (*ProjectResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsIdPut Update project
+
+	Update project by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1ProjectsIdPutRequest
+	*/
+	InternalV1ProjectsIdPut(ctx context.Context, id string) ApiInternalV1ProjectsIdPutRequest
+
+	// InternalV1ProjectsIdPutExecute executes the request
+	//  @return ProjectResponse
+	InternalV1ProjectsIdPutExecute(r ApiInternalV1ProjectsIdPutRequest) (*ProjectResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsKeyKeyNameGet Get project by key name
+
+	Get project by notify key name
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param keyName
+	@return ApiInternalV1ProjectsKeyKeyNameGetRequest
+	*/
+	InternalV1ProjectsKeyKeyNameGet(ctx context.Context, keyName string) ApiInternalV1ProjectsKeyKeyNameGetRequest
+
+	// InternalV1ProjectsKeyKeyNameGetExecute executes the request
+	//  @return ProjectResponse
+	InternalV1ProjectsKeyKeyNameGetExecute(r ApiInternalV1ProjectsKeyKeyNameGetRequest) (*ProjectResponse, *http.Response, error)
+
+	/*
+	InternalV1ProjectsPost Create project
+
+	Create a new project
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1ProjectsPostRequest
+	*/
+	InternalV1ProjectsPost(ctx context.Context) ApiInternalV1ProjectsPostRequest
+
+	// InternalV1ProjectsPostExecute executes the request
+	//  @return ProjectResponse
+	InternalV1ProjectsPostExecute(r ApiInternalV1ProjectsPostRequest) (*ProjectResponse, *http.Response, error)
+}
+
 // InternalAPIProjectsAPIService InternalAPIProjectsAPI service
 type InternalAPIProjectsAPIService service
 
 type ApiInternalV1ProjectsCompanyCompanyIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	companyId string
 }
 
@@ -138,7 +258,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsCompanyCompanyIdGetExe
 
 type ApiInternalV1ProjectsGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -273,7 +393,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsGetExecute(r ApiIntern
 
 type ApiInternalV1ProjectsIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	id string
 }
 
@@ -375,7 +495,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsIdDeleteExecute(r ApiI
 
 type ApiInternalV1ProjectsIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	id string
 }
 
@@ -488,7 +608,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsIdGetExecute(r ApiInte
 
 type ApiInternalV1ProjectsIdLimitsPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	id string
 	projectLimitsUpdateRequest *ProjectLimitsUpdateRequest
 }
@@ -623,7 +743,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsIdLimitsPatchExecute(r
 
 type ApiInternalV1ProjectsIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	id string
 	projectUpdateRequest *ProjectUpdateRequest
 }
@@ -758,7 +878,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsIdPutExecute(r ApiInte
 
 type ApiInternalV1ProjectsKeyKeyNameGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	keyName string
 }
 
@@ -871,7 +991,7 @@ func (a *InternalAPIProjectsAPIService) InternalV1ProjectsKeyKeyNameGetExecute(r
 
 type ApiInternalV1ProjectsPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIProjectsAPIService
+	ApiService InternalAPIProjectsAPI
 	projectCreateRequest *ProjectCreateRequest
 }
 

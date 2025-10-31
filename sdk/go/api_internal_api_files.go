@@ -21,12 +21,115 @@ import (
 )
 
 
+type InternalAPIFilesAPI interface {
+
+	/*
+	InternalV1FilesGet List files
+
+	Get a list of files with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1FilesGetRequest
+	*/
+	InternalV1FilesGet(ctx context.Context) ApiInternalV1FilesGetRequest
+
+	// InternalV1FilesGetExecute executes the request
+	//  @return FileListResponse
+	InternalV1FilesGetExecute(r ApiInternalV1FilesGetRequest) (*FileListResponse, *http.Response, error)
+
+	/*
+	InternalV1FilesIdDelete Delete file
+
+	Delete file by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1FilesIdDeleteRequest
+	*/
+	InternalV1FilesIdDelete(ctx context.Context, id string) ApiInternalV1FilesIdDeleteRequest
+
+	// InternalV1FilesIdDeleteExecute executes the request
+	InternalV1FilesIdDeleteExecute(r ApiInternalV1FilesIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1FilesIdDownloadGet Download file
+
+	Download file by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1FilesIdDownloadGetRequest
+	*/
+	InternalV1FilesIdDownloadGet(ctx context.Context, id string) ApiInternalV1FilesIdDownloadGetRequest
+
+	// InternalV1FilesIdDownloadGetExecute executes the request
+	//  @return *os.File
+	InternalV1FilesIdDownloadGetExecute(r ApiInternalV1FilesIdDownloadGetRequest) (*os.File, *http.Response, error)
+
+	/*
+	InternalV1FilesIdGet Get file
+
+	Get file by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1FilesIdGetRequest
+	*/
+	InternalV1FilesIdGet(ctx context.Context, id string) ApiInternalV1FilesIdGetRequest
+
+	// InternalV1FilesIdGetExecute executes the request
+	//  @return FileResponse
+	InternalV1FilesIdGetExecute(r ApiInternalV1FilesIdGetRequest) (*FileResponse, *http.Response, error)
+
+	/*
+	InternalV1FilesUploadMultiplePost Upload multiple files
+
+	Upload multiple files
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1FilesUploadMultiplePostRequest
+	*/
+	InternalV1FilesUploadMultiplePost(ctx context.Context) ApiInternalV1FilesUploadMultiplePostRequest
+
+	// InternalV1FilesUploadMultiplePostExecute executes the request
+	//  @return MultipleFileUploadResponse
+	InternalV1FilesUploadMultiplePostExecute(r ApiInternalV1FilesUploadMultiplePostRequest) (*MultipleFileUploadResponse, *http.Response, error)
+
+	/*
+	InternalV1FilesUploadPost Upload file
+
+	Upload a single file
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1FilesUploadPostRequest
+	*/
+	InternalV1FilesUploadPost(ctx context.Context) ApiInternalV1FilesUploadPostRequest
+
+	// InternalV1FilesUploadPostExecute executes the request
+	//  @return FileResponse
+	InternalV1FilesUploadPostExecute(r ApiInternalV1FilesUploadPostRequest) (*FileResponse, *http.Response, error)
+
+	/*
+	InternalV1FilesValidatePost Validate file
+
+	Validate file before upload
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1FilesValidatePostRequest
+	*/
+	InternalV1FilesValidatePost(ctx context.Context) ApiInternalV1FilesValidatePostRequest
+
+	// InternalV1FilesValidatePostExecute executes the request
+	//  @return FileValidationResponse
+	InternalV1FilesValidatePostExecute(r ApiInternalV1FilesValidatePostRequest) (*FileValidationResponse, *http.Response, error)
+}
+
 // InternalAPIFilesAPIService InternalAPIFilesAPI service
 type InternalAPIFilesAPIService service
 
 type ApiInternalV1FilesGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -161,7 +264,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesGetExecute(r ApiInternalV1Fi
 
 type ApiInternalV1FilesIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	id string
 }
 
@@ -263,7 +366,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesIdDeleteExecute(r ApiInterna
 
 type ApiInternalV1FilesIdDownloadGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	id string
 }
 
@@ -376,7 +479,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesIdDownloadGetExecute(r ApiIn
 
 type ApiInternalV1FilesIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	id string
 }
 
@@ -489,7 +592,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesIdGetExecute(r ApiInternalV1
 
 type ApiInternalV1FilesUploadMultiplePostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	files []*os.File
 	description *string
 }
@@ -636,7 +739,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesUploadMultiplePostExecute(r 
 
 type ApiInternalV1FilesUploadPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	file *os.File
 	description *string
 	tags *[]string
@@ -790,7 +893,7 @@ func (a *InternalAPIFilesAPIService) InternalV1FilesUploadPostExecute(r ApiInter
 
 type ApiInternalV1FilesValidatePostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIFilesAPIService
+	ApiService InternalAPIFilesAPI
 	file *os.File
 }
 

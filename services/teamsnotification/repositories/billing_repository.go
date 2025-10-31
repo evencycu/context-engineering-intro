@@ -11,30 +11,30 @@ import (
 
 // BillingPlanRepository defines the interface for billing plan operations
 type BillingPlanRepository interface {
-	Create(ctx context.Context, entity *database.BillingPlan) error
-	GetByID(ctx context.Context, id uuid.UUID) (*database.BillingPlan, error)
-	GetAll(ctx context.Context) ([]*database.BillingPlan, error)
-	Update(ctx context.Context, entity *database.BillingPlan) error
+	Create(ctx context.Context, entity *models.BillingPlan) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.BillingPlan, error)
+	GetAll(ctx context.Context) ([]*models.BillingPlan, error)
+	Update(ctx context.Context, entity *models.BillingPlan) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 // UsageRecordRepository defines the interface for usage record operations
 type UsageRecordRepository interface {
-	Create(ctx context.Context, entity *database.UsageRecord) error
-	CreateBatch(ctx context.Context, entities []*database.UsageRecord) error
-	GetByID(ctx context.Context, id uuid.UUID) (*database.UsageRecord, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error)
-	GetByProjectID(ctx context.Context, projectID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error)
-	GetByUserID(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error)
+	Create(ctx context.Context, entity *models.UsageRecord) error
+	CreateBatch(ctx context.Context, entities []*models.UsageRecord) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.UsageRecord, error)
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error)
+	GetByProjectID(ctx context.Context, projectID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error)
 	GetSummary(ctx context.Context, companyID *uuid.UUID, projectID *uuid.UUID, userID *uuid.UUID, startDate, endDate *time.Time) (*UsageSummary, error)
 	GetTrends(ctx context.Context, companyID *uuid.UUID, projectID *uuid.UUID, userID *uuid.UUID, startDate, endDate *time.Time, groupBy string) ([]*UsageTrend, error)
 }
 
 // ProjectBillingRepository defines the interface for project billing operations
 type ProjectBillingRepository interface {
-	Create(ctx context.Context, entity *database.ProjectBilling) error
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error)
-	Update(ctx context.Context, entity *database.ProjectBilling) error
+	Create(ctx context.Context, entity *models.ProjectBilling) error
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) (*models.ProjectBilling, error)
+	Update(ctx context.Context, entity *models.ProjectBilling) error
 	Delete(ctx context.Context, projectID uuid.UUID) error
 	SetBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) error
 }
@@ -71,7 +71,7 @@ func NewBillingPlanRepository(db *sqlx.DB) BillingPlanRepository {
 	return &billingPlanRepository{db: db}
 }
 
-func (r *billingPlanRepository) Create(ctx context.Context, entity *database.BillingPlan) error {
+func (r *billingPlanRepository) Create(ctx context.Context, entity *models.BillingPlan) error {
 	query := `INSERT INTO billing_plans (
 		id, name, description, price_per_notification, price_per_attachment,
 		price_per_mention, price_per_adaptive_card, daily_limit, monthly_limit,
@@ -88,13 +88,13 @@ func (r *billingPlanRepository) Create(ctx context.Context, entity *database.Bil
 	return err
 }
 
-func (r *billingPlanRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.BillingPlan, error) {
+func (r *billingPlanRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.BillingPlan, error) {
 	query := `SELECT id, name, description, price_per_notification, price_per_attachment,
 		price_per_mention, price_per_adaptive_card, daily_limit, monthly_limit, status,
 		created_at, updated_at
 		FROM billing_plans WHERE id = $1`
 
-	var plan database.BillingPlan
+	var plan models.BillingPlan
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&plan.ID, &plan.Name, &plan.Description, &plan.PricePerNotification,
 		&plan.PricePerAttachment, &plan.PricePerMention, &plan.PricePerAdaptiveCard,
@@ -106,7 +106,7 @@ func (r *billingPlanRepository) GetByID(ctx context.Context, id uuid.UUID) (*dat
 	return &plan, nil
 }
 
-func (r *billingPlanRepository) GetAll(ctx context.Context) ([]*database.BillingPlan, error) {
+func (r *billingPlanRepository) GetAll(ctx context.Context) ([]*models.BillingPlan, error) {
 	query := `SELECT id, name, description, price_per_notification, price_per_attachment,
 		price_per_mention, price_per_adaptive_card, daily_limit, monthly_limit, status,
 		created_at, updated_at
@@ -118,9 +118,9 @@ func (r *billingPlanRepository) GetAll(ctx context.Context) ([]*database.Billing
 	}
 	defer rows.Close()
 
-	var plans []*database.BillingPlan
+	var plans []*models.BillingPlan
 	for rows.Next() {
-		var plan database.BillingPlan
+		var plan models.BillingPlan
 		err := rows.Scan(
 			&plan.ID, &plan.Name, &plan.Description, &plan.PricePerNotification,
 			&plan.PricePerAttachment, &plan.PricePerMention, &plan.PricePerAdaptiveCard,
@@ -134,7 +134,7 @@ func (r *billingPlanRepository) GetAll(ctx context.Context) ([]*database.Billing
 	return plans, nil
 }
 
-func (r *billingPlanRepository) Update(ctx context.Context, entity *database.BillingPlan) error {
+func (r *billingPlanRepository) Update(ctx context.Context, entity *models.BillingPlan) error {
 	query := `UPDATE billing_plans SET
 		name = $2, description = $3, price_per_notification = $4, price_per_attachment = $5,
 		price_per_mention = $6, price_per_adaptive_card = $7, daily_limit = $8,
@@ -165,7 +165,7 @@ func NewUsageRecordRepository(db *sqlx.DB) UsageRecordRepository {
 	return &usageRecordRepository{db: db}
 }
 
-func (r *usageRecordRepository) Create(ctx context.Context, entity *database.UsageRecord) error {
+func (r *usageRecordRepository) Create(ctx context.Context, entity *models.UsageRecord) error {
 	query := `INSERT INTO usage_records (
 		id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at
 	) VALUES (
@@ -179,7 +179,7 @@ func (r *usageRecordRepository) Create(ctx context.Context, entity *database.Usa
 	return err
 }
 
-func (r *usageRecordRepository) CreateBatch(ctx context.Context, entities []*database.UsageRecord) error {
+func (r *usageRecordRepository) CreateBatch(ctx context.Context, entities []*models.UsageRecord) error {
 	if len(entities) == 0 {
 		return nil
 	}
@@ -202,11 +202,11 @@ func (r *usageRecordRepository) CreateBatch(ctx context.Context, entities []*dat
 	return nil
 }
 
-func (r *usageRecordRepository) GetByID(ctx context.Context, id uuid.UUID) (*database.UsageRecord, error) {
+func (r *usageRecordRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.UsageRecord, error) {
 	query := `SELECT id, project_id, user_id, record_type, quantity, unit_cost, total_cost, metadata, created_at
 		FROM usage_records WHERE id = $1`
 
-	var record database.UsageRecord
+	var record models.UsageRecord
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&record.ID, &record.ProjectID, &record.UserID, &record.RecordType, &record.Quantity,
 		&record.UnitCost, &record.TotalCost, &record.Metadata, &record.CreatedAt,
@@ -217,19 +217,19 @@ func (r *usageRecordRepository) GetByID(ctx context.Context, id uuid.UUID) (*dat
 	return &record, nil
 }
 
-func (r *usageRecordRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error) {
+func (r *usageRecordRepository) GetByCompanyID(ctx context.Context, companyID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error) {
 	// Implementation will be added
-	return []*database.UsageRecord{}, 0, nil
+	return []*models.UsageRecord{}, 0, nil
 }
 
-func (r *usageRecordRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error) {
+func (r *usageRecordRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error) {
 	// Implementation will be added
-	return []*database.UsageRecord{}, 0, nil
+	return []*models.UsageRecord{}, 0, nil
 }
 
-func (r *usageRecordRepository) GetByUserID(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*database.UsageRecord, int64, error) {
+func (r *usageRecordRepository) GetByUserID(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, page, pageSize int) ([]*models.UsageRecord, int64, error) {
 	// Implementation will be added
-	return []*database.UsageRecord{}, 0, nil
+	return []*models.UsageRecord{}, 0, nil
 }
 
 func (r *usageRecordRepository) GetSummary(ctx context.Context, companyID *uuid.UUID, projectID *uuid.UUID, userID *uuid.UUID, startDate, endDate *time.Time) (*UsageSummary, error) {
@@ -252,7 +252,7 @@ func NewProjectBillingRepository(db *sqlx.DB) ProjectBillingRepository {
 	return &projectBillingRepository{db: db}
 }
 
-func (r *projectBillingRepository) Create(ctx context.Context, entity *database.ProjectBilling) error {
+func (r *projectBillingRepository) Create(ctx context.Context, entity *models.ProjectBilling) error {
 	query := `INSERT INTO project_billing (
 		id, project_id, billing_plan_id, billing_status, payment_method,
 		billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at
@@ -268,12 +268,12 @@ func (r *projectBillingRepository) Create(ctx context.Context, entity *database.
 	return err
 }
 
-func (r *projectBillingRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error) {
+func (r *projectBillingRepository) GetByProjectID(ctx context.Context, projectID uuid.UUID) (*models.ProjectBilling, error) {
 	query := `SELECT id, project_id, billing_plan_id, billing_status, payment_method,
 		billing_cycle, next_billing_date, total_usage_cost, created_at, updated_at
 		FROM project_billing WHERE project_id = $1`
 
-	var billing database.ProjectBilling
+	var billing models.ProjectBilling
 	err := r.db.QueryRowContext(ctx, query, projectID).Scan(
 		&billing.ID, &billing.ProjectID, &billing.BillingPlanID, &billing.BillingStatus,
 		&billing.PaymentMethod, &billing.BillingCycle, &billing.NextBillingDate, &billing.TotalUsageCost,
@@ -285,7 +285,7 @@ func (r *projectBillingRepository) GetByProjectID(ctx context.Context, projectID
 	return &billing, nil
 }
 
-func (r *projectBillingRepository) Update(ctx context.Context, entity *database.ProjectBilling) error {
+func (r *projectBillingRepository) Update(ctx context.Context, entity *models.ProjectBilling) error {
 	query := `UPDATE project_billing SET
 		billing_plan_id = $2, billing_status = $3, payment_method = $4,
 		billing_cycle = $5, next_billing_date = $6, total_usage_cost = $7, updated_at = $8

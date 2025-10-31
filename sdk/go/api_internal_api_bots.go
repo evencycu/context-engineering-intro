@@ -20,12 +20,147 @@ import (
 )
 
 
+type InternalAPIBotsAPI interface {
+
+	/*
+	InternalV1BotsPlatformGet List Teams bots
+
+	Get a list of Teams bot services
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BotsPlatformGetRequest
+	*/
+	InternalV1BotsPlatformGet(ctx context.Context) ApiInternalV1BotsPlatformGetRequest
+
+	// InternalV1BotsPlatformGetExecute executes the request
+	//  @return BotListResponse
+	InternalV1BotsPlatformGetExecute(r ApiInternalV1BotsPlatformGetRequest) (*BotListResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdCapabilitiesPatch Update bot capabilities
+
+	Update bot capabilities by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdCapabilitiesPatchRequest
+	*/
+	InternalV1BotsPlatformIdCapabilitiesPatch(ctx context.Context, id string) ApiInternalV1BotsPlatformIdCapabilitiesPatchRequest
+
+	// InternalV1BotsPlatformIdCapabilitiesPatchExecute executes the request
+	//  @return BotResponse
+	InternalV1BotsPlatformIdCapabilitiesPatchExecute(r ApiInternalV1BotsPlatformIdCapabilitiesPatchRequest) (*BotResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdDelete Delete Teams bot
+
+	Delete Teams bot by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdDeleteRequest
+	*/
+	InternalV1BotsPlatformIdDelete(ctx context.Context, id string) ApiInternalV1BotsPlatformIdDeleteRequest
+
+	// InternalV1BotsPlatformIdDeleteExecute executes the request
+	InternalV1BotsPlatformIdDeleteExecute(r ApiInternalV1BotsPlatformIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdGet Get Teams bot
+
+	Get Teams bot by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdGetRequest
+	*/
+	InternalV1BotsPlatformIdGet(ctx context.Context, id string) ApiInternalV1BotsPlatformIdGetRequest
+
+	// InternalV1BotsPlatformIdGetExecute executes the request
+	//  @return BotResponse
+	InternalV1BotsPlatformIdGetExecute(r ApiInternalV1BotsPlatformIdGetRequest) (*BotResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdPut Update Teams bot
+
+	Update Teams bot by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdPutRequest
+	*/
+	InternalV1BotsPlatformIdPut(ctx context.Context, id string) ApiInternalV1BotsPlatformIdPutRequest
+
+	// InternalV1BotsPlatformIdPutExecute executes the request
+	//  @return BotResponse
+	InternalV1BotsPlatformIdPutExecute(r ApiInternalV1BotsPlatformIdPutRequest) (*BotResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdStatusPatch Update bot status
+
+	Update bot status by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdStatusPatchRequest
+	*/
+	InternalV1BotsPlatformIdStatusPatch(ctx context.Context, id string) ApiInternalV1BotsPlatformIdStatusPatchRequest
+
+	// InternalV1BotsPlatformIdStatusPatchExecute executes the request
+	//  @return BotResponse
+	InternalV1BotsPlatformIdStatusPatchExecute(r ApiInternalV1BotsPlatformIdStatusPatchRequest) (*BotResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformIdTestPost Test bot connection
+
+	Test bot connection by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BotsPlatformIdTestPostRequest
+	*/
+	InternalV1BotsPlatformIdTestPost(ctx context.Context, id string) ApiInternalV1BotsPlatformIdTestPostRequest
+
+	// InternalV1BotsPlatformIdTestPostExecute executes the request
+	//  @return BotTestResponse
+	InternalV1BotsPlatformIdTestPostExecute(r ApiInternalV1BotsPlatformIdTestPostRequest) (*BotTestResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsPlatformPost Create Teams bot
+
+	Create a new Teams bot service
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BotsPlatformPostRequest
+	*/
+	InternalV1BotsPlatformPost(ctx context.Context) ApiInternalV1BotsPlatformPostRequest
+
+	// InternalV1BotsPlatformPostExecute executes the request
+	//  @return BotResponse
+	InternalV1BotsPlatformPostExecute(r ApiInternalV1BotsPlatformPostRequest) (*BotResponse, *http.Response, error)
+
+	/*
+	InternalV1BotsStatusStatusGet Get bots by status
+
+	Get bots by status
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param status
+	@return ApiInternalV1BotsStatusStatusGetRequest
+	*/
+	InternalV1BotsStatusStatusGet(ctx context.Context, status string) ApiInternalV1BotsStatusStatusGetRequest
+
+	// InternalV1BotsStatusStatusGetExecute executes the request
+	//  @return BotListResponse
+	InternalV1BotsStatusStatusGetExecute(r ApiInternalV1BotsStatusStatusGetRequest) (*BotListResponse, *http.Response, error)
+}
+
 // InternalAPIBotsAPIService InternalAPIBotsAPI service
 type InternalAPIBotsAPIService service
 
 type ApiInternalV1BotsPlatformGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -160,7 +295,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformGetExecute(r ApiIntern
 
 type ApiInternalV1BotsPlatformIdCapabilitiesPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 	botCapabilitiesUpdateRequest *BotCapabilitiesUpdateRequest
 }
@@ -295,7 +430,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdCapabilitiesPatchExe
 
 type ApiInternalV1BotsPlatformIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 }
 
@@ -397,7 +532,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdDeleteExecute(r ApiI
 
 type ApiInternalV1BotsPlatformIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 }
 
@@ -510,7 +645,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdGetExecute(r ApiInte
 
 type ApiInternalV1BotsPlatformIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 	botUpdateRequest *BotUpdateRequest
 }
@@ -645,7 +780,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdPutExecute(r ApiInte
 
 type ApiInternalV1BotsPlatformIdStatusPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 	botStatusUpdateRequest *BotStatusUpdateRequest
 }
@@ -780,7 +915,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdStatusPatchExecute(r
 
 type ApiInternalV1BotsPlatformIdTestPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	id string
 }
 
@@ -893,7 +1028,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformIdTestPostExecute(r Ap
 
 type ApiInternalV1BotsPlatformPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	botCreateRequest *BotCreateRequest
 }
 
@@ -1013,7 +1148,7 @@ func (a *InternalAPIBotsAPIService) InternalV1BotsPlatformPostExecute(r ApiInter
 
 type ApiInternalV1BotsStatusStatusGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBotsAPIService
+	ApiService InternalAPIBotsAPI
 	status string
 }
 

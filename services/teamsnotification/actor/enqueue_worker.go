@@ -11,7 +11,7 @@ import (
 
 // NotificationDestinationRepository subset needed by worker
 type NotificationDestinationRepository interface {
-	GetPending(ctx context.Context, limit int) ([]*database.NotificationDestination, error)
+	GetPending(ctx context.Context, limit int) ([]*models.NotificationDestination, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
@@ -73,7 +73,7 @@ func (w *EnqueueWorker) scanOnce(ctx context.Context) {
 			log.Printf("EnqueueWorker: enqueue %s failed: %v", nd.ID, err)
 			continue // keep pending; no retry here per spec
 		}
-		if err := w.repo.UpdateStatus(ctx, nd.ID, "enqueued"); err != nil {
+		if err := w.repo.UpdateStatus(ctx, nd.ID, string(models.NotificationStatusEnqueued)); err != nil {
 			log.Printf("EnqueueWorker: update status for %s failed: %v", nd.ID, err)
 		}
 	}

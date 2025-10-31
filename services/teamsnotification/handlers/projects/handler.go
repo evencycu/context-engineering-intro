@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -73,7 +73,7 @@ func (h *Handler) CreateProject(c *gin.Context) {
 	}
 
 	// Convert request to project model
-	project := &database.Project{
+	project := &models.Project{
 		CompanyID:    req.CompanyID,
 		NotifyKey:    req.NotifyKey,
 		Description:  req.Description,
@@ -85,7 +85,7 @@ func (h *Handler) CreateProject(c *gin.Context) {
 	}
 
 	// Create project
-	createReq := &services.CreateRequest[database.Project]{
+	createReq := &services.CreateRequest[models.Project]{
 		Data: *project,
 	}
 
@@ -247,7 +247,7 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 	}
 
 	// Update project
-	updateReq := &services.UpdateRequest[database.Project]{
+	updateReq := &services.UpdateRequest[models.Project]{
 		Data: *existingProject,
 	}
 

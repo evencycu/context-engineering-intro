@@ -20,12 +20,161 @@ import (
 )
 
 
+type InternalAPIDestinationsAPI interface {
+
+	/*
+	InternalV1DestinationsBotBotIdGet Get destinations by bot
+
+	Get destinations by bot ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param botId
+	@return ApiInternalV1DestinationsBotBotIdGetRequest
+	*/
+	InternalV1DestinationsBotBotIdGet(ctx context.Context, botId string) ApiInternalV1DestinationsBotBotIdGetRequest
+
+	// InternalV1DestinationsBotBotIdGetExecute executes the request
+	//  @return DestinationListResponse
+	InternalV1DestinationsBotBotIdGetExecute(r ApiInternalV1DestinationsBotBotIdGetRequest) (*DestinationListResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsGet List destinations
+
+	Get a list of destinations with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1DestinationsGetRequest
+	*/
+	InternalV1DestinationsGet(ctx context.Context) ApiInternalV1DestinationsGetRequest
+
+	// InternalV1DestinationsGetExecute executes the request
+	//  @return DestinationListResponse
+	InternalV1DestinationsGetExecute(r ApiInternalV1DestinationsGetRequest) (*DestinationListResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsIdDelete Delete destination
+
+	Delete destination by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1DestinationsIdDeleteRequest
+	*/
+	InternalV1DestinationsIdDelete(ctx context.Context, id string) ApiInternalV1DestinationsIdDeleteRequest
+
+	// InternalV1DestinationsIdDeleteExecute executes the request
+	InternalV1DestinationsIdDeleteExecute(r ApiInternalV1DestinationsIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1DestinationsIdGet Get destination
+
+	Get destination by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1DestinationsIdGetRequest
+	*/
+	InternalV1DestinationsIdGet(ctx context.Context, id string) ApiInternalV1DestinationsIdGetRequest
+
+	// InternalV1DestinationsIdGetExecute executes the request
+	//  @return DestinationResponse
+	InternalV1DestinationsIdGetExecute(r ApiInternalV1DestinationsIdGetRequest) (*DestinationResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsIdPut Update destination
+
+	Update destination by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1DestinationsIdPutRequest
+	*/
+	InternalV1DestinationsIdPut(ctx context.Context, id string) ApiInternalV1DestinationsIdPutRequest
+
+	// InternalV1DestinationsIdPutExecute executes the request
+	//  @return DestinationResponse
+	InternalV1DestinationsIdPutExecute(r ApiInternalV1DestinationsIdPutRequest) (*DestinationResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsIdTargetsPatch Update destination targets
+
+	Update destination targets by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1DestinationsIdTargetsPatchRequest
+	*/
+	InternalV1DestinationsIdTargetsPatch(ctx context.Context, id string) ApiInternalV1DestinationsIdTargetsPatchRequest
+
+	// InternalV1DestinationsIdTargetsPatchExecute executes the request
+	//  @return DestinationResponse
+	InternalV1DestinationsIdTargetsPatchExecute(r ApiInternalV1DestinationsIdTargetsPatchRequest) (*DestinationResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsIdValidatePost Validate destination targets
+
+	Validate destination targets by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1DestinationsIdValidatePostRequest
+	*/
+	InternalV1DestinationsIdValidatePost(ctx context.Context, id string) ApiInternalV1DestinationsIdValidatePostRequest
+
+	// InternalV1DestinationsIdValidatePostExecute executes the request
+	//  @return DestinationValidationResponse
+	InternalV1DestinationsIdValidatePostExecute(r ApiInternalV1DestinationsIdValidatePostRequest) (*DestinationValidationResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsPost Create destination
+
+	Create a new destination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1DestinationsPostRequest
+	*/
+	InternalV1DestinationsPost(ctx context.Context) ApiInternalV1DestinationsPostRequest
+
+	// InternalV1DestinationsPostExecute executes the request
+	//  @return DestinationResponse
+	InternalV1DestinationsPostExecute(r ApiInternalV1DestinationsPostRequest) (*DestinationResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsProjectProjectIdGet Get destinations by project
+
+	Get destinations by project ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param projectId
+	@return ApiInternalV1DestinationsProjectProjectIdGetRequest
+	*/
+	InternalV1DestinationsProjectProjectIdGet(ctx context.Context, projectId string) ApiInternalV1DestinationsProjectProjectIdGetRequest
+
+	// InternalV1DestinationsProjectProjectIdGetExecute executes the request
+	//  @return DestinationListResponse
+	InternalV1DestinationsProjectProjectIdGetExecute(r ApiInternalV1DestinationsProjectProjectIdGetRequest) (*DestinationListResponse, *http.Response, error)
+
+	/*
+	InternalV1DestinationsSearchGet Search destinations
+
+	Search destinations with filters
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1DestinationsSearchGetRequest
+	*/
+	InternalV1DestinationsSearchGet(ctx context.Context) ApiInternalV1DestinationsSearchGetRequest
+
+	// InternalV1DestinationsSearchGetExecute executes the request
+	//  @return DestinationListResponse
+	InternalV1DestinationsSearchGetExecute(r ApiInternalV1DestinationsSearchGetRequest) (*DestinationListResponse, *http.Response, error)
+}
+
 // InternalAPIDestinationsAPIService InternalAPIDestinationsAPI service
 type InternalAPIDestinationsAPIService service
 
 type ApiInternalV1DestinationsBotBotIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	botId string
 }
 
@@ -138,7 +287,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsBotBotIdGetExe
 
 type ApiInternalV1DestinationsGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -273,7 +422,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsGetExecute(r A
 
 type ApiInternalV1DestinationsIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	id string
 }
 
@@ -375,7 +524,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsIdDeleteExecut
 
 type ApiInternalV1DestinationsIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	id string
 }
 
@@ -488,7 +637,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsIdGetExecute(r
 
 type ApiInternalV1DestinationsIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	id string
 	destinationUpdateRequest *DestinationUpdateRequest
 }
@@ -623,7 +772,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsIdPutExecute(r
 
 type ApiInternalV1DestinationsIdTargetsPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	id string
 	destinationTargetsUpdateRequest *DestinationTargetsUpdateRequest
 }
@@ -758,7 +907,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsIdTargetsPatch
 
 type ApiInternalV1DestinationsIdValidatePostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	id string
 }
 
@@ -871,7 +1020,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsIdValidatePost
 
 type ApiInternalV1DestinationsPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	destinationCreateRequest *DestinationCreateRequest
 }
 
@@ -991,7 +1140,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsPostExecute(r 
 
 type ApiInternalV1DestinationsProjectProjectIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	projectId string
 }
 
@@ -1104,7 +1253,7 @@ func (a *InternalAPIDestinationsAPIService) InternalV1DestinationsProjectProject
 
 type ApiInternalV1DestinationsSearchGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIDestinationsAPIService
+	ApiService InternalAPIDestinationsAPI
 	search *string
 	type_ *string
 	status *string

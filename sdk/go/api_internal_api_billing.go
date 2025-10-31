@@ -20,12 +20,175 @@ import (
 )
 
 
+type InternalAPIBillingAPI interface {
+
+	/*
+	InternalV1BillingAnalyticsOverviewGet Get billing analytics overview
+
+	Get billing analytics overview
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BillingAnalyticsOverviewGetRequest
+	*/
+	InternalV1BillingAnalyticsOverviewGet(ctx context.Context) ApiInternalV1BillingAnalyticsOverviewGetRequest
+
+	// InternalV1BillingAnalyticsOverviewGetExecute executes the request
+	//  @return BillingAnalyticsResponse
+	InternalV1BillingAnalyticsOverviewGetExecute(r ApiInternalV1BillingAnalyticsOverviewGetRequest) (*BillingAnalyticsResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingPlansGet List billing plans
+
+	Get a list of billing plans
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BillingPlansGetRequest
+	*/
+	InternalV1BillingPlansGet(ctx context.Context) ApiInternalV1BillingPlansGetRequest
+
+	// InternalV1BillingPlansGetExecute executes the request
+	//  @return BillingPlansResponse
+	InternalV1BillingPlansGetExecute(r ApiInternalV1BillingPlansGetRequest) (*BillingPlansResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingPlansIdGet Get billing plan
+
+	Get billing plan by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BillingPlansIdGetRequest
+	*/
+	InternalV1BillingPlansIdGet(ctx context.Context, id string) ApiInternalV1BillingPlansIdGetRequest
+
+	// InternalV1BillingPlansIdGetExecute executes the request
+	//  @return BillingPlanResponse
+	InternalV1BillingPlansIdGetExecute(r ApiInternalV1BillingPlansIdGetRequest) (*BillingPlanResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingPlansIdPut Update billing plan
+
+	Update billing plan by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1BillingPlansIdPutRequest
+	*/
+	InternalV1BillingPlansIdPut(ctx context.Context, id string) ApiInternalV1BillingPlansIdPutRequest
+
+	// InternalV1BillingPlansIdPutExecute executes the request
+	//  @return BillingPlanResponse
+	InternalV1BillingPlansIdPutExecute(r ApiInternalV1BillingPlansIdPutRequest) (*BillingPlanResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingPlansPost Create billing plan
+
+	Create a new billing plan
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BillingPlansPostRequest
+	*/
+	InternalV1BillingPlansPost(ctx context.Context) ApiInternalV1BillingPlansPostRequest
+
+	// InternalV1BillingPlansPostExecute executes the request
+	//  @return BillingPlanResponse
+	InternalV1BillingPlansPostExecute(r ApiInternalV1BillingPlansPostRequest) (*BillingPlanResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingProjectProjectIdGet Get project billing
+
+	Get project billing information
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param projectId
+	@return ApiInternalV1BillingProjectProjectIdGetRequest
+	*/
+	InternalV1BillingProjectProjectIdGet(ctx context.Context, projectId string) ApiInternalV1BillingProjectProjectIdGetRequest
+
+	// InternalV1BillingProjectProjectIdGetExecute executes the request
+	//  @return ProjectBillingResponse
+	InternalV1BillingProjectProjectIdGetExecute(r ApiInternalV1BillingProjectProjectIdGetRequest) (*ProjectBillingResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingProjectProjectIdPut Update project billing
+
+	Update project billing information
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param projectId
+	@return ApiInternalV1BillingProjectProjectIdPutRequest
+	*/
+	InternalV1BillingProjectProjectIdPut(ctx context.Context, projectId string) ApiInternalV1BillingProjectProjectIdPutRequest
+
+	// InternalV1BillingProjectProjectIdPutExecute executes the request
+	//  @return ProjectBillingResponse
+	InternalV1BillingProjectProjectIdPutExecute(r ApiInternalV1BillingProjectProjectIdPutRequest) (*ProjectBillingResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingUsageCompanyCompanyIdGet Get company usage
+
+	Get usage records for a company
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param companyId
+	@return ApiInternalV1BillingUsageCompanyCompanyIdGetRequest
+	*/
+	InternalV1BillingUsageCompanyCompanyIdGet(ctx context.Context, companyId string) ApiInternalV1BillingUsageCompanyCompanyIdGetRequest
+
+	// InternalV1BillingUsageCompanyCompanyIdGetExecute executes the request
+	//  @return UsageRecordsResponse
+	InternalV1BillingUsageCompanyCompanyIdGetExecute(r ApiInternalV1BillingUsageCompanyCompanyIdGetRequest) (*UsageRecordsResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingUsageGet Get usage records
+
+	Get usage records with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BillingUsageGetRequest
+	*/
+	InternalV1BillingUsageGet(ctx context.Context) ApiInternalV1BillingUsageGetRequest
+
+	// InternalV1BillingUsageGetExecute executes the request
+	//  @return UsageRecordsResponse
+	InternalV1BillingUsageGetExecute(r ApiInternalV1BillingUsageGetRequest) (*UsageRecordsResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingUsageProjectProjectIdGet Get project usage
+
+	Get usage records for a project
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param projectId
+	@return ApiInternalV1BillingUsageProjectProjectIdGetRequest
+	*/
+	InternalV1BillingUsageProjectProjectIdGet(ctx context.Context, projectId string) ApiInternalV1BillingUsageProjectProjectIdGetRequest
+
+	// InternalV1BillingUsageProjectProjectIdGetExecute executes the request
+	//  @return UsageRecordsResponse
+	InternalV1BillingUsageProjectProjectIdGetExecute(r ApiInternalV1BillingUsageProjectProjectIdGetRequest) (*UsageRecordsResponse, *http.Response, error)
+
+	/*
+	InternalV1BillingUsageSummaryGet Get usage summary
+
+	Get usage summary statistics
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1BillingUsageSummaryGetRequest
+	*/
+	InternalV1BillingUsageSummaryGet(ctx context.Context) ApiInternalV1BillingUsageSummaryGetRequest
+
+	// InternalV1BillingUsageSummaryGetExecute executes the request
+	//  @return UsageSummaryResponse
+	InternalV1BillingUsageSummaryGetExecute(r ApiInternalV1BillingUsageSummaryGetRequest) (*UsageSummaryResponse, *http.Response, error)
+}
+
 // InternalAPIBillingAPIService InternalAPIBillingAPI service
 type InternalAPIBillingAPIService service
 
 type ApiInternalV1BillingAnalyticsOverviewGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	startDate *string
 	endDate *string
 }
@@ -142,7 +305,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingAnalyticsOverviewGetExec
 
 type ApiInternalV1BillingPlansGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 }
 
 func (r ApiInternalV1BillingPlansGetRequest) Execute() (*BillingPlansResponse, *http.Response, error) {
@@ -241,7 +404,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingPlansGetExecute(r ApiInt
 
 type ApiInternalV1BillingPlansIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	id string
 }
 
@@ -354,7 +517,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingPlansIdGetExecute(r ApiI
 
 type ApiInternalV1BillingPlansIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	id string
 	billingPlanUpdateRequest *BillingPlanUpdateRequest
 }
@@ -489,7 +652,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingPlansIdPutExecute(r ApiI
 
 type ApiInternalV1BillingPlansPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	billingPlanCreateRequest *BillingPlanCreateRequest
 }
 
@@ -609,7 +772,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingPlansPostExecute(r ApiIn
 
 type ApiInternalV1BillingProjectProjectIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	projectId string
 }
 
@@ -722,7 +885,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingProjectProjectIdGetExecu
 
 type ApiInternalV1BillingProjectProjectIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	projectId string
 	projectBillingUpdateRequest *ProjectBillingUpdateRequest
 }
@@ -857,7 +1020,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingProjectProjectIdPutExecu
 
 type ApiInternalV1BillingUsageCompanyCompanyIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	companyId string
 }
 
@@ -970,7 +1133,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingUsageCompanyCompanyIdGet
 
 type ApiInternalV1BillingUsageGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	limit *int32
 	offset *int32
 	companyId *string
@@ -1113,7 +1276,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingUsageGetExecute(r ApiInt
 
 type ApiInternalV1BillingUsageProjectProjectIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	projectId string
 }
 
@@ -1226,7 +1389,7 @@ func (a *InternalAPIBillingAPIService) InternalV1BillingUsageProjectProjectIdGet
 
 type ApiInternalV1BillingUsageSummaryGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIBillingAPIService
+	ApiService InternalAPIBillingAPI
 	companyId *string
 	projectId *string
 	startDate *string

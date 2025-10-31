@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
 	"github.com/gin-gonic/gin"
 )
@@ -80,7 +81,7 @@ func (h *Handler) ProactiveTest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "sent"})
+	c.JSON(http.StatusOK, gin.H{"status": string(models.NotificationStatusSent)})
 }
 
 // mapToStruct marshals then unmarshals to map into struct

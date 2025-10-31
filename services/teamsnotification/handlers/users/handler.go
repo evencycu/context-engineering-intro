@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -71,7 +71,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	}
 
 	// Convert request to user model
-	user := &database.User{
+	user := &models.User{
 		CompanyID: req.CompanyID,
 		Email:     req.Email,
 		Name:      req.Name,
@@ -81,7 +81,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	}
 
 	// Create user
-	createReq := &services.CreateRequest[database.User]{
+	createReq := &services.CreateRequest[models.User]{
 		Data: *user,
 	}
 
@@ -254,7 +254,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	}
 
 	// Update user
-	updateReq := &services.UpdateRequest[database.User]{
+	updateReq := &services.UpdateRequest[models.User]{
 		Data: *existingUser,
 	}
 

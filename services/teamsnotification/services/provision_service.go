@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 )
@@ -39,30 +39,30 @@ func NewProvisionService(
 }
 
 type ProvisionCreateRequest struct {
-	CompanyID     uuid.UUID             `json:"companyId"`
-	CreatedBy     uuid.UUID             `json:"createdBy"`
-	ProjectName   string                `json:"projectName"`
-	ProjectDesc   string                `json:"projectDescription"`
-	TeamsTenantID string                `json:"teamsTenantId"`
-	Targets       database.JSONBTargets `json:"targets"`
+	CompanyID     uuid.UUID           `json:"companyId"`
+	CreatedBy     uuid.UUID           `json:"createdBy"`
+	ProjectName   string              `json:"projectName"`
+	ProjectDesc   string              `json:"projectDescription"`
+	TeamsTenantID string              `json:"teamsTenantId"`
+	Targets       models.JSONBTargets `json:"targets"`
 }
 
 type ProvisionCreateResponse struct {
-	NotifyKey   string                `json:"notifyKey"`
-	Project     *database.Project     `json:"project"`
-	Destination *database.Destination `json:"destination"`
+	NotifyKey   string              `json:"notifyKey"`
+	Project     *models.Project     `json:"project"`
+	Destination *models.Destination `json:"destination"`
 }
 
 type ProvisionReadResponse struct {
-	Project      *database.Project       `json:"project"`
-	Destinations []*database.Destination `json:"destinations"`
+	Project      *models.Project       `json:"project"`
+	Destinations []*models.Destination `json:"destinations"`
 }
 
 type ProvisionUpdateRequest struct {
-	ProjectName   *string                `json:"project_name,omitempty"`
-	ProjectDesc   *string                `json:"project_description,omitempty"`
-	TeamsTenantID *string                `json:"teams_tenant_id,omitempty"`
-	Targets       *database.JSONBTargets `json:"targets,omitempty"`
+	ProjectName   *string              `json:"project_name,omitempty"`
+	ProjectDesc   *string              `json:"project_description,omitempty"`
+	TeamsTenantID *string              `json:"teams_tenant_id,omitempty"`
+	Targets       *models.JSONBTargets `json:"targets,omitempty"`
 }
 
 func (s *provisionService) Create(ctx context.Context, req *ProvisionCreateRequest) (*ProvisionCreateResponse, error) {
@@ -88,8 +88,8 @@ func (s *provisionService) Create(ctx context.Context, req *ProvisionCreateReque
 	projectID := uuid.New()
 	notifyKey := generateNotifyKey(projectID, req.CompanyID)
 
-	project := &database.Project{
-		BaseModel:    database.BaseModel{ID: projectID},
+	project := &models.Project{
+		BaseModel:    models.BaseModel{ID: projectID},
 		CompanyID:    req.CompanyID,
 		NotifyKey:    notifyKey,
 		Description:  req.ProjectDesc,
@@ -104,8 +104,8 @@ func (s *provisionService) Create(ctx context.Context, req *ProvisionCreateReque
 	}
 
 	// 4) Insert destination
-	dest := &database.Destination{
-		BaseModel:        database.BaseModel{ID: uuid.New()},
+	dest := &models.Destination{
+		BaseModel:        models.BaseModel{ID: uuid.New()},
 		ProjectID:        projectID,
 		Name:             fmt.Sprintf("%s-default", req.ProjectName),
 		Description:      "Auto-provisioned default destination",

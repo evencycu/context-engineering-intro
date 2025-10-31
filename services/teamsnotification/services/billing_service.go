@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 )
@@ -17,15 +17,15 @@ type BillingService interface {
 	GetUsageSummary(ctx context.Context, req *GetUsageSummaryRequest) (*UsageSummaryData, error)
 
 	// Billing plans
-	GetBillingPlans(ctx context.Context) ([]*database.BillingPlan, error)
-	GetBillingPlan(ctx context.Context, id uuid.UUID) (*database.BillingPlan, error)
-	CreateBillingPlan(ctx context.Context, req *CreateBillingPlanRequest) (*database.BillingPlan, error)
-	UpdateBillingPlan(ctx context.Context, id uuid.UUID, req *UpdateBillingPlanRequest) (*database.BillingPlan, error)
+	GetBillingPlans(ctx context.Context) ([]*models.BillingPlan, error)
+	GetBillingPlan(ctx context.Context, id uuid.UUID) (*models.BillingPlan, error)
+	CreateBillingPlan(ctx context.Context, req *CreateBillingPlanRequest) (*models.BillingPlan, error)
+	UpdateBillingPlan(ctx context.Context, id uuid.UUID, req *UpdateBillingPlanRequest) (*models.BillingPlan, error)
 
 	// Project billing
-	GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error)
-	UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*database.ProjectBilling, error)
-	SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*database.ProjectBilling, error)
+	GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*models.ProjectBilling, error)
+	UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*models.ProjectBilling, error)
+	SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*models.ProjectBilling, error)
 
 	// Analytics
 	GetAnalyticsOverview(ctx context.Context, req *GetAnalyticsOverviewRequest) (*AnalyticsOverviewData, error)
@@ -75,11 +75,11 @@ type GetUsageRecordsRequest struct {
 }
 
 type UsageRecordsData struct {
-	Records    []*database.UsageRecord `json:"records"`
-	Total      int64                   `json:"total"`
-	Page       int                     `json:"page"`
-	PageSize   int                     `json:"page_size"`
-	TotalPages int                     `json:"total_pages"`
+	Records    []*models.UsageRecord `json:"records"`
+	Total      int64                 `json:"total"`
+	Page       int                   `json:"page"`
+	PageSize   int                   `json:"page_size"`
+	TotalPages int                   `json:"total_pages"`
 }
 
 type GetUsageSummaryRequest struct {
@@ -137,10 +137,10 @@ type UpdateBillingPlanRequest struct {
 }
 
 type UpdateProjectBillingRequest struct {
-	PaymentMethod    *string
-	BillingCycle     *string
+	PaymentMethod   *string
+	BillingCycle    *string
 	NextBillingDate *string
-	BillingStatus    *string
+	BillingStatus   *string
 }
 
 type GetAnalyticsOverviewRequest struct {
@@ -209,13 +209,13 @@ type ProjectUsageData struct {
 }
 
 type RecordUsageRequest struct {
-	ProjectID   uuid.UUID
-	UserID      *uuid.UUID
-	RecordType  string
-	Quantity    int
-	UnitCost    float64
-	TotalCost   float64
-	Metadata    map[string]any
+	ProjectID  uuid.UUID
+	UserID     *uuid.UUID
+	RecordType string
+	Quantity   int
+	UnitCost   float64
+	TotalCost  float64
+	Metadata   map[string]any
 }
 
 // Implementation methods
@@ -223,7 +223,7 @@ type RecordUsageRequest struct {
 func (s *billingService) GetUsageRecords(ctx context.Context, req *GetUsageRecordsRequest) (*UsageRecordsData, error) {
 	// Implementation will be added when repository methods are available
 	return &UsageRecordsData{
-		Records:    []*database.UsageRecord{},
+		Records:    []*models.UsageRecord{},
 		Total:      0,
 		Page:       req.Page,
 		PageSize:   req.PageSize,
@@ -246,37 +246,37 @@ func (s *billingService) GetUsageSummary(ctx context.Context, req *GetUsageSumma
 	}, nil
 }
 
-func (s *billingService) GetBillingPlans(ctx context.Context) ([]*database.BillingPlan, error) {
+func (s *billingService) GetBillingPlans(ctx context.Context) ([]*models.BillingPlan, error) {
 	// Implementation will be added when repository methods are available
-	return []*database.BillingPlan{}, nil
+	return []*models.BillingPlan{}, nil
 }
 
-func (s *billingService) GetBillingPlan(ctx context.Context, id uuid.UUID) (*database.BillingPlan, error) {
-	// Implementation will be added when repository methods are available
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *billingService) CreateBillingPlan(ctx context.Context, req *CreateBillingPlanRequest) (*database.BillingPlan, error) {
+func (s *billingService) GetBillingPlan(ctx context.Context, id uuid.UUID) (*models.BillingPlan, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) UpdateBillingPlan(ctx context.Context, id uuid.UUID, req *UpdateBillingPlanRequest) (*database.BillingPlan, error) {
+func (s *billingService) CreateBillingPlan(ctx context.Context, req *CreateBillingPlanRequest) (*models.BillingPlan, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*database.ProjectBilling, error) {
+func (s *billingService) UpdateBillingPlan(ctx context.Context, id uuid.UUID, req *UpdateBillingPlanRequest) (*models.BillingPlan, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*database.ProjectBilling, error) {
+func (s *billingService) GetProjectBilling(ctx context.Context, projectID uuid.UUID) (*models.ProjectBilling, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *billingService) SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*database.ProjectBilling, error) {
+func (s *billingService) UpdateProjectBilling(ctx context.Context, projectID uuid.UUID, req *UpdateProjectBillingRequest) (*models.ProjectBilling, error) {
+	// Implementation will be added when repository methods are available
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *billingService) SetProjectBillingPlan(ctx context.Context, projectID uuid.UUID, planID uuid.UUID) (*models.ProjectBilling, error) {
 	// Implementation will be added when repository methods are available
 	return nil, fmt.Errorf("not implemented")
 }
@@ -329,22 +329,22 @@ func (s *billingService) RecordUsage(ctx context.Context, req *RecordUsageReques
 	}
 
 	// Create usage record
-	usageRecord := &database.UsageRecord{
-		BaseModel: database.BaseModel{
+	usageRecord := &models.UsageRecord{
+		BaseModel: models.BaseModel{
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		ProjectID:   req.ProjectID,
-		UserID:      req.UserID,
-		RecordType:  req.RecordType,
-		Quantity:    req.Quantity,
-		UnitCost:    req.UnitCost,
-		TotalCost:   req.TotalCost,
-		Metadata:    database.JSONBObject(req.Metadata),
+		ProjectID:  req.ProjectID,
+		UserID:     req.UserID,
+		RecordType: req.RecordType,
+		Quantity:   req.Quantity,
+		UnitCost:   req.UnitCost,
+		TotalCost:  req.TotalCost,
+		Metadata:   models.JSONBObject(req.Metadata),
 	}
 
-	// Save to database
+	// Save to models
 	if err := s.usageRepo.Create(ctx, usageRecord); err != nil {
 		return fmt.Errorf("failed to create usage record: %w", err)
 	}

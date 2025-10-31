@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -58,9 +58,9 @@ type CountRequest struct {
 
 // CompanyService defines company-specific operations
 type CompanyService interface {
-	Service[database.Company]
-	GetByEmail(ctx context.Context, email string) (*database.Company, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Company, error)
+	Service[models.Company]
+	GetByEmail(ctx context.Context, email string) (*models.Company, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Company, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	EnableBilling(ctx context.Context, id uuid.UUID) error
 	DisableBilling(ctx context.Context, id uuid.UUID) error
@@ -78,11 +78,11 @@ func NewCompanyService(repo repositories.CompanyRepository) CompanyService {
 
 // UserService defines the interface for user operations
 type UserService interface {
-	Service[database.User]
-	GetByEmail(ctx context.Context, email string) (*database.User, error)
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.User, error)
-	GetByRole(ctx context.Context, role string) ([]*database.User, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.User, error)
+	Service[models.User]
+	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.User, error)
+	GetByRole(ctx context.Context, role string) ([]*models.User, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.User, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 }
@@ -98,7 +98,7 @@ func NewUserService(repo repositories.UserRepository) UserService {
 }
 
 // Create creates a new user
-func (s *userService) Create(ctx context.Context, req *CreateRequest[database.User]) (*database.User, error) {
+func (s *userService) Create(ctx context.Context, req *CreateRequest[models.User]) (*models.User, error) {
 	// Set default values
 	req.Data.ID = uuid.New()
 	req.Data.CreatedAt = time.Now()
@@ -124,12 +124,12 @@ func (s *userService) Create(ctx context.Context, req *CreateRequest[database.Us
 }
 
 // GetByID retrieves a user by ID
-func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*database.User, error) {
+func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates an existing user
-func (s *userService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.User]) (*database.User, error) {
+func (s *userService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.User]) (*models.User, error) {
 	req.Data.ID = id
 	req.Data.UpdatedAt = time.Now()
 
@@ -157,7 +157,7 @@ func (s *userService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves users with pagination
-func (s *userService) List(ctx context.Context, req *ListRequest) ([]*database.User, error) {
+func (s *userService) List(ctx context.Context, req *ListRequest) ([]*models.User, error) {
 	users, err := s.repo.List(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
@@ -172,22 +172,22 @@ func (s *userService) Count(ctx context.Context, req *CountRequest) (int64, erro
 }
 
 // GetByEmail retrieves a user by email
-func (s *userService) GetByEmail(ctx context.Context, email string) (*database.User, error) {
+func (s *userService) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	return s.repo.GetByEmail(ctx, email)
 }
 
 // GetByCompanyID retrieves users by company ID
-func (s *userService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.User, error) {
+func (s *userService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.User, error) {
 	return s.repo.GetByCompanyID(ctx, companyID)
 }
 
 // GetByRole retrieves users by role
-func (s *userService) GetByRole(ctx context.Context, role string) ([]*database.User, error) {
+func (s *userService) GetByRole(ctx context.Context, role string) ([]*models.User, error) {
 	return s.repo.GetByRole(ctx, role)
 }
 
 // GetByStatus retrieves users by status
-func (s *userService) GetByStatus(ctx context.Context, status string) ([]*database.User, error) {
+func (s *userService) GetByStatus(ctx context.Context, status string) ([]*models.User, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
@@ -236,7 +236,7 @@ func (s *userService) UpdateLastLogin(ctx context.Context, userID uuid.UUID) err
 }
 
 // Create creates a new company
-func (s *companyService) Create(ctx context.Context, req *CreateRequest[database.Company]) (*database.Company, error) {
+func (s *companyService) Create(ctx context.Context, req *CreateRequest[models.Company]) (*models.Company, error) {
 	company := &req.Data
 	company.ID = uuid.New()
 	company.CreatedAt = time.Now()
@@ -250,7 +250,7 @@ func (s *companyService) Create(ctx context.Context, req *CreateRequest[database
 }
 
 // GetByID gets a company by ID
-func (s *companyService) GetByID(ctx context.Context, id uuid.UUID) (*database.Company, error) {
+func (s *companyService) GetByID(ctx context.Context, id uuid.UUID) (*models.Company, error) {
 	company, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, &NotFoundError{Resource: "Company", ID: id}
@@ -259,7 +259,7 @@ func (s *companyService) GetByID(ctx context.Context, id uuid.UUID) (*database.C
 }
 
 // Update updates a company
-func (s *companyService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Company]) (*database.Company, error) {
+func (s *companyService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.Company]) (*models.Company, error) {
 	// First get the existing company
 	company, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -294,7 +294,7 @@ func (s *companyService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List lists companies
-func (s *companyService) List(ctx context.Context, req *ListRequest) ([]*database.Company, error) {
+func (s *companyService) List(ctx context.Context, req *ListRequest) ([]*models.Company, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = 10
@@ -317,7 +317,7 @@ func (s *companyService) Count(ctx context.Context, req *CountRequest) (int64, e
 }
 
 // GetByEmail gets a company by email
-func (s *companyService) GetByEmail(ctx context.Context, email string) (*database.Company, error) {
+func (s *companyService) GetByEmail(ctx context.Context, email string) (*models.Company, error) {
 	company, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, &NotFoundError{Resource: "Company", ID: uuid.Nil}
@@ -326,7 +326,7 @@ func (s *companyService) GetByEmail(ctx context.Context, email string) (*databas
 }
 
 // GetByStatus gets companies by status
-func (s *companyService) GetByStatus(ctx context.Context, status string) ([]*database.Company, error) {
+func (s *companyService) GetByStatus(ctx context.Context, status string) ([]*models.Company, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
@@ -371,20 +371,20 @@ func (s *companyService) DisableBilling(ctx context.Context, id uuid.UUID) error
 
 // ProjectService defines project-specific operations
 type ProjectService interface {
-	Service[database.Project]
-	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.Project, error)
-	GetByKeyName(ctx context.Context, keyName string) (*database.Project, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Project, error)
+	Service[models.Project]
+	GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.Project, error)
+	GetByKeyName(ctx context.Context, keyName string) (*models.Project, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Project, error)
 	UpdateLimits(ctx context.Context, id uuid.UUID, dailyLimit, monthlyLimit int) error
 	CheckLimit(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 // BotService defines bot-specific operations
 type TeamsBotService interface {
-	Service[database.TeamsBot]
-	GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error)
-	GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error)
+	Service[models.TeamsBot]
+	GetByAppID(ctx context.Context, appID string) (*models.TeamsBot, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.TeamsBot, error)
+	GetByTenantID(ctx context.Context, tenantID string) ([]*models.TeamsBot, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	UpdateCapabilities(ctx context.Context, id uuid.UUID, capabilities map[string]any) error
 	TestConnection(ctx context.Context, id uuid.UUID) error
@@ -392,24 +392,24 @@ type TeamsBotService interface {
 
 // DestinationService defines destination-specific operations
 type DestinationService interface {
-	Service[database.Destination]
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error)
-	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Destination, error)
-	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error)
-	SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error)
-	UpdateTargets(ctx context.Context, id uuid.UUID, targets database.JSONBTargets) (*database.Destination, error)
-	ValidateTargets(ctx context.Context, id uuid.UUID) (*database.Destination, error)
+	Service[models.Destination]
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Destination, error)
+	GetByBotID(ctx context.Context, botID uuid.UUID) ([]*models.Destination, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Destination, error)
+	GetByValidationStatus(ctx context.Context, validationStatus string) ([]*models.Destination, error)
+	SearchDestinations(ctx context.Context, query string) ([]*models.Destination, error)
+	UpdateTargets(ctx context.Context, id uuid.UUID, targets models.JSONBTargets) (*models.Destination, error)
+	ValidateTargets(ctx context.Context, id uuid.UUID) (*models.Destination, error)
 }
 
 // NotificationService defines notification-specific operations
 type NotificationService interface {
-	Service[database.Notification]
-	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error)
-	GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error)
-	GetByStatus(ctx context.Context, status string) ([]*database.Notification, error)
-	GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error)
-	SendNotification(ctx context.Context, req *SendNotificationRequest) (*database.Notification, error)
+	Service[models.Notification]
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Notification, error)
+	GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*models.Notification, error)
+	GetByStatus(ctx context.Context, status string) ([]*models.Notification, error)
+	GetByDateRange(ctx context.Context, start, end time.Time) ([]*models.Notification, error)
+	SendNotification(ctx context.Context, req *SendNotificationRequest) (*models.Notification, error)
 	RetryNotification(ctx context.Context, id uuid.UUID) error
 	CancelNotification(ctx context.Context, id uuid.UUID) error
 }
@@ -483,7 +483,7 @@ func (s *messagesService) handleInstallationUpdate(ctx context.Context, act *Act
 	}
 
 	// Resolve bot presence: proceed if either platform or third-party bot exists
-	var bot *database.TeamsBot
+	var bot *models.TeamsBot
 	var botErr error
 	bot, botErr = s.teamsBotRepo.GetByAppID(ctx, appID)
 
@@ -599,9 +599,9 @@ func (s *messagesService) handleInstallationUpdate(ctx context.Context, act *Act
 
 	// Prepare installation entity
 	now := time.Now()
-	inst := &database.BotInstallation{
+	inst := &models.BotInstallation{
 		BotID:              bot.ID,
-		BotType:            database.BotType("platform"),
+		BotType:            models.BotType("platform"),
 		TeamsTenantID:      tenantID,
 		ConversationType:   conversationType,
 		ConversationID:     conversationID,
@@ -773,16 +773,15 @@ func getEnv(key, def string) string {
 
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
-	ProjectID    uuid.UUID              `json:"project_id" validate:"required"`
-	SenderID     *uuid.UUID             `json:"sender_id"`
-	MessageType  string                 `json:"message_type" validate:"required,oneof=text file adaptive_card"`
-	Content      string                 `json:"content" validate:"required,max=4000"`
-	Mentions     []string               `json:"mentions"`
-	Attachment   *database.Attachment   `json:"attachment"`
-	AdaptiveCard *database.AdaptiveCard `json:"adaptive_card"`
-	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
-	Metadata     map[string]any         `json:"metadata"`
-	Targets      []string               `json:"targets" validate:"omitempty,min=1"`
+	ProjectID   uuid.UUID        `json:"project_id" validate:"required"`
+	SenderID    *uuid.UUID       `json:"sender_id"`
+	MessageType string           `json:"message_type" validate:"required,oneof=text file adaptive_card"`
+	Content     string           `json:"content" validate:"required,max=4000"`
+	Mentions    []string         `json:"mentions"`
+	Attachments []map[string]any `json:"attachments"`
+	Priority    string           `json:"priority" validate:"oneof=low normal high"`
+	Metadata    map[string]any   `json:"metadata"`
+	Targets     []string         `json:"targets" validate:"omitempty,min=1"`
 }
 
 // BaseService provides common service functionality
@@ -833,7 +832,7 @@ func NewProjectService(repo repositories.ProjectRepository) ProjectService {
 }
 
 // Create creates a new project
-func (s *projectService) Create(ctx context.Context, req *CreateRequest[database.Project]) (*database.Project, error) {
+func (s *projectService) Create(ctx context.Context, req *CreateRequest[models.Project]) (*models.Project, error) {
 	// Set default values
 	req.Data.ID = uuid.New()
 	req.Data.CreatedAt = time.Now()
@@ -854,12 +853,12 @@ func (s *projectService) Create(ctx context.Context, req *CreateRequest[database
 }
 
 // GetByID retrieves a project by ID
-func (s *projectService) GetByID(ctx context.Context, id uuid.UUID) (*database.Project, error) {
+func (s *projectService) GetByID(ctx context.Context, id uuid.UUID) (*models.Project, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates an existing project
-func (s *projectService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Project]) (*database.Project, error) {
+func (s *projectService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.Project]) (*models.Project, error) {
 	req.Data.ID = id
 	req.Data.UpdatedAt = time.Now()
 
@@ -877,7 +876,7 @@ func (s *projectService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves projects with pagination
-func (s *projectService) List(ctx context.Context, req *ListRequest) ([]*database.Project, error) {
+func (s *projectService) List(ctx context.Context, req *ListRequest) ([]*models.Project, error) {
 	projects, err := s.repo.List(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list projects: %w", err)
@@ -892,17 +891,17 @@ func (s *projectService) Count(ctx context.Context, req *CountRequest) (int64, e
 }
 
 // GetByCompanyID retrieves projects by company ID
-func (s *projectService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.Project, error) {
+func (s *projectService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.Project, error) {
 	return s.repo.GetByCompanyID(ctx, companyID)
 }
 
 // GetByKeyName retrieves a project by key name
-func (s *projectService) GetByKeyName(ctx context.Context, keyName string) (*database.Project, error) {
+func (s *projectService) GetByKeyName(ctx context.Context, keyName string) (*models.Project, error) {
 	return s.repo.GetByKeyName(ctx, keyName)
 }
 
 // GetByStatus retrieves projects by status
-func (s *projectService) GetByStatus(ctx context.Context, status string) ([]*database.Project, error) {
+func (s *projectService) GetByStatus(ctx context.Context, status string) ([]*models.Project, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
@@ -944,12 +943,12 @@ func NewteamsBotService(repo repositories.TeamsBotRepository) TeamsBotService {
 }
 
 // Create creates a new platform bot
-func (s *teamsBotService) Create(ctx context.Context, req *CreateRequest[database.TeamsBot]) (*database.TeamsBot, error) {
+func (s *teamsBotService) Create(ctx context.Context, req *CreateRequest[models.TeamsBot]) (*models.TeamsBot, error) {
 	// Set default values
 	req.Data.ID = uuid.New()
 	req.Data.CreatedAt = time.Now()
 	req.Data.UpdatedAt = time.Now()
-	status := database.BotStatusActive
+	status := models.BotStatusActive
 	req.Data.Status = &status
 
 	err := s.repo.Create(ctx, &req.Data)
@@ -961,12 +960,12 @@ func (s *teamsBotService) Create(ctx context.Context, req *CreateRequest[databas
 }
 
 // GetByID retrieves a platform bot by ID
-func (s *teamsBotService) GetByID(ctx context.Context, id uuid.UUID) (*database.TeamsBot, error) {
+func (s *teamsBotService) GetByID(ctx context.Context, id uuid.UUID) (*models.TeamsBot, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates an existing platform bot
-func (s *teamsBotService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.TeamsBot]) (*database.TeamsBot, error) {
+func (s *teamsBotService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.TeamsBot]) (*models.TeamsBot, error) {
 	req.Data.ID = id
 	req.Data.UpdatedAt = time.Now()
 
@@ -984,7 +983,7 @@ func (s *teamsBotService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves platform bots with pagination
-func (s *teamsBotService) List(ctx context.Context, req *ListRequest) ([]*database.TeamsBot, error) {
+func (s *teamsBotService) List(ctx context.Context, req *ListRequest) ([]*models.TeamsBot, error) {
 	bots, err := s.repo.List(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list platform bots: %w", err)
@@ -999,22 +998,22 @@ func (s *teamsBotService) Count(ctx context.Context, req *CountRequest) (int64, 
 }
 
 // GetByAppID retrieves a platform bot by app ID
-func (s *teamsBotService) GetByAppID(ctx context.Context, appID string) (*database.TeamsBot, error) {
+func (s *teamsBotService) GetByAppID(ctx context.Context, appID string) (*models.TeamsBot, error) {
 	return s.repo.GetByAppID(ctx, appID)
 }
 
 // GetByStatus retrieves platform bots by status
-func (s *teamsBotService) GetByStatus(ctx context.Context, status string) ([]*database.TeamsBot, error) {
+func (s *teamsBotService) GetByStatus(ctx context.Context, status string) ([]*models.TeamsBot, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
 // GetByCompanyID retrieves platform bots by company ID
-func (s *teamsBotService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*database.TeamsBot, error) {
+func (s *teamsBotService) GetByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*models.TeamsBot, error) {
 	return s.repo.GetByCompanyID(ctx, companyID)
 }
 
 // GetByTenantID retrieves platform bots by tenant ID
-func (s *teamsBotService) GetByTenantID(ctx context.Context, tenantID string) ([]*database.TeamsBot, error) {
+func (s *teamsBotService) GetByTenantID(ctx context.Context, tenantID string) ([]*models.TeamsBot, error) {
 	return s.repo.GetByTenantID(ctx, tenantID)
 }
 
@@ -1025,7 +1024,7 @@ func (s *teamsBotService) UpdateStatus(ctx context.Context, id uuid.UUID, status
 		return fmt.Errorf("failed to get platform bot: %w", err)
 	}
 
-	botStatus := database.BotStatus(status)
+	botStatus := models.BotStatus(status)
 	bot.Status = &botStatus
 	bot.UpdatedAt = time.Now()
 
@@ -1039,7 +1038,7 @@ func (s *teamsBotService) UpdateCapabilities(ctx context.Context, id uuid.UUID, 
 		return fmt.Errorf("failed to get platform bot: %w", err)
 	}
 
-	capabilitiesObj := database.JSONBObject(capabilities)
+	capabilitiesObj := models.JSONBObject(capabilities)
 	bot.Capabilities = &capabilitiesObj
 	bot.UpdatedAt = time.Now()
 
@@ -1072,7 +1071,7 @@ type destinationService struct {
 }
 
 // Create creates a new destination
-func (s *destinationService) Create(ctx context.Context, req *CreateRequest[database.Destination]) (*database.Destination, error) {
+func (s *destinationService) Create(ctx context.Context, req *CreateRequest[models.Destination]) (*models.Destination, error) {
 	// Set default values
 	destination := req.Data
 	// validate targets before create
@@ -1087,7 +1086,7 @@ func (s *destinationService) Create(ctx context.Context, req *CreateRequest[data
 		destination.Status = "active"
 	}
 	if destination.ValidationStatus == "" {
-		destination.ValidationStatus = "pending"
+		destination.ValidationStatus = string(models.NotificationStatusPending)
 	}
 
 	err := s.repo.Create(ctx, &destination)
@@ -1099,12 +1098,12 @@ func (s *destinationService) Create(ctx context.Context, req *CreateRequest[data
 }
 
 // GetByID retrieves a destination by ID
-func (s *destinationService) GetByID(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
+func (s *destinationService) GetByID(ctx context.Context, id uuid.UUID) (*models.Destination, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates a destination
-func (s *destinationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Destination]) (*database.Destination, error) {
+func (s *destinationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.Destination]) (*models.Destination, error) {
 	destination := req.Data
 	destination.ID = id
 	// validate if targets provided (Update via this path might include targets)
@@ -1129,7 +1128,7 @@ func (s *destinationService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves destinations with pagination
-func (s *destinationService) List(ctx context.Context, req *ListRequest) ([]*database.Destination, error) {
+func (s *destinationService) List(ctx context.Context, req *ListRequest) ([]*models.Destination, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = 10
@@ -1148,32 +1147,32 @@ func (s *destinationService) Count(ctx context.Context, req *CountRequest) (int6
 }
 
 // GetByProjectID retrieves destinations by project ID
-func (s *destinationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Destination, error) {
+func (s *destinationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Destination, error) {
 	return s.repo.GetByProjectID(ctx, projectID)
 }
 
 // GetByBotID retrieves destinations by bot ID
-func (s *destinationService) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*database.Destination, error) {
+func (s *destinationService) GetByBotID(ctx context.Context, botID uuid.UUID) ([]*models.Destination, error) {
 	return s.repo.GetByBotID(ctx, botID)
 }
 
 // GetByStatus retrieves destinations by status
-func (s *destinationService) GetByStatus(ctx context.Context, status string) ([]*database.Destination, error) {
+func (s *destinationService) GetByStatus(ctx context.Context, status string) ([]*models.Destination, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
 // GetByValidationStatus retrieves destinations by validation status
-func (s *destinationService) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*database.Destination, error) {
+func (s *destinationService) GetByValidationStatus(ctx context.Context, validationStatus string) ([]*models.Destination, error) {
 	return s.repo.GetByValidationStatus(ctx, validationStatus)
 }
 
 // SearchDestinations searches destinations by name or description
-func (s *destinationService) SearchDestinations(ctx context.Context, query string) ([]*database.Destination, error) {
+func (s *destinationService) SearchDestinations(ctx context.Context, query string) ([]*models.Destination, error) {
 	return s.repo.SearchDestinations(ctx, query)
 }
 
 // UpdateTargets updates destination targets
-func (s *destinationService) UpdateTargets(ctx context.Context, id uuid.UUID, targets database.JSONBTargets) (*database.Destination, error) {
+func (s *destinationService) UpdateTargets(ctx context.Context, id uuid.UUID, targets models.JSONBTargets) (*models.Destination, error) {
 	destination, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get destination: %w", err)
@@ -1196,7 +1195,7 @@ func (s *destinationService) UpdateTargets(ctx context.Context, id uuid.UUID, ta
 }
 
 // ValidateTargets validates destination targets
-func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) (*database.Destination, error) {
+func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) (*models.Destination, error) {
 	destination, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get destination: %w", err)
@@ -1220,7 +1219,7 @@ func (s *destinationService) ValidateTargets(ctx context.Context, id uuid.UUID) 
 }
 
 // validateTeamsTargets enforces per-type requirements for TeamsTarget
-func validateTeamsTargets(targets database.JSONBTargets) error {
+func validateTeamsTargets(targets models.JSONBTargets) error {
 	if len(targets) == 0 {
 		return fmt.Errorf("targets cannot be empty")
 	}
@@ -1272,13 +1271,13 @@ type notificationService struct {
 }
 
 // Create creates a new notification
-func (s *notificationService) Create(ctx context.Context, req *CreateRequest[database.Notification]) (*database.Notification, error) {
+func (s *notificationService) Create(ctx context.Context, req *CreateRequest[models.Notification]) (*models.Notification, error) {
 	notification := req.Data
 	notification.ID = uuid.New()
 	notification.CreatedAt = time.Now()
 	notification.UpdatedAt = time.Now()
-	if notification.Status == "" {
-		notification.Status = "pending"
+	if notification.Status == models.NotificationStatus("") {
+		notification.Status = models.NotificationStatusPending
 	}
 
 	err := s.repo.Create(ctx, &notification)
@@ -1289,12 +1288,12 @@ func (s *notificationService) Create(ctx context.Context, req *CreateRequest[dat
 }
 
 // GetByID retrieves a notification by ID
-func (s *notificationService) GetByID(ctx context.Context, id uuid.UUID) (*database.Notification, error) {
+func (s *notificationService) GetByID(ctx context.Context, id uuid.UUID) (*models.Notification, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // Update updates a notification
-func (s *notificationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[database.Notification]) (*database.Notification, error) {
+func (s *notificationService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.Notification]) (*models.Notification, error) {
 	notification := req.Data
 	notification.ID = id
 	notification.UpdatedAt = time.Now()
@@ -1312,7 +1311,7 @@ func (s *notificationService) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves notifications with pagination
-func (s *notificationService) List(ctx context.Context, req *ListRequest) ([]*database.Notification, error) {
+func (s *notificationService) List(ctx context.Context, req *ListRequest) ([]*models.Notification, error) {
 	return s.repo.List(ctx, req.Limit, req.Offset)
 }
 
@@ -1322,63 +1321,45 @@ func (s *notificationService) Count(ctx context.Context, req *CountRequest) (int
 }
 
 // GetByProjectID retrieves notifications by project ID
-func (s *notificationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*database.Notification, error) {
+func (s *notificationService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.Notification, error) {
 	return s.repo.GetByProjectID(ctx, projectID)
 }
 
 // GetBySenderID retrieves notifications by sender ID
-func (s *notificationService) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*database.Notification, error) {
+func (s *notificationService) GetBySenderID(ctx context.Context, senderID uuid.UUID) ([]*models.Notification, error) {
 	return s.repo.GetBySenderID(ctx, senderID)
 }
 
 // GetByStatus retrieves notifications by status
-func (s *notificationService) GetByStatus(ctx context.Context, status string) ([]*database.Notification, error) {
+func (s *notificationService) GetByStatus(ctx context.Context, status string) ([]*models.Notification, error) {
 	return s.repo.GetByStatus(ctx, status)
 }
 
 // GetByDateRange retrieves notifications by date range
-func (s *notificationService) GetByDateRange(ctx context.Context, start, end time.Time) ([]*database.Notification, error) {
+func (s *notificationService) GetByDateRange(ctx context.Context, start, end time.Time) ([]*models.Notification, error) {
 	return s.repo.GetByDateRange(ctx, start, end)
 }
 
 // SendNotification sends a notification
-func (s *notificationService) SendNotification(ctx context.Context, req *SendNotificationRequest) (*database.Notification, error) {
-	// Convert Attachment and AdaptiveCard to JSONBNullableObject
-	var attachment *database.JSONBNullableObject
-	if req.Attachment != nil {
-		// Convert Attachment struct to map[string]any
-		attachmentData := map[string]any{
-			"file_name": req.Attachment.FileName,
-			"file_url":  req.Attachment.FileURL,
-			"file_size": req.Attachment.FileSize,
-			"mime_type": req.Attachment.MimeType,
-		}
-		attachment = (*database.JSONBNullableObject)(&attachmentData)
+func (s *notificationService) SendNotification(ctx context.Context, req *SendNotificationRequest) (*models.Notification, error) {
+	// Convert attachments slice
+	var attachments models.JSONBObjectArray
+	if req.Attachments != nil {
+		attachments = models.JSONBObjectArray(req.Attachments)
+	} else {
+		attachments = models.JSONBObjectArray{}
 	}
 
-	var adaptiveCard *database.JSONBNullableObject
-	if req.AdaptiveCard != nil {
-		// Convert AdaptiveCard struct to map[string]any
-		adaptiveCardData := map[string]any{
-			"type":    req.AdaptiveCard.Type,
-			"version": req.AdaptiveCard.Version,
-			"body":    req.AdaptiveCard.Body,
-			"actions": req.AdaptiveCard.Actions,
-		}
-		adaptiveCard = (*database.JSONBNullableObject)(&adaptiveCardData)
-	}
-
-	notification := &database.Notification{
-		ProjectID:    req.ProjectID,
-		SenderID:     req.SenderID,
-		MessageType:  req.MessageType,
-		Content:      req.Content,
-		Mentions:     database.JSONBStringArray(req.Mentions),
-		Attachment:   attachment,
-		AdaptiveCard: adaptiveCard,
-		Priority:     req.Priority,
-		Status:       "sent",
-		Metadata:     database.JSONBObject(req.Metadata),
+	notification := &models.Notification{
+		ProjectID:   req.ProjectID,
+		SenderID:    req.SenderID,
+		MessageType: req.MessageType,
+		Content:     req.Content,
+		Mentions:    models.JSONBStringArray(req.Mentions),
+		Attachments: attachments,
+		Priority:    req.Priority,
+		Status:      models.NotificationStatusSent,
+		Metadata:    models.JSONBObject(req.Metadata),
 	}
 
 	// Get destinations for the project
@@ -1391,7 +1372,7 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	notification.ID = uuid.New()
 	notification.CreatedAt = time.Now()
 	notification.UpdatedAt = time.Now()
-	notification.Status = "pending" // Start as pending, actors will update status
+	notification.Status = models.NotificationStatusPending // Start as pending, actors will update status
 
 	err = s.repo.Create(ctx, notification)
 	if err != nil {
@@ -1417,19 +1398,19 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	// Create notification_destinations entries for each target in destinations
 	// Each Teams target gets its own notification_destination record
 	if len(destinations) > 0 {
-		var nds []*database.NotificationDestination
+		var nds []*models.NotificationDestination
 		for _, d := range destinations {
 			for _, t := range d.Targets {
 				conversationID := t.ConversationID
-				nd := &database.NotificationDestination{
-					BaseModel:      database.BaseModel{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
+				nd := &models.NotificationDestination{
+					BaseModel:      models.BaseModel{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
 					NotificationID: notification.ID,
 					DestinationID:  d.ID,
 					Priority:       req.Priority,
 					ConversationID: &conversationID,
 					BotID:          d.BotID,
 					BotType:        nil, // Will be set by actor when it gets bot info
-					Status:         "pending",
+					Status:         string(models.NotificationStatusPending),
 					RetryCount:     0,
 					MaxRetries:     5,
 				}
@@ -1459,8 +1440,8 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 	return notification, nil
 }
 
-func filterDestinations(destinations []*database.Destination, targets []string) []*database.Destination {
-	filteredDestinations := make([]*database.Destination, 0)
+func filterDestinations(destinations []*models.Destination, targets []string) []*models.Destination {
+	filteredDestinations := make([]*models.Destination, 0)
 	for _, d := range destinations {
 		for _, t := range targets {
 			matched := false
@@ -1497,12 +1478,12 @@ func (s *notificationService) RetryNotification(ctx context.Context, id uuid.UUI
 		return err
 	}
 
-	if notification.Status != "failed" {
+	if notification.Status != models.NotificationStatusFailed {
 		return fmt.Errorf("notification is not in failed status")
 	}
 
 	// Reset status and retry
-	notification.Status = "pending"
+	notification.Status = models.NotificationStatusPending
 	notification.ErrorMessage = ""
 	notification.UpdatedAt = time.Now()
 
@@ -1521,11 +1502,11 @@ func (s *notificationService) CancelNotification(ctx context.Context, id uuid.UU
 		return err
 	}
 
-	if notification.Status == "sent" {
+	if notification.Status == models.NotificationStatusSent {
 		return fmt.Errorf("cannot cancel already sent notification")
 	}
 
-	notification.Status = "cancelled"
+	notification.Status = models.NotificationStatusCancelled
 	notification.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, notification)
@@ -1594,7 +1575,7 @@ func (s *messagesService) getGraphAPIAccessToken(ctx context.Context, tenantID s
 	// Use the same bot credentials to get Graph API access token
 	// This uses Client Credentials flow for application permissions
 
-	// Get bot credentials from environment or database
+	// Get bot credentials from environment or models
 	appID := os.Getenv("TEAMS_BOT_APP_ID")
 	appPassword := os.Getenv("TEAMS_BOT_APP_PASSWORD")
 

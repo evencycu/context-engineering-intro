@@ -1,4 +1,4 @@
-package database
+package models
 
 import (
 	"database/sql/driver"
@@ -39,11 +39,12 @@ const (
 type NotificationStatus string
 
 const (
-	NotificationStatusPending   NotificationStatus = "pending"
-	NotificationStatusEnqueued  NotificationStatus = "enqueued"
-	NotificationStatusSent      NotificationStatus = "sent"
-	NotificationStatusFailed    NotificationStatus = "failed"
-	NotificationStatusCancelled NotificationStatus = "cancelled"
+	NotificationStatusPending    NotificationStatus = "pending"
+	NotificationStatusProcessing NotificationStatus = "processing"
+	NotificationStatusEnqueued   NotificationStatus = "enqueued"
+	NotificationStatusSent       NotificationStatus = "sent"
+	NotificationStatusFailed     NotificationStatus = "failed"
+	NotificationStatusCancelled  NotificationStatus = "cancelled"
 )
 
 // =============================================
@@ -162,6 +163,9 @@ type JSONBObject map[string]any
 
 // JSONBNullableObject is a JSONB-backed nullable object for DB scanning/valuing
 type JSONBNullableObject map[string]any
+
+// JSONBObjectArray is a JSONB-backed slice of objects for DB scanning/valuing
+type JSONBObjectArray []map[string]any
 
 // Value implements driver.Valuer to convert JSONBTargets to JSON bytes
 func (t JSONBTargets) Value() (driver.Value, error) {
@@ -305,6 +309,41 @@ func (o *JSONBNullableObject) Scan(src any) error {
 	return nil
 }
 
+// Value implements driver.Valuer to convert JSONBObjectArray to JSON bytes
+func (a JSONBObjectArray) Value() (driver.Value, error) {
+	if a == nil {
+		return []byte("[]"), nil
+	}
+	b, err := json.Marshal([]map[string]any(a))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBObjectArray: %w", err)
+	}
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBObjectArray
+func (a *JSONBObjectArray) Scan(src any) error {
+	if src == nil {
+		*a = JSONBObjectArray{}
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBObjectArray Scan: %T", src)
+	}
+	var arr []map[string]any
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBObjectArray: %w", err)
+	}
+	*a = JSONBObjectArray(arr)
+	return nil
+}
+
 // Destination represents a Teams target group (can contain multiple targets)
 type Destination struct {
 	BaseModel
@@ -327,18 +366,17 @@ type Destination struct {
 // Notification represents a notification message
 type Notification struct {
 	BaseModel
-	ProjectID    uuid.UUID            `json:"project_id" db:"project_id"`
-	SenderID     *uuid.UUID           `json:"sender_id" db:"sender_id"`
-	MessageType  string               `json:"message_type" db:"message_type"` // text, file, adaptive_card
-	Content      string               `json:"content" db:"content"`
-	Mentions     JSONBStringArray     `json:"mentions" db:"mentions"`
-	Attachment   *JSONBNullableObject `json:"attachment" db:"attachment"`
-	AdaptiveCard *JSONBNullableObject `json:"adaptive_card" db:"adaptive_card"`
-	Priority     string               `json:"priority" db:"priority"`
-	Status       NotificationStatus   `json:"status" db:"status"`
-	ErrorMessage string               `json:"error_message" db:"error_message"`
-	Metadata     JSONBObject          `json:"metadata" db:"metadata"`
-	SentAt       *time.Time           `json:"sent_at" db:"sent_at"`
+	ProjectID    uuid.UUID          `json:"project_id" db:"project_id"`
+	SenderID     *uuid.UUID         `json:"sender_id" db:"sender_id"`
+	MessageType  string             `json:"message_type" db:"message_type"` // text, file, adaptive_card
+	Content      string             `json:"content" db:"content"`
+	Mentions     JSONBStringArray   `json:"mentions" db:"mentions"`
+	Attachments  JSONBObjectArray   `json:"attachments" db:"attachments"`
+	Priority     string             `json:"priority" db:"priority"`
+	Status       NotificationStatus `json:"status" db:"status"`
+	ErrorMessage string             `json:"error_message" db:"error_message"`
+	Metadata     JSONBObject        `json:"metadata" db:"metadata"`
+	SentAt       *time.Time         `json:"sent_at" db:"sent_at"`
 }
 
 // Attachment represents a file attachment
@@ -490,13 +528,13 @@ type BillingPlan struct {
 // ProjectBilling represents project billing information
 type ProjectBilling struct {
 	BaseModel
-	ProjectID        uuid.UUID  `json:"project_id" db:"project_id"`
-	BillingPlanID    *uuid.UUID `json:"billing_plan_id" db:"billing_plan_id"`
-	BillingStatus    string     `json:"billing_status" db:"billing_status"`
-	PaymentMethod    *string    `json:"payment_method" db:"payment_method"`
-	BillingCycle     string     `json:"billing_cycle" db:"billing_cycle"`
-	NextBillingDate  *time.Time `json:"next_billing_date" db:"next_billing_date"`
-	TotalUsageCost   float64    `json:"total_usage_cost" db:"total_usage_cost"`
+	ProjectID       uuid.UUID  `json:"project_id" db:"project_id"`
+	BillingPlanID   *uuid.UUID `json:"billing_plan_id" db:"billing_plan_id"`
+	BillingStatus   string     `json:"billing_status" db:"billing_status"`
+	PaymentMethod   *string    `json:"payment_method" db:"payment_method"`
+	BillingCycle    string     `json:"billing_cycle" db:"billing_cycle"`
+	NextBillingDate *time.Time `json:"next_billing_date" db:"next_billing_date"`
+	TotalUsageCost  float64    `json:"total_usage_cost" db:"total_usage_cost"`
 }
 
 // File represents a file stored in the system
@@ -517,13 +555,13 @@ type File struct {
 // UsageRecord represents a usage record for billing
 type UsageRecord struct {
 	BaseModel
-	ProjectID   uuid.UUID     `json:"project_id" db:"project_id"`
-	UserID      *uuid.UUID    `json:"user_id" db:"user_id"`
-	RecordType  string        `json:"record_type" db:"record_type"` // notification, api_call, storage
-	Quantity    int           `json:"quantity" db:"quantity"`
-	UnitCost    float64       `json:"unit_cost" db:"unit_cost"`
-	TotalCost   float64       `json:"total_cost" db:"total_cost"`
-	Metadata    JSONBObject   `json:"metadata" db:"metadata"`
+	ProjectID  uuid.UUID   `json:"project_id" db:"project_id"`
+	UserID     *uuid.UUID  `json:"user_id" db:"user_id"`
+	RecordType string      `json:"record_type" db:"record_type"` // notification, api_call, storage
+	Quantity   int         `json:"quantity" db:"quantity"`
+	UnitCost   float64     `json:"unit_cost" db:"unit_cost"`
+	TotalCost  float64     `json:"total_cost" db:"total_cost"`
+	Metadata   JSONBObject `json:"metadata" db:"metadata"`
 }
 
 // =============================================

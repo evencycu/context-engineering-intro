@@ -20,12 +20,131 @@ import (
 )
 
 
+type InternalAPIUsersAPI interface {
+
+	/*
+	InternalV1UsersCompanyCompanyIdGet Get users by company
+
+	Get users by company ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param companyId
+	@return ApiInternalV1UsersCompanyCompanyIdGetRequest
+	*/
+	InternalV1UsersCompanyCompanyIdGet(ctx context.Context, companyId string) ApiInternalV1UsersCompanyCompanyIdGetRequest
+
+	// InternalV1UsersCompanyCompanyIdGetExecute executes the request
+	//  @return UserListResponse
+	InternalV1UsersCompanyCompanyIdGetExecute(r ApiInternalV1UsersCompanyCompanyIdGetRequest) (*UserListResponse, *http.Response, error)
+
+	/*
+	InternalV1UsersGet List users
+
+	Get a list of users with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1UsersGetRequest
+	*/
+	InternalV1UsersGet(ctx context.Context) ApiInternalV1UsersGetRequest
+
+	// InternalV1UsersGetExecute executes the request
+	//  @return UserListResponse
+	InternalV1UsersGetExecute(r ApiInternalV1UsersGetRequest) (*UserListResponse, *http.Response, error)
+
+	/*
+	InternalV1UsersIdDelete Delete user
+
+	Delete user by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1UsersIdDeleteRequest
+	*/
+	InternalV1UsersIdDelete(ctx context.Context, id string) ApiInternalV1UsersIdDeleteRequest
+
+	// InternalV1UsersIdDeleteExecute executes the request
+	InternalV1UsersIdDeleteExecute(r ApiInternalV1UsersIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1UsersIdGet Get user
+
+	Get user by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1UsersIdGetRequest
+	*/
+	InternalV1UsersIdGet(ctx context.Context, id string) ApiInternalV1UsersIdGetRequest
+
+	// InternalV1UsersIdGetExecute executes the request
+	//  @return UserResponse
+	InternalV1UsersIdGetExecute(r ApiInternalV1UsersIdGetRequest) (*UserResponse, *http.Response, error)
+
+	/*
+	InternalV1UsersIdPasswordPatch Change user password
+
+	Change user password by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1UsersIdPasswordPatchRequest
+	*/
+	InternalV1UsersIdPasswordPatch(ctx context.Context, id string) ApiInternalV1UsersIdPasswordPatchRequest
+
+	// InternalV1UsersIdPasswordPatchExecute executes the request
+	InternalV1UsersIdPasswordPatchExecute(r ApiInternalV1UsersIdPasswordPatchRequest) (*http.Response, error)
+
+	/*
+	InternalV1UsersIdPut Update user
+
+	Update user by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiInternalV1UsersIdPutRequest
+	*/
+	InternalV1UsersIdPut(ctx context.Context, id string) ApiInternalV1UsersIdPutRequest
+
+	// InternalV1UsersIdPutExecute executes the request
+	//  @return UserResponse
+	InternalV1UsersIdPutExecute(r ApiInternalV1UsersIdPutRequest) (*UserResponse, *http.Response, error)
+
+	/*
+	InternalV1UsersPost Create user
+
+	Create a new user
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1UsersPostRequest
+	*/
+	InternalV1UsersPost(ctx context.Context) ApiInternalV1UsersPostRequest
+
+	// InternalV1UsersPostExecute executes the request
+	//  @return UserResponse
+	InternalV1UsersPostExecute(r ApiInternalV1UsersPostRequest) (*UserResponse, *http.Response, error)
+
+	/*
+	InternalV1UsersRoleRoleGet Get users by role
+
+	Get users by role
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param role
+	@return ApiInternalV1UsersRoleRoleGetRequest
+	*/
+	InternalV1UsersRoleRoleGet(ctx context.Context, role string) ApiInternalV1UsersRoleRoleGetRequest
+
+	// InternalV1UsersRoleRoleGetExecute executes the request
+	//  @return UserListResponse
+	InternalV1UsersRoleRoleGetExecute(r ApiInternalV1UsersRoleRoleGetRequest) (*UserListResponse, *http.Response, error)
+}
+
 // InternalAPIUsersAPIService InternalAPIUsersAPI service
 type InternalAPIUsersAPIService service
 
 type ApiInternalV1UsersCompanyCompanyIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	companyId string
 }
 
@@ -138,7 +257,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersCompanyCompanyIdGetExecute(r
 
 type ApiInternalV1UsersGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -273,7 +392,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersGetExecute(r ApiInternalV1Us
 
 type ApiInternalV1UsersIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	id string
 }
 
@@ -375,7 +494,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersIdDeleteExecute(r ApiInterna
 
 type ApiInternalV1UsersIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	id string
 }
 
@@ -488,7 +607,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersIdGetExecute(r ApiInternalV1
 
 type ApiInternalV1UsersIdPasswordPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	id string
 	changePasswordRequest *ChangePasswordRequest
 }
@@ -612,7 +731,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersIdPasswordPatchExecute(r Api
 
 type ApiInternalV1UsersIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	id string
 	userUpdateRequest *UserUpdateRequest
 }
@@ -747,7 +866,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersIdPutExecute(r ApiInternalV1
 
 type ApiInternalV1UsersPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	userCreateRequest *UserCreateRequest
 }
 
@@ -867,7 +986,7 @@ func (a *InternalAPIUsersAPIService) InternalV1UsersPostExecute(r ApiInternalV1U
 
 type ApiInternalV1UsersRoleRoleGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPIUsersAPIService
+	ApiService InternalAPIUsersAPI
 	role string
 }
 

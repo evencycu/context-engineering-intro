@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
 )
 
@@ -37,13 +37,14 @@ func NewNotifyService(
 
 // NotifyRequest represents an external notification request
 type NotifyRequest struct {
-	NotifyKey   string         `json:"notify_key" validate:"required,min=3,max=50"`
-	Message     string         `json:"message" validate:"required,min=1,max=4000"`
-	MessageType string         `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
-	Priority    string         `json:"priority" validate:"omitempty,oneof=low normal high"`
-	TargetIDs   []string       `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
-	Mentions    []string       `json:"mentions" validate:"omitempty"`
-	Metadata    map[string]any `json:"metadata" validate:"omitempty"`
+	NotifyKey   string           `json:"notify_key" validate:"required,min=3,max=50"`
+	Message     string           `json:"message" validate:"required,min=1,max=4000"`
+	MessageType string           `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
+	Priority    string           `json:"priority" validate:"omitempty,oneof=low normal high"`
+	TargetIDs   []string         `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
+	Mentions    []string         `json:"mentions" validate:"omitempty"`
+	Metadata    map[string]any   `json:"metadata" validate:"omitempty"`
+	Attachments []map[string]any `json:"attachments" validate:"omitempty"`
 }
 
 // NotifyResponse represents the response for external notification
@@ -107,6 +108,7 @@ func (s *notifyService) SendNotification(ctx context.Context, req *NotifyRequest
 		MessageType: req.MessageType,
 		Content:     req.Message,
 		Mentions:    req.Mentions,
+		Attachments: req.Attachments,
 		Priority:    req.Priority,
 		Metadata:    req.Metadata,
 		Targets:     req.TargetIDs, // Empty means send to all destinations
@@ -141,7 +143,7 @@ func (s *notifyService) SendNotification(ctx context.Context, req *NotifyRequest
 
 	response := &NotifyResponse{
 		NotificationID:    notification.ID.String(),
-		Status:            "pending", // Always pending for async processing
+		Status:            string(models.NotificationStatusPending), // Always pending for async processing
 		Message:           "Notification queued for processing",
 		ProjectID:         project.ID.String(),
 		ProjectName:       project.NotifyKey,
@@ -185,9 +187,9 @@ func (s *notifyService) GetProjectDestinations(ctx context.Context, notifyKey st
 
 // DestinationInfo represents destination information for external users
 type DestinationInfo struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Status      string                `json:"status"`
-	Targets     database.JSONBTargets `json:"targets"`
+	ID          string              `json:"id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Status      string              `json:"status"`
+	Targets     models.JSONBTargets `json:"targets"`
 }

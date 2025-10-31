@@ -20,12 +20,117 @@ import (
 )
 
 
+type InternalAPICompaniesAPI interface {
+
+	/*
+	InternalV1CompaniesGet List companies
+
+	Get a list of companies with pagination
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1CompaniesGetRequest
+	*/
+	InternalV1CompaniesGet(ctx context.Context) ApiInternalV1CompaniesGetRequest
+
+	// InternalV1CompaniesGetExecute executes the request
+	//  @return CompanyListResponse
+	InternalV1CompaniesGetExecute(r ApiInternalV1CompaniesGetRequest) (*CompanyListResponse, *http.Response, error)
+
+	/*
+	InternalV1CompaniesIdBillingPatch Update company billing status
+
+	Update company billing status by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Company ID
+	@return ApiInternalV1CompaniesIdBillingPatchRequest
+	*/
+	InternalV1CompaniesIdBillingPatch(ctx context.Context, id string) ApiInternalV1CompaniesIdBillingPatchRequest
+
+	// InternalV1CompaniesIdBillingPatchExecute executes the request
+	//  @return CompanyResponse
+	InternalV1CompaniesIdBillingPatchExecute(r ApiInternalV1CompaniesIdBillingPatchRequest) (*CompanyResponse, *http.Response, error)
+
+	/*
+	InternalV1CompaniesIdDelete Delete company
+
+	Delete company by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Company ID
+	@return ApiInternalV1CompaniesIdDeleteRequest
+	*/
+	InternalV1CompaniesIdDelete(ctx context.Context, id string) ApiInternalV1CompaniesIdDeleteRequest
+
+	// InternalV1CompaniesIdDeleteExecute executes the request
+	InternalV1CompaniesIdDeleteExecute(r ApiInternalV1CompaniesIdDeleteRequest) (*http.Response, error)
+
+	/*
+	InternalV1CompaniesIdGet Get company
+
+	Get company by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Company ID
+	@return ApiInternalV1CompaniesIdGetRequest
+	*/
+	InternalV1CompaniesIdGet(ctx context.Context, id string) ApiInternalV1CompaniesIdGetRequest
+
+	// InternalV1CompaniesIdGetExecute executes the request
+	//  @return CompanyResponse
+	InternalV1CompaniesIdGetExecute(r ApiInternalV1CompaniesIdGetRequest) (*CompanyResponse, *http.Response, error)
+
+	/*
+	InternalV1CompaniesIdPut Update company
+
+	Update company by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Company ID
+	@return ApiInternalV1CompaniesIdPutRequest
+	*/
+	InternalV1CompaniesIdPut(ctx context.Context, id string) ApiInternalV1CompaniesIdPutRequest
+
+	// InternalV1CompaniesIdPutExecute executes the request
+	//  @return CompanyResponse
+	InternalV1CompaniesIdPutExecute(r ApiInternalV1CompaniesIdPutRequest) (*CompanyResponse, *http.Response, error)
+
+	/*
+	InternalV1CompaniesIdStatusPatch Update company status
+
+	Update company status by ID
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Company ID
+	@return ApiInternalV1CompaniesIdStatusPatchRequest
+	*/
+	InternalV1CompaniesIdStatusPatch(ctx context.Context, id string) ApiInternalV1CompaniesIdStatusPatchRequest
+
+	// InternalV1CompaniesIdStatusPatchExecute executes the request
+	//  @return CompanyResponse
+	InternalV1CompaniesIdStatusPatchExecute(r ApiInternalV1CompaniesIdStatusPatchRequest) (*CompanyResponse, *http.Response, error)
+
+	/*
+	InternalV1CompaniesPost Create company
+
+	Create a new company
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiInternalV1CompaniesPostRequest
+	*/
+	InternalV1CompaniesPost(ctx context.Context) ApiInternalV1CompaniesPostRequest
+
+	// InternalV1CompaniesPostExecute executes the request
+	//  @return CompanyResponse
+	InternalV1CompaniesPostExecute(r ApiInternalV1CompaniesPostRequest) (*CompanyResponse, *http.Response, error)
+}
+
 // InternalAPICompaniesAPIService InternalAPICompaniesAPI service
 type InternalAPICompaniesAPIService service
 
 type ApiInternalV1CompaniesGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	limit *int32
 	offset *int32
 	search *string
@@ -160,7 +265,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesGetExecute(r ApiInte
 
 type ApiInternalV1CompaniesIdBillingPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	id string
 	projectBillingUpdateRequest *ProjectBillingUpdateRequest
 }
@@ -295,7 +400,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesIdBillingPatchExecut
 
 type ApiInternalV1CompaniesIdDeleteRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	id string
 }
 
@@ -397,7 +502,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesIdDeleteExecute(r Ap
 
 type ApiInternalV1CompaniesIdGetRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	id string
 }
 
@@ -510,7 +615,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesIdGetExecute(r ApiIn
 
 type ApiInternalV1CompaniesIdPutRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	id string
 	companyUpdateRequest *CompanyUpdateRequest
 }
@@ -645,7 +750,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesIdPutExecute(r ApiIn
 
 type ApiInternalV1CompaniesIdStatusPatchRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	id string
 	companyStatusUpdateRequest *CompanyStatusUpdateRequest
 }
@@ -780,7 +885,7 @@ func (a *InternalAPICompaniesAPIService) InternalV1CompaniesIdStatusPatchExecute
 
 type ApiInternalV1CompaniesPostRequest struct {
 	ctx context.Context
-	ApiService *InternalAPICompaniesAPIService
+	ApiService InternalAPICompaniesAPI
 	companyCreateRequest *CompanyCreateRequest
 }
 
