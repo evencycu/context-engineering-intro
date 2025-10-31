@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	database "github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -32,7 +32,7 @@ type RecordUsageRequest struct {
 	UserID         *uuid.UUID
 	NotificationID *uuid.UUID
 	BotID          *uuid.UUID
-	BotType        *database.BotType
+	BotType        *models.BotType
 	RecordType     string
 	Quantity       int
 	UnitPrice      float64
@@ -52,7 +52,7 @@ type NotificationActor struct {
 	BotAppPassword     string
 	TenantID           string
 	ServiceURL         string
-	Installation       *database.BotInstallation
+	Installation       *models.BotInstallation
 	Redis              *redis.Client
 	DB                 ActorDB
 	TokenManager       TokenManager   // New field for token management
@@ -107,7 +107,7 @@ func NewNotificationActor(
 	notificationID uuid.UUID,
 	conversationID string,
 	message string,
-	installation *database.BotInstallation,
+	installation *models.BotInstallation,
 	botAppID string,
 	botAppPassword string,
 	redis *redis.Client,
@@ -132,7 +132,7 @@ func NewNotificationActor(
 		BillingService:     billingService,
 		MaxRetries:         5,
 		CurrentRetry:       0,
-		Status:             "pending",
+		Status:             string(models.NotificationStatusPending),
 		StopChan:           make(chan struct{}),
 		DoneChan:           make(chan *ActorResult, 1),
 	}
@@ -161,7 +161,7 @@ func (a *NotificationActor) run(ctx context.Context) {
 
 	// Mark as processing
 	now := time.Now()
-	processing := "processing"
+	processing := string(models.NotificationStatusProcessing)
 	a.DB.UpdateNotificationDestination(ctx, a.NotificationDestID, &NotificationDestinationUpdate{
 		Status:         &processing,
 		ActorID:        &a.ID,
@@ -220,7 +220,7 @@ func (a *NotificationActor) run(ctx context.Context) {
 		if success {
 			// Success!
 			log.Printf("[%s] Successfully sent notification", a.ID)
-			sentStatus := "sent"
+			sentStatus := string(models.NotificationStatusSent)
 			sentAt := time.Now()
 			a.DB.UpdateNotificationDestination(ctx, a.NotificationDestID, &NotificationDestinationUpdate{
 				Status:         &sentStatus,
@@ -259,7 +259,7 @@ func (a *NotificationActor) run(ctx context.Context) {
 		if !isRetryable || a.CurrentRetry >= a.MaxRetries {
 			// Non-retryable or exhausted retries
 			log.Printf("[%s] Non-retryable error or exhausted retries: %v", a.ID, err)
-			failedStatus := "failed"
+			failedStatus := string(models.NotificationStatusFailed)
 			errMsg := fmt.Sprintf("%v", err)
 			a.DB.UpdateNotificationDestination(ctx, a.NotificationDestID, &NotificationDestinationUpdate{
 				Status:        &failedStatus,
@@ -348,14 +348,13 @@ func (a *NotificationActor) attemptSend(ctx context.Context) (success bool, stat
 		return false, 401, nil, "", fmt.Errorf("failed to get token: %w", err)
 	}
 
-	// Get notification content from database if not already loaded
+	// Load notification to obtain content and attachments
 	messageText := a.Message
+	notification, nErr := a.DB.GetNotificationByID(ctx, a.NotificationID)
+	if nErr != nil {
+		return false, 500, nil, "", fmt.Errorf("failed to get notification: %w", nErr)
+	}
 	if messageText == "" {
-		// Get notification from database
-		notification, err := a.DB.GetNotificationByID(ctx, a.NotificationID)
-		if err != nil {
-			return false, 500, nil, "", fmt.Errorf("failed to get notification: %w", err)
-		}
 		messageText = notification.Content
 	}
 
@@ -377,7 +376,14 @@ func (a *NotificationActor) attemptSend(ctx context.Context) (success bool, stat
 		"serviceUrl": a.ServiceURL,
 	}
 
+	// Include attachments if present on notification
+	if len(notification.Attachments) > 0 {
+		payload["attachments"] = []map[string]any(notification.Attachments)
+	}
+
 	reqBody, _ := json.Marshal(payload)
+	// Debug: log outgoing Bot Framework payload (without auth token)
+	log.Printf("[%s] Outgoing payload to Teams: %s", a.ID, string(reqBody))
 	url := a.ServiceURL + "/v3/conversations/" + a.ConversationID + "/activities"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, strings.NewReader(string(reqBody)))
@@ -608,13 +614,13 @@ func (a *NotificationActor) recordUsage(ctx context.Context) error {
 
 	// Get bot to record bot_id and bot_type
 	var botID *uuid.UUID
-	var botType *database.BotType
+	var botType *models.BotType
 	if a.Installation != nil && a.Installation.BotID != uuid.Nil {
 		botID = &a.Installation.BotID
 		bot, err := a.DB.GetTeamsBot(ctx, a.Installation.BotID)
 		if err == nil && bot != nil {
 			// Convert string Type to BotType
-			bt := database.BotType(bot.Type)
+			bt := models.BotType(bot.Type)
 			botType = &bt
 		}
 	}

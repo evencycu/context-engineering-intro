@@ -33,13 +33,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 // SendNotificationRequest represents the request to send notification
 type SendNotificationRequest struct {
-	NotifyKey   string         `json:"notifyKey" binding:"required" example:"my-project-key"`
-	Message     string         `json:"message" binding:"required" example:"Hello from external API"`
-	MessageType string         `json:"messageType" example:"text" enums:"text,file,adaptive_card"`
-	Priority    string         `json:"priority" example:"normal" enums:"low,normal,high"`
-	Targets     []string       `json:"targets" example:"all" description:"List of target Emails or Conversation IDs or 'all'"`
-	Mentions    []string       `json:"mentions" example:"@user1,@user2"`
-	Metadata    map[string]any `json:"metadata" example:"{\"source\":\"external\",\"version\":\"1.0\"}"`
+	NotifyKey   string           `json:"notifyKey" binding:"required" example:"my-project-key"`
+	Message     string           `json:"message" binding:"required" example:"Hello from external API"`
+	MessageType string           `json:"messageType" example:"text" enums:"text,file,adaptive_card"`
+	Priority    string           `json:"priority" example:"normal" enums:"low,normal,high"`
+	Targets     []string         `json:"targets" example:"all" description:"List of target Emails or Conversation IDs or 'all'"`
+	Mentions    []string         `json:"mentions" example:"@user1,@user2"`
+	Metadata    map[string]any   `json:"metadata" example:"{\"source\":\"external\",\"version\":\"1.0\"}"`
+	Attachments []map[string]any `json:"attachments" example:"[{}]"`
 }
 
 // SendNotificationResponse represents the response for send notification
@@ -94,6 +95,7 @@ func (h *Handler) SendNotification(c *gin.Context) {
 		TargetIDs:   req.Targets,
 		Mentions:    req.Mentions,
 		Metadata:    req.Metadata,
+		Attachments: req.Attachments,
 	}
 
 	// Send notification
@@ -130,15 +132,14 @@ func (h *Handler) GetProjectDestinations(c *gin.Context) {
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, GetProjectDestinationsResponse{
 			Success: false,
-			Error:   "Invalid notify key format",
+			Error:   "Invalid request format: " + err.Error(),
 		})
 		return
 	}
 
-	// Get destinations from service
 	destinations, err := h.notifyService.GetProjectDestinations(c.Request.Context(), req.NotifyKey)
 	if err != nil {
-		c.JSON(http.StatusNotFound, GetProjectDestinationsResponse{
+		c.JSON(http.StatusBadRequest, GetProjectDestinationsResponse{
 			Success: false,
 			Error:   err.Error(),
 		})
