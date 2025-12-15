@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 )
 

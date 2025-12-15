@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
+	"github.com/evencycu/TeamsNotifyGoV3/libs/response" // Import the new response package
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -84,10 +85,7 @@ type DateRangeRequest struct {
 func (h *Handler) SendNotification(c *gin.Context) {
 	var req SendNotificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
+		response.BadRequest(c, "Invalid request body", err, nil)
 		return
 	}
 
@@ -107,15 +105,12 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	// Send notification
 	notification, err := h.notificationService.SendNotification(c.Request.Context(), serviceReq)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to send notification",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to send notification", err, nil)
 		return
 	}
 
 	// Create response
-	response := SendNotificationResponse{
+	res := SendNotificationResponse{
 		NotificationID: notification.ID,
 		Status:         string(notification.Status),
 		Message:        "Notification queued successfully",
@@ -125,16 +120,14 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	// Add estimated delivery time based on priority
 	switch req.Priority {
 	case "high":
-		response.EstimatedTime = "2-5 minutes"
+		res.EstimatedTime = "2-5 minutes"
 	case "normal":
-		response.EstimatedTime = "5-10 minutes"
+		res.EstimatedTime = "5-10 minutes"
 	case "low":
-		response.EstimatedTime = "10-30 minutes"
+		res.EstimatedTime = "10-30 minutes"
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"data": response,
-	})
+	response.Success(c, http.StatusAccepted, "Notification queued successfully", res)
 }
 
 // ListNotifications lists notifications with pagination
@@ -160,10 +153,7 @@ func (h *Handler) ListNotifications(c *gin.Context) {
 	// Get notifications
 	notifications, err := h.notificationService.List(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list notifications",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to list notifications", err, nil)
 		return
 	}
 
@@ -174,17 +164,14 @@ func (h *Handler) ListNotifications(c *gin.Context) {
 	}
 	total, err := h.notificationService.Count(c.Request.Context(), countReq)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to count notifications",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to count notifications", err, nil)
 		return
 	}
 
 	// Calculate pages
 	pages := int((total + int64(limit) - 1) / int64(limit))
 
-	c.JSON(http.StatusOK, gin.H{
+	response.Success(c, http.StatusOK, "Notifications listed successfully", gin.H{
 		"data": notifications,
 		"pagination": gin.H{
 			"total":  total,
@@ -200,30 +187,21 @@ func (h *Handler) GetNotification(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid notification ID",
-		})
+		response.BadRequest(c, "Invalid notification ID", err, nil)
 		return
 	}
 
 	notification, err := h.notificationService.GetByID(c.Request.Context(), id)
 	if err != nil {
 		if _, ok := err.(services.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Notification not found",
-			})
+			response.NotFound(c, "Notification not found", err, nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get notification",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to get notification", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": notification,
-	})
+	response.Success(c, http.StatusOK, "Notification retrieved successfully", notification)
 }
 
 // RetryNotification retries a failed notification
@@ -231,30 +209,21 @@ func (h *Handler) RetryNotification(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid notification ID",
-		})
+		response.BadRequest(c, "Invalid notification ID", err, nil)
 		return
 	}
 
 	err = h.notificationService.RetryNotification(c.Request.Context(), id)
 	if err != nil {
 		if _, ok := err.(services.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Notification not found",
-			})
+			response.NotFound(c, "Notification not found", err, nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to retry notification",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to retry notification", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Notification retry initiated successfully",
-	})
+	response.Success(c, http.StatusOK, "Notification retry initiated successfully", nil)
 }
 
 // CancelNotification cancels a pending notification
@@ -262,30 +231,21 @@ func (h *Handler) CancelNotification(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid notification ID",
-		})
+		response.BadRequest(c, "Invalid notification ID", err, nil)
 		return
 	}
 
 	err = h.notificationService.CancelNotification(c.Request.Context(), id)
 	if err != nil {
 		if _, ok := err.(services.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Notification not found",
-			})
+			response.NotFound(c, "Notification not found", err, nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to cancel notification",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to cancel notification", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Notification cancelled successfully",
-	})
+	response.Success(c, http.StatusOK, "Notification cancelled successfully", nil)
 }
 
 // GetNotificationsByProject gets notifications by project ID
@@ -293,24 +253,17 @@ func (h *Handler) GetNotificationsByProject(c *gin.Context) {
 	projectIDStr := c.Param("projectId")
 	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid project ID",
-		})
+		response.BadRequest(c, "Invalid project ID", err, nil)
 		return
 	}
 
 	notifications, err := h.notificationService.GetByProjectID(c.Request.Context(), projectID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get notifications by project",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to get notifications by project", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": notifications,
-	})
+	response.Success(c, http.StatusOK, "Notifications by project retrieved successfully", notifications)
 }
 
 // GetNotificationsBySender gets notifications by sender ID
@@ -318,24 +271,17 @@ func (h *Handler) GetNotificationsBySender(c *gin.Context) {
 	senderIDStr := c.Param("senderId")
 	senderID, err := uuid.Parse(senderIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid sender ID",
-		})
+		response.BadRequest(c, "Invalid sender ID", err, nil)
 		return
 	}
 
 	notifications, err := h.notificationService.GetBySenderID(c.Request.Context(), senderID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get notifications by sender",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to get notifications by sender", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": notifications,
-	})
+	response.Success(c, http.StatusOK, "Notifications by sender retrieved successfully", notifications)
 }
 
 // GetNotificationsByStatus gets notifications by status
@@ -344,64 +290,47 @@ func (h *Handler) GetNotificationsByStatus(c *gin.Context) {
 
 	notifications, err := h.notificationService.GetByStatus(c.Request.Context(), status)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get notifications by status",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to get notifications by status", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": notifications,
-	})
+	response.Success(c, http.StatusOK, "Notifications by status retrieved successfully", notifications)
 }
 
 // GetNotificationsByDateRange gets notifications by date range
 func (h *Handler) GetNotificationsByDateRange(c *gin.Context) {
 	var req DateRangeRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid query parameters",
-			"details": err.Error(),
-		})
+		response.BadRequest(c, "Invalid query parameters", err, nil)
 		return
 	}
 
 	// Parse dates
 	startDate, err := time.Parse(time.RFC3339, req.StartDate)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid start date format",
-		})
+		response.BadRequest(c, "Invalid start date format", err, nil)
 		return
 	}
 
 	endDate, err := time.Parse(time.RFC3339, req.EndDate)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid end date format",
-		})
+		response.BadRequest(c, "Invalid end date format", err, nil)
 		return
 	}
 
 	// Validate date range
 	if startDate.After(endDate) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Start date must be before end date",
-		})
+		response.BadRequest(c, "Start date must be before end date", nil, nil)
 		return
 	}
 
 	notifications, err := h.notificationService.GetByDateRange(c.Request.Context(), startDate, endDate)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get notifications by date range",
-			"details": err.Error(),
-		})
+		response.InternalServerError(c, "Failed to get notifications by date range", err, nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	response.Success(c, http.StatusOK, "Notifications by date range retrieved successfully", gin.H{
 		"data":  notifications,
 		"count": len(notifications),
 		"date_range": gin.H{

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/services"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )

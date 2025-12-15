@@ -41,7 +41,7 @@ Teams Notification API 是一個基於 Go 的微服務架構，提供企業級�
 ### 4.2 快速啟動
 ```bash
 # Clone 專案
-git clone https://github.com/evencycu/TeamsNotifyGoV2.git
+git clone https://github.com/evencycu/TeamsNotifyGoV3.git
 cd TeamsNotifyGoV2
 
 # 啟動開發環境

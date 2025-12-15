@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/repositories"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -418,24 +418,62 @@ type NotificationService interface {
 // Messages (Bot Installation) Service
 // =============================================
 
-// Activity minimal for Bot Framework events
+// Activity represents Bot Framework Activity payload
 type Activity struct {
-	Type       string `json:"type"`
-	ServiceURL string `json:"serviceUrl"`
-	From       struct {
-		ID string `json:"id"`
-	} `json:"from"`
-	Recipient struct {
-		ID string `json:"id"`
-	} `json:"recipient"`
-	Conversation struct {
-		ID string `json:"id"`
-	} `json:"conversation"`
-	ChannelID   string         `json:"channelId"`
-	Locale      string         `json:"locale"`
-	ChannelData map[string]any `json:"channelData"`
+	ID             string           `json:"id"`
+	Type           string           `json:"type"`
+	Name           string           `json:"name,omitempty"`
+	ServiceURL     string           `json:"serviceUrl"`
+	From           ChannelAccount   `json:"from"`
+	Recipient      ChannelAccount   `json:"recipient"`
+	Conversation   Conversation     `json:"conversation"`
+	ChannelID      string           `json:"channelId"`
+	Locale         string           `json:"locale,omitempty"`
+	LocalTimestamp string           `json:"localTimestamp,omitempty"`
+	LocalTimezone  string           `json:"localTimezone,omitempty"`
+	Timestamp      string           `json:"timestamp,omitempty"`
+	Text           string           `json:"text,omitempty"`
+	TextFormat     string           `json:"textFormat,omitempty"`
+	ChannelData    map[string]any   `json:"channelData,omitempty"`
+	Attachments    []Attachment     `json:"attachments,omitempty"`
+	Entities       []map[string]any `json:"entities,omitempty"`
+	ReplyToID      string           `json:"replyToId,omitempty"`
+	Value          json.RawMessage  `json:"value,omitempty"`
 }
 
+type Conversation struct {
+	ID               string `json:"id,omitempty"`
+	ConversationType string `json:"conversationType,omitempty"`
+	TenantID         string `json:"tenantId,omitempty"`
+}
+type ChannelAccount struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+// OAuth Card 內容
+type OAuthCard struct {
+	Text           string       `json:"text,omitempty"`
+	ConnectionName string       `json:"connectionName"`
+	Buttons        []CardAction `json:"buttons,omitempty"`
+}
+
+// OAuth Card 按鈕
+type CardAction struct {
+	Type  string `json:"type"`
+	Title string `json:"title"`
+	Value string `json:"value,omitempty"`
+}
+
+type Attachment struct {
+	Content     interface{} `json:"content"`
+	ContentType string      `json:"contentType"`
+}
+
+// Token Response（從 OAuth 回調中取得）
+type TokenResponse struct {
+	Token string `json:"token"`
+}
 type MessagesService interface {
 	HandleActivity(ctx context.Context, act *Activity, rawPayload map[string]any) error
 	SendProactiveTest(ctx context.Context, activity map[string]any, text string) error
@@ -463,6 +501,8 @@ func (s *messagesService) HandleActivity(ctx context.Context, act *Activity, raw
 		return s.handleMessage(ctx, act, rawPayload)
 	case "conversationupdate":
 		return s.handleConversationUpdate(ctx, act, rawPayload)
+	case "event":
+		return s.handleEvent(ctx, act, rawPayload)
 	default:
 		log.Printf("messages: unhandled activity type=%s", activityType)
 		return nil
@@ -637,7 +677,162 @@ func (s *messagesService) handleMessage(ctx context.Context, act *Activity, rawP
 		convID = act.Conversation.ID
 	}
 	log.Printf("messages: received message event. conversation_id=%s channel_id=%s", convID, act.ChannelID)
+	if strings.Contains(act.Text, "email") {
+		reply := createOAuthCardActivity(act)
+
+		// 透過 Bot Connector REST API 回覆
+		if err := sendReply(act.ServiceURL, act.Conversation.ID, act.ID, reply); err != nil {
+			log.Printf("發送回覆失敗: %v", err)
+
+			return errors.New("send Outh Reply failed")
+		}
+	}
 	return nil
+}
+
+// 透過 Bot Connector REST API 發送回覆
+func sendReply(serviceURL, conversationID, activityID string, reply Activity) error {
+	// Bot Connector REST API 端點
+	// POST {serviceUrl}/v3/conversations/{conversationId}/activities/{activityId}
+	url := fmt.Sprintf("%s/v3/conversations/%s/activities/%s", serviceURL, conversationID, activityID)
+
+	// 建立 HTTP 請求
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	jsonData, err := json.Marshal(reply)
+	if err != nil {
+		return fmt.Errorf("序列化回覆失敗: %w", err)
+	}
+
+	// Debug: log the actual JSON being sent
+	log.Printf("Sending reply to Bot Framework:\n%s", string(jsonData))
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(jsonData)))
+	if err != nil {
+		return fmt.Errorf("建立請求失敗: %w", err)
+	}
+
+	clientID := getEnv("TEAMS_BOT_APP_ID", "")
+	clientSecret := getEnv("TEAMS_BOT_APP_PASSWORD", "")
+	if clientID == "" || clientSecret == "" {
+		return errors.New("TEAMS_BOT_APP_ID/TEAMS_BOT_APP_PASSWORD are required in env")
+	}
+	token, err := fetchBotFrameworkToken(context.Background(), "051cece0-e4dc-4aed-b471-bf29824e1ee6", clientID, clientSecret)
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch token: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	// 注意：實際應該使用 Bot Framework 的認證機制
+	// 這裡簡化處理，實際應該加上 JWT 認證
+	// 參考: https://learn.microsoft.com/en-us/azure/bot-service/rest-api/bot-framework-rest-connector-authentication
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("發送請求失敗: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("API 回應錯誤: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// 處理事件類型的 Activity（OAuth 回調）
+func (s *messagesService) handleEvent(ctx context.Context, act *Activity, rawPayload map[string]any) error {
+	// 檢查是否為 OAuth Token 回調
+	if act.Name == "tokens/response" {
+		log.Printf("收到 OAuth Token 回調")
+
+		var tokenResp TokenResponse
+		if err := json.Unmarshal(act.Value, &tokenResp); err != nil {
+			log.Printf("解析 Token Response 失敗: %v", err)
+			return errors.New(fmt.Sprintf("解析 Token Response 失敗: %v", err))
+
+		}
+
+		if tokenResp.Token == "" {
+			return errors.New("Token 為空")
+		}
+
+		log.Printf("Token: %s", tokenResp.Token)
+		// 使用 Token 查詢郵件
+		// emails, err := getTodayEmails(tokenResp.Token)
+		// if err != nil {
+		// 	log.Printf("查詢郵件失敗: %v", err)
+		// 	// 回覆錯誤訊息
+		// 	reply := Activity{
+		// 		Type:         "message",
+		// 		From:         activity.Recipient,
+		// 		Recipient:    activity.From,
+		// 		Conversation: activity.Conversation,
+		// 		ServiceURL:   activity.ServiceURL,
+		// 		ReplyToID:    activity.ID,
+		// 		Text:         "查詢郵件時發生錯誤，請稍後再試。",
+		// 	}
+		// 	sendReply(activity.ServiceURL, activity.Conversation.ID, activity.ID, reply)
+		// 	c.JSON(http.StatusOK, gin.H{})
+		// 	return
+		// }
+
+		// // 整理郵件結果並回覆
+		// emailSummary := formatEmailSummary(emails)
+		// reply := Activity{
+		// 	Type:         "message",
+		// 	From:         activity.Recipient,
+		// 	Recipient:    activity.From,
+		// 	Conversation: activity.Conversation,
+		// 	ServiceURL:   activity.ServiceURL,
+		// 	ReplyToID:    activity.ID,
+		// 	Text:         emailSummary,
+		// }
+
+		// if err := sendReply(activity.ServiceURL, activity.Conversation.ID, activity.ID, reply); err != nil {
+		// 	log.Printf("發送回覆失敗: %v", err)
+		// }
+
+		// c.JSON(http.StatusOK, gin.H{})
+
+	}
+
+	return nil
+}
+
+func createOAuthCardActivity(act *Activity) Activity {
+	oauthCard := OAuthCard{
+		Text:           "請先登入，讓我幫你查詢今天的 email。",
+		ConnectionName: "lab-test-teams-notify-login",
+	}
+
+	attachment := Attachment{
+		ContentType: "application/vnd.microsoft.card.oauth",
+		Content:     oauthCard,
+	}
+
+	reply := Activity{
+		Type:         "message",
+		ChannelID:    act.ChannelID,
+		ServiceURL:   act.ServiceURL,
+		Conversation: act.Conversation,
+		ReplyToID:    act.ID,
+		Attachments:  []Attachment{attachment},
+	}
+
+	// Copy From/Recipient (swap them for reply)
+	reply.From = act.Recipient
+	reply.Recipient = act.From
+
+	// Debug: log the OAuth card payload
+	if jsonData, err := json.MarshalIndent(reply, "", "  "); err == nil {
+		log.Printf("OAuth Card Activity payload:\n%s", string(jsonData))
+	}
+
+	return reply
 }
 
 // handleConversationUpdate processes member added/removed, etc. (stub)

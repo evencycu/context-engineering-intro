@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/repositories"
 )
 
 // MonitoringService provides comprehensive system monitoring

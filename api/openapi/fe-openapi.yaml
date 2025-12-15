@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: Enterprise Teams Notification Center API
+  description: >
+    API specification for the Enterprise Teams Notification Center. 
+    This service manages multi-tenant notifications sent to Microsoft Teams via Adaptive Cards,
+    integrates with Azure Active Directory, and provides audit logging and template management.
+  version: 1.0.0
+  contact:
+    name: Platform Engineering Team
+    email: platform@enterprise.corp
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local Development Server
+  - url: https://api.notifications.enterprise.corp/v1
+    description: Production Server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Azure AD Access Token for UI users.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Project-specific API Key for server-to-server integration.
+
+  schemas:
+    # --- Common Enums ---
+    MessagePriority:
+      type: string
+      enum: [High, Normal, Low]
+      description: Delivery priority. High bypasses quiet hours (if configured).
+
+    RecipientType:
+      type: string
+      enum: [User, Channel, Tag, List]
+
+    MessageStatus:
+      type: string
+      enum: [SENT, FAILED, PENDING, SCHEDULED]
+
+    # --- Core Entities ---
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "proj_fin_01"
+        name:
+          type: string
+          example: "Finance Core Systems"
+        department:
+          type: string
+          example: "Finance"
+        companyId:
+          type: string
+        apiKey:
+          type: string
+          description: Secret key for this project (masked in list view).
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        userPrincipalName:
+          type: string
+          format: email
+        jobTitle:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    TemplateVariable:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [text, select, image, date, number]
+        options:
+          type: array
+          items:
+            type: string
+          description: Only used when type is 'select'.
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateVariable'
+        defaultJsonStructure:
+          type: string
+          description: Stringified JSON of the Adaptive Card.
+
+    NotificationLog:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        senderUpn:
+          type: string
+        recipient:
+          type: string
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        status:
+          $ref: '#/components/schemas/MessageStatus'
+        priority:
+          $ref: '#/components/schemas/MessagePriority'
+        errorMessage:
+          type: string
+        contentPreview:
+          type: string
+
+    # --- Request Payloads ---
+    SendMessageRequest:
+      type: object
+      required: [projectId, recipient, recipientType, content]
+      properties:
+        projectId:
+          type: string
+        recipient:
+          type: string
+          description: UPN, Channel ID, or Tag name.
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        content:
+          type: string
+          description: The final JSON string of the Adaptive Card to send.
+        isTemplate:
+          type: boolean
+          default: false
+        templateId:
+          type: string
+        priority:
+          $ref: '#/components/schemas/MessagePriority'
+          default: Normal
+        scheduledFor:
+          type: string
+          format: date-time
+          description: Optional ISO string for delayed delivery.
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ----------------------------
+  # Messaging
+  # ----------------------------
+  /messages/send:
+    post:
+      tags: [Messaging]
+      summary: Send a notification
+      description: Sends an Adaptive Card to a user, channel, or list. Supports templates and scheduling.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message queued or sent successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messageId:
+                    type: string
+                  status:
+                    type: string
+        '400':
+          description: Invalid recipient or malformed JSON.
+        '401':
+          description: Invalid API Key or Token.
+
+  # ----------------------------
+  # Projects
+  # ----------------------------
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List accessible projects
+      responses:
+        '200':
+          description: List of projects the user has access to.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    put:
+      tags: [Projects]
+      summary: Update project settings
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: 
+                  type: string
+                department: 
+                  type: string
+      responses:
+        '200':
+          description: Updated successfully.
+
+  /projects/{projectId}/regenerate-key:
+    post:
+      tags: [Projects]
+      summary: Rotate API Key
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the new API key. Old one is immediately invalidated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiKey:
+                    type: string
+
+  /projects/{projectId}/logs:
+    get:
+      tags: [Projects]
+      summary: Get notification history
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationLog'
+
+  # ----------------------------
+  # Templates
+  # ----------------------------
+  /projects/{projectId}/templates:
+    get:
+      tags: [Templates]
+      summary: Get project templates
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Template'
+    post:
+      tags: [Templates]
+      summary: Create a new template
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+      responses:
+        '201':
+          description: Created
+
+  /projects/{projectId}/templates/{templateId}:
+    put:
+      tags: [Templates]
+      summary: Update a template
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+      responses:
+        '200':
+          description: Updated
+
+    delete:
+      tags: [Templates]
+      summary: Delete a template
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ----------------------------
+  # Directory & Audience
+  # ----------------------------
+  /directory/users/search:
+    get:
+      tags: [Directory]
+      summary: Search Azure AD Users
+      parameters:
+        - name: q
+          in: query
+          description: Search term (name or email)
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+
+  /directory/groups:
+    get:
+      tags: [Directory]
+      summary: List Azure AD Groups
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    displayName:
+                      type: string
+                    groupTypes:
+                      type: array
+                      items: 
+                        type: string
+
+  /directory/groups/{groupId}/channels:
+    get:
+      tags: [Directory]
+      summary: Get Teams Channels for a Group
+      description: Requires the group to be a 'Unified' (M365) group.
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    displayName:
+                      type: string
+                    membershipType:
+                      type: string
+                      enum: [Standard, Private, Shared]
+
+  /projects/{projectId}/chat-groups:
+    get:
+      tags: [Directory]
+      summary: Get registered Chat Groups
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: 
+                      type: string
+                    name:
+                      type: string
+                    chatId:
+                      type: string
+
+    post:
+      tags: [Directory]
+      summary: Register a new Chat Group ID
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, chatId]
+              properties:
+                name: 
+                  type: string
+                chatId:
+                  type: string
+      responses:
+        '201':
+          description: Registered
+
+  # ----------------------------
+  # Admin & Billing
+  # ----------------------------
+  /admin/health:
+    get:
+      tags: [Admin]
+      summary: System Health Check
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cpuUsage:
+                    type: number
+                  queueLength:
+                    type: integer
+                  aadSyncStatus:
+                    type: string
+
+  /admin/billing/records:
+    get:
+      tags: [Admin]
+      summary: Get aggregated billing records
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    companyName:
+                      type: string
+                    cost:
+                      type: number
+                    currency:
+                      type: string
+
+  /admin/bots:
+    get:
+      tags: [Admin]
+      summary: List registered bots
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    displayName:
+                      type: string
+                    appId:
+                      type: string
+                    status:
+                      type: string

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/models"
+	"github.com/evencycu/TeamsNotifyGoV3/libs/models"
 	"github.com/google/uuid"
 )
 

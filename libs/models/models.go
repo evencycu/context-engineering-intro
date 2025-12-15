@@ -665,3 +665,63 @@ type UsageSummary struct {
 	TotalCost     float64   `json:"total_cost" db:"total_cost"`
 	UsageDate     time.Time `json:"usage_date" db:"usage_date"`
 }
+
+// =============================================
+// Template Models
+// =============================================
+
+// TemplateVariable represents a variable in a template
+type TemplateVariable struct {
+	Key     string   `json:"key" db:"key"`
+	Label   string   `json:"label" db:"label"`
+	Type    string   `json:"type" db:"type"` // text, select, image, date, number
+	Options []string `json:"options,omitempty" db:"options"`
+}
+
+// JSONBTemplateVariables is a JSONB-backed slice of TemplateVariable for DB scanning/valuing
+type JSONBTemplateVariables []TemplateVariable
+
+// Value implements driver.Valuer to convert JSONBTemplateVariables to JSON bytes
+func (t JSONBTemplateVariables) Value() (driver.Value, error) {
+	if t == nil {
+		return []byte("[]"), nil
+	}
+	b, err := json.Marshal([]TemplateVariable(t))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSONBTemplateVariables: %w", err)
+	}
+	return b, nil
+}
+
+// Scan implements sql.Scanner to convert JSON bytes into JSONBTemplateVariables
+func (t *JSONBTemplateVariables) Scan(src any) error {
+	if src == nil {
+		*t = JSONBTemplateVariables{}
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for JSONBTemplateVariables Scan: %T", src)
+	}
+	var arr []TemplateVariable
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return fmt.Errorf("failed to unmarshal JSONBTemplateVariables: %w", err)
+	}
+	*t = JSONBTemplateVariables(arr)
+	return nil
+}
+
+// Template represents a notification template
+type Template struct {
+	BaseModel
+	ProjectID            uuid.UUID              `json:"project_id" db:"project_id"`
+	Name                 string                 `json:"name" db:"name"`
+	Description          string                 `json:"description" db:"description"`
+	Variables            JSONBTemplateVariables `json:"variables" db:"variables"`
+	DefaultJsonStructure string                 `json:"default_json_structure" db:"default_json_structure"`
+}

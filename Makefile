@@ -37,8 +37,25 @@ build:
 	@echo "Building application..."
 	go build -o server ./cmd/server
 
+stop:
+	@echo "Stopping application on port 8080 if running..."
+	@PID=$$(lsof -t -i:8080 -sTCP:LISTEN 2>/dev/null || echo ""); \
+	if [ -n "$$PID" ]; then \
+		echo "Killing process $$PID"; \
+		kill $$PID || true; \
+	else \
+		echo "No process listening on port 8080"; \
+	fi
+
 run:
-	@echo "Running application..."
+	@echo "Running application with .env..."
+	@if lsof -t -i:8080 -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo "Port 8080 is already in use. Run 'make stop' first."; \
+		exit 1; \
+	fi; \
+	set -a; \
+	if [ -f configs/.env ]; then . configs/.env; fi; \
+	set +a; \
 	go run ./cmd/server
 
 test:

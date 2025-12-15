@@ -15,21 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 
-	"github.com/evencycu/TeamsNotifyGoV2/libs/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/monitoring"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/notify"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/queue"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/system"
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/configs"
+	"github.com/evencycu/TeamsNotifyGoV3/libs/middleware"
 )
 
 // Server represents the API server
@@ -38,20 +25,10 @@ type Server struct {
 	server *http.Server
 }
 
-// Config represents server configuration
-type Config struct {
-	Port         string
-	Environment  string
-	RateLimit    rate.Limit
-	Burst        int
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-}
-
 // NewServer creates a new API server
-func NewServer(cfg Config) *Server {
+func NewServer(serverCfg configs.ServerConfig) *Server {
 	// Set Gin mode
-	if cfg.Environment == "production" {
+	if serverCfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -66,7 +43,7 @@ func NewServer(cfg Config) *Server {
 	router.Use(requestid.New())
 
 	// 3. Rate limiting (early rejection for performance)
-	limiter := rate.NewLimiter(cfg.RateLimit, cfg.Burst)
+	limiter := rate.NewLimiter(rate.Limit(serverCfg.RateLimit), serverCfg.Burst)
 	router.Use(func(c *gin.Context) {
 		if !limiter.Allow() {
 			c.JSON(http.StatusTooManyRequests, gin.H{
@@ -79,14 +56,31 @@ func NewServer(cfg Config) *Server {
 	})
 
 	// 4. CORS (after rate limiting)
-	router.Use(cors.New(cors.Config{
+	// Create two CORS middlewares: one for Bot Framework (allow all), one for others (restricted)
+	botFrameworkCORS := cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false, // Bot Framework doesn't use credentials
+		MaxAge:           12 * time.Hour,
+	})
+	defaultCORS := cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "http://localhost:8082", "https://yourdomain.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-	}))
+	})
+	// Conditional CORS: use botFrameworkCORS for /api/v1/messages, defaultCORS for others
+	router.Use(func(c *gin.Context) {
+		if c.Request.URL.Path == "/api/v1/messages" {
+			botFrameworkCORS(c)
+			return
+		}
+		defaultCORS(c)
+	})
 
 	// 5. Business metrics logger (for business events)
 	businessMetricsMiddleware := middleware.NewBusinessMetricsMiddleware(logrus.New())
@@ -115,10 +109,10 @@ func NewServer(cfg Config) *Server {
 	return &Server{
 		router: router,
 		server: &http.Server{
-			Addr:         ":" + cfg.Port,
+			Addr:         ":" + serverCfg.Port,
 			Handler:      router,
-			ReadTimeout:  cfg.ReadTimeout,
-			WriteTimeout: cfg.WriteTimeout,
+			ReadTimeout:  serverCfg.ReadTimeout,
+			WriteTimeout: serverCfg.WriteTimeout,
 		},
 	}
 }
@@ -176,121 +170,4 @@ func (s *Server) Start() error {
 // GetRouter returns the router for testing
 func (s *Server) GetRouter() *gin.Engine {
 	return s.router
-}
-
-// RegisterRoutes registers all API routes
-func (s *Server) RegisterRoutes(
-	companyHandler *companies.Handler,
-	userHandler *users.Handler,
-	projectHandler *projects.Handler,
-	botHandler *bots.Handler,
-	destinationHandler *destinations.Handler,
-	notificationHandler *notifications.Handler,
-	messagesHandler *messages.Handler,
-	provisionHandler *provision.Handler,
-	externalHandler *notify.Handler,
-	systemHandler *system.Handler,
-	billingHandler *billing.Handler,
-	fileHandler *files.Handler,
-	queueHandler *queue.Handler,
-	monitoringHandler *monitoring.MonitoringHandler,
-) {
-	// API v1 routes
-	v1 := s.router.Group("/api/v1")
-	{
-		// Company routes
-		v1.POST("/companies", companyHandler.CreateCompany)
-		v1.GET("/companies", companyHandler.ListCompanies)
-		v1.GET("/companies/:id", companyHandler.GetCompany)
-		v1.PUT("/companies/:id", companyHandler.UpdateCompany)
-		v1.DELETE("/companies/:id", companyHandler.DeleteCompany)
-		v1.PATCH("/companies/:id/status", companyHandler.UpdateCompanyStatus)
-		v1.PATCH("/companies/:id/billing", companyHandler.UpdateBillingStatus)
-
-		// User routes
-		v1.POST("/users", userHandler.CreateUser)
-		v1.GET("/users", userHandler.ListUsers)
-		v1.GET("/users/:id", userHandler.GetUser)
-		v1.PUT("/users/:id", userHandler.UpdateUser)
-		v1.DELETE("/users/:id", userHandler.DeleteUser)
-		v1.PATCH("/users/:id/password", userHandler.ChangePassword)
-		v1.GET("/users/company/:companyId", userHandler.GetUsersByCompany)
-		v1.GET("/users/role/:role", userHandler.GetUsersByRole)
-
-		// Project routes
-		v1.POST("/projects", projectHandler.CreateProject)
-		v1.GET("/projects", projectHandler.ListProjects)
-		v1.GET("/projects/:id", projectHandler.GetProject)
-		v1.PUT("/projects/:id", projectHandler.UpdateProject)
-		v1.DELETE("/projects/:id", projectHandler.DeleteProject)
-		v1.PATCH("/projects/:id/limits", projectHandler.UpdateLimits)
-		v1.GET("/projects/company/:companyId", projectHandler.GetProjectsByCompany)
-		v1.GET("/projects/key/:keyName", projectHandler.GetProjectByKeyName)
-
-		// Bot routes
-		v1.POST("/bots/platform", botHandler.CreateTeamsBotService)
-		v1.GET("/bots/platform", botHandler.ListteamsBotServices)
-		v1.GET("/bots/platform/:id", botHandler.GetteamsBotService)
-		v1.PUT("/bots/platform/:id", botHandler.UpdateteamsBotService)
-		v1.DELETE("/bots/platform/:id", botHandler.DeleteteamsBotService)
-		v1.PATCH("/bots/platform/:id/status", botHandler.UpdateteamsBotServiceStatus)
-		v1.PATCH("/bots/platform/:id/capabilities", botHandler.UpdateteamsBotServiceCapabilities)
-		v1.POST("/bots/platform/:id/test", botHandler.TestteamsBotServiceConnection)
-
-		// third-party routes removed
-		// v1.GET("/bots/company/:companyId", botHandler.GetBotsByCompany) // removed with third-party
-		v1.GET("/bots/status/:status", botHandler.GetBotsByStatus)
-
-		// Destination routes
-		v1.POST("/destinations", destinationHandler.CreateDestination)
-		v1.GET("/destinations", destinationHandler.ListDestinations)
-		v1.GET("/destinations/:id", destinationHandler.GetDestination)
-		v1.PUT("/destinations/:id", destinationHandler.UpdateDestination)
-		v1.DELETE("/destinations/:id", destinationHandler.DeleteDestination)
-		v1.PATCH("/destinations/:id/targets", destinationHandler.UpdateTargets)
-		v1.POST("/destinations/:id/validate", destinationHandler.ValidateTargets)
-		v1.GET("/destinations/project/:projectId", destinationHandler.GetDestinationsByProject)
-		v1.GET("/destinations/bot/:botId", destinationHandler.GetDestinationsByBot)
-		v1.GET("/destinations/search", destinationHandler.SearchDestinations)
-
-		// Notification routes
-		v1.POST("/notifications", notificationHandler.SendNotification)
-		v1.GET("/notifications", notificationHandler.ListNotifications)
-		v1.GET("/notifications/:id", notificationHandler.GetNotification)
-		v1.POST("/notifications/:id/retry", notificationHandler.RetryNotification)
-		v1.DELETE("/notifications/:id", notificationHandler.CancelNotification)
-		v1.GET("/notifications/project/:projectId", notificationHandler.GetNotificationsByProject)
-		v1.GET("/notifications/sender/:senderId", notificationHandler.GetNotificationsBySender)
-		v1.GET("/notifications/status/:status", notificationHandler.GetNotificationsByStatus)
-		v1.GET("/notifications/date-range", notificationHandler.GetNotificationsByDateRange)
-
-		// Bot Framework messages webhook
-		v1.POST("/messages", messagesHandler.Handle)
-		v1.POST("/messages/proactive/test", messagesHandler.ProactiveTest)
-
-		// Provision routes
-		provisionHandler.RegisterRoutes(v1)
-
-		// External API routes
-		externalHandler.RegisterRoutes(v1)
-
-		// System routes
-		systemHandler.RegisterRoutes(v1)
-
-		// Billing routes
-		billingHandler.RegisterRoutes(v1)
-
-		// File routes
-		fileHandler.RegisterRoutes(v1)
-
-		// Queue routes
-		queueHandler.RegisterRoutes(v1)
-
-		// Monitoring routes
-		v1.GET("/monitoring/health", monitoringHandler.GetSystemHealth)
-		v1.GET("/monitoring/performance", monitoringHandler.GetPerformanceMetrics)
-		v1.GET("/monitoring/business", monitoringHandler.GetBusinessHealth)
-		v1.GET("/monitoring/alerts", monitoringHandler.GetAlertStatus)
-		v1.GET("/monitoring/dashboard", monitoringHandler.GetDashboard)
-	}
 }

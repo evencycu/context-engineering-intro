@@ -135,8 +135,8 @@
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)

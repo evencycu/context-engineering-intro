@@ -16392,23 +16392,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -16626,23 +16626,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -16857,23 +16857,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -17087,23 +17087,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -32264,19 +32264,19 @@ internal/
 #### **1. cmd/server/main.go**
 ```go
 // 當前
-import "github.com/evencycu/TeamsNotifyGoV2/internal/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/actor"
 
 // 搬遷後
-import "github.com/evencycu/TeamsNotifyGoV2/internal/api/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/api/actor"
 ```
 
 #### **2. internal/api/services/service.go**
 ```go
 // 當前
-import "github.com/evencycu/TeamsNotifyGoV2/internal/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/actor"
 
 // 搬遷後
-import "github.com/evencycu/TeamsNotifyGoV2/internal/api/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/api/actor"
 ```
 
 ### ⚠️ **潛在問題分析**
@@ -32318,18 +32318,18 @@ internal/
 
 ```go
 // 當前
-import "github.com/evencycu/TeamsNotifyGoV2/internal/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/actor"
 
 // 搬遷後
-import "github.com/evencycu/TeamsNotifyGoV2/internal/api/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/api/actor"
 ```
 
 ```go
 // 當前
-import "github.com/evencycu/TeamsNotifyGoV2/internal/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/actor"
 
 // 搬遷後
-import "github.com/evencycu/TeamsNotifyGoV2/internal/api/actor"
+import "github.com/evencycu/TeamsNotifyGoV3/internal/api/actor"
 ```
 
 ```plaintext
@@ -33997,23 +33997,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -37748,23 +37748,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -38145,23 +38145,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -39829,9 +39829,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41525,7 +41525,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationScanner periodically scans for pending notifications
@@ -42079,23 +42079,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -42313,7 +42313,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationScanner periodically scans for pending notifications
@@ -42440,9 +42440,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44143,7 +44143,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -45415,7 +45415,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -46701,8 +46701,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -47126,7 +47126,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationScanner periodically scans for pending notifications
@@ -47239,7 +47239,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationScanner periodically scans for pending notifications
@@ -47352,7 +47352,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationScanner periodically scans for pending notifications
@@ -47653,9 +47653,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49364,7 +49364,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -49475,7 +49475,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -49591,7 +49591,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -50012,7 +50012,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -51508,23 +51508,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -51746,9 +51746,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -53424,7 +53424,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-    "github.com/evencycu/TeamsNotifyGoV2/internal/database"
+    "github.com/evencycu/TeamsNotifyGoV3/internal/database"
 )
 
 // NotificationDestinationRepository subset needed by worker
@@ -53518,9 +53518,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -55244,9 +55244,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -56914,7 +56914,7 @@ func (s *messagesService) getGraphAPIAccessToken(ctx context.Context, tenantID s
      "fmt"
      "io"
 @@
--    "github.com/evencycu/TeamsNotifyGoV2/internal/actor"
+-    "github.com/evencycu/TeamsNotifyGoV3/internal/actor"
 *** End Patch
 PATCH
 ```
@@ -56937,8 +56937,8 @@ import (
 	"time"
 
     // actor package no longer needed here (enqueue moved to worker)
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -58611,8 +58611,8 @@ import (
 	"time"
 
     // actor package no longer needed here (enqueue moved to worker)
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -60284,8 +60284,8 @@ import (
 	"time"
 
     // actor package no longer needed here (enqueue moved to worker)
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -62058,7 +62058,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -62304,23 +62304,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -62533,7 +62533,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -65029,8 +65029,8 @@ func (h *Handler) GetQueueStats(c *gin.Context) {
 -import (
 +import (
 @@
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-+    qhandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
++    qhandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
 @@
 -    notificationProcessor.Start(ctx)
 +    notificationProcessor.Start(ctx)
@@ -65057,24 +65057,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-    qhandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+    qhandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -69453,13 +69453,13 @@ func NewConfigValidationError(details string) *AppError {
      "os"
      "time"
 @@
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-     qhandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-     "github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
-+    cfgpkg "github.com/evencycu/TeamsNotifyGoV2/internal/config"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+     qhandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+     "github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
++    cfgpkg "github.com/evencycu/TeamsNotifyGoV3/internal/config"
      "github.com/gin-gonic/gin"
 @@
  func main() {
@@ -69505,25 +69505,25 @@ import (
 	"os"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/actor"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/billing"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/bots"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/companies"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/destinations"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/external"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/files"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/messages"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/notifications"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/projects"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/provision"
-	qhandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/users"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/middleware"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/repositories"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/services"
-	"github.com/evencycu/TeamsNotifyGoV2/internal/api/storage"
-	cfgpkg "github.com/evencycu/TeamsNotifyGoV2/internal/config"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/actor"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/billing"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/bots"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/companies"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/external"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/files"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/messages"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/notifications"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/projects"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/provision"
+	qhandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/users"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/middleware"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/repositories"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/services"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/api/storage"
+	cfgpkg "github.com/evencycu/TeamsNotifyGoV3/internal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -73826,7 +73826,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -73912,7 +73912,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -74646,7 +74646,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -75898,7 +75898,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -76039,7 +76039,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -76781,7 +76781,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -77379,7 +77379,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evencycu/TeamsNotifyGoV2/internal/database"
+	"github.com/evencycu/TeamsNotifyGoV3/internal/database"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -101388,7 +101388,7 @@ Teams Notification API 是一個基於 Go 的微服務架構，提供企業級�
 ### 4.2 快速啟動
 ```bash
 # Clone 專案
-git clone https://github.com/evencycu/TeamsNotifyGoV2.git
+git clone https://github.com/evencycu/TeamsNotifyGoV3.git
 cd TeamsNotifyGoV2
 
 # 啟動開發環境
@@ -101554,7 +101554,7 @@ Teams Notification API 是一個基於 Go 的微服務架構，提供企業級�
 ### 4.2 快速啟動
 ```bash
 # Clone 專案
-git clone https://github.com/evencycu/TeamsNotifyGoV2.git
+git clone https://github.com/evencycu/TeamsNotifyGoV3.git
 cd TeamsNotifyGoV2
 
 # 啟動開發環境
@@ -108994,8 +108994,8 @@ For issues and questions:
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)
@@ -109516,8 +109516,8 @@ JitterFraction: 0.1                 // 10% 抖動
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)
@@ -110045,8 +110045,8 @@ JitterFraction: 0.1                 // 10% 抖動
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)
@@ -110567,8 +110567,8 @@ JitterFraction: 0.1                 // 10% 抖動
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)
@@ -111089,8 +111089,8 @@ JitterFraction: 0.1                 // 10% 抖動
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)
@@ -111611,8 +111611,8 @@ JitterFraction: 0.1                 // 10% 抖動
 
 1. **cmd/server/main.go**
    ```diff
-   + import "github.com/evencycu/TeamsNotifyGoV2/internal/queue"
-   + import queueHandler "github.com/evencycu/TeamsNotifyGoV2/internal/api/handlers/queue"
+   + import "github.com/evencycu/TeamsNotifyGoV3/internal/queue"
+   + import queueHandler "github.com/evencycu/TeamsNotifyGoV3/internal/api/handlers/queue"
    
    + // Initialize queue system
    + queueRepo := queue.NewRepository(db.DB)

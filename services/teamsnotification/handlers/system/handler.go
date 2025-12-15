@@ -3,7 +3,7 @@ package system
 import (
 	"net/http"
 
-	"github.com/evencycu/TeamsNotifyGoV2/services/teamsnotification/services"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/services"
 	"github.com/gin-gonic/gin"
 )
 
