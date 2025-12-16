@@ -1925,6 +1925,144 @@ paths:
               schema:
                 $ref: "#/components/schemas/QueueClearResponse"
 
+  # Template Management endpoints
+  /internal/v1/projects/{id}/templates:
+    get:
+      summary: List templates
+      tags: [Internal API - Templates]
+      description: List templates for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Template list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateListResponse"
+    post:
+      summary: Create template
+      tags: [Internal API - Templates]
+      description: Create a new template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateCreateRequest"
+      responses:
+        "201":
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateResponse"
+
+  /internal/v1/projects/{id}/templates/{templateId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get template
+      tags: [Internal API - Templates]
+      description: Get template by ID
+      responses:
+        "200":
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateResponse"
+    put:
+      summary: Update template
+      tags: [Internal API - Templates]
+      description: Update template by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateUpdateRequest"
+      responses:
+        "200":
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateResponse"
+    delete:
+      summary: Delete template
+      tags: [Internal API - Templates]
+      description: Delete template by ID
+      responses:
+        "204":
+          description: Template deleted
+
+  # Directory endpoints
+  /internal/v1/directory/users/search:
+    get:
+      summary: Search Azure AD users
+      tags: [Internal API - Directory]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSearchResponse"
+
+  /internal/v1/directory/groups:
+    get:
+      summary: List Azure AD groups
+      tags: [Internal API - Directory]
+      responses:
+        "200":
+          description: Group list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupListResponse"
+
+  /internal/v1/directory/sync:
+    post:
+      summary: Sync directory
+      tags: [Internal API - Directory]
+      description: Trigger directory synchronization with Azure AD
+      responses:
+        "202":
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3509,6 +3647,154 @@ components:
         timestamp:
           type: string
           format: date-time
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateVariable"
+        default_json_structure:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TemplateVariable:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [text, select, image, date, number]
+        options:
+          type: array
+          items:
+            type: string
+
+    TemplateListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+        message:
+          type: string
+
+    TemplateResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Template"
+        message:
+          type: string
+
+    TemplateCreateRequest:
+      type: object
+      required: [name, default_json_structure]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateVariable"
+        default_json_structure:
+          type: string
+
+    TemplateUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateVariable"
+        default_json_structure:
+          type: string
+
+    AzureADUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        azure_ad_id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+        job_title:
+          type: string
+        department:
+          type: string
+        synced_at:
+          type: string
+          format: date-time
+
+    AzureADGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        azure_ad_id:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        group_types:
+          type: array
+          items:
+            type: string
+        synced_at:
+          type: string
+          format: date-time
+
+    UserSearchResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AzureADUser"
+        message:
+          type: string
+
+    GroupListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AzureADGroup"
+        message:
+          type: string
 
 tags:
   - name: System

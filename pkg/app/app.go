@@ -14,6 +14,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/bots"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/companies"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/destinations"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/directory"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/files"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/messages"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/monitoring"
@@ -120,6 +121,11 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 	tokenManager := token.NewTokenManager(redisClient)
 	logger.Info("Token Manager initialized successfully")
 
+	// Directory & Graph
+	directoryRepo := repositories.NewDirectoryRepository(db)
+	graphService := services.NewGraphService(tokenManager, cfg.Teams.TenantID, cfg.Teams.AppID)
+	directoryService := services.NewDirectoryService(directoryRepo, graphService)
+
 	billingPlanRepo := repositories.NewBillingPlanRepository(db)
 	usageRecordRepo := repositories.NewUsageRecordRepository(db)
 	projectBillingRepo := repositories.NewProjectBillingRepository(db)
@@ -134,8 +140,8 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 		redisClient,
 		redisQueue,
 		actor.NewActorDB(notificationDestRepo, installationRepo, teamsBotRepo, notificationRepo, projectRepo),
-		token.NewTokenManagerAdapter(tokenManager),
-		token.NewBillingServiceAdapter(billingService),
+		services.NewTokenManagerAdapter(tokenManager),
+		services.NewBillingServiceAdapter(billingService),
 		cfg.Actor.MaxActors,
 		notificationDestRepo,
 	)
@@ -172,6 +178,7 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 	systemHandler := system.NewHandler(metricsService, configService)
 	monitoringHandler := monitoring.NewMonitoringHandler(monitoringService)
 	templateHandler := templates.NewHandler(templateService)
+	directoryHandler := directory.NewHandler(directoryService)
 
 	// Create server
 	server := teamsnotification.NewServer(cfg.Server)
@@ -220,6 +227,7 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 		queueHandler,
 		monitoringHandler,
 		templateHandler,
+		directoryHandler,
 	)
 
 	return &Application{

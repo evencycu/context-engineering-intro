@@ -1636,34 +1636,49 @@ func (s *notificationService) SendNotification(ctx context.Context, req *SendNot
 }
 
 func filterDestinations(destinations []*models.Destination, targets []string) []*models.Destination {
-	filteredDestinations := make([]*models.Destination, 0)
+	if len(targets) == 0 {
+		return destinations
+	}
+
+	// Preprocess targets into sets for O(1) lookup
+	targetEmails := make(map[string]struct{})
+	targetConvIDs := make(map[string]struct{})
+
+	for _, t := range targets {
+		t = strings.TrimSpace(t)
+		if strings.Contains(t, "@") {
+			targetEmails[strings.ToLower(t)] = struct{}{}
+		} else {
+			targetConvIDs[strings.ToLower(t)] = struct{}{}
+		}
+	}
+
+	filtered := make([]*models.Destination, 0)
+
 	for _, d := range destinations {
-		for _, t := range targets {
-			matched := false
-			if strings.Contains(t, "@") {
-				for _, tgt := range d.Targets {
-					if strings.EqualFold(t, tgt.Email) {
-						filteredDestinations = append(filteredDestinations, d)
-						matched = true
-						break
-					}
-				}
-			} else {
-				// match by conversation_id across all targets
-				for _, tgt := range d.Targets {
-					if strings.EqualFold(t, tgt.ConversationID) {
-						filteredDestinations = append(filteredDestinations, d)
-						matched = true
-						break
-					}
-				}
+		if isDestinationMatched(d, targetEmails, targetConvIDs) {
+			filtered = append(filtered, d)
+		}
+	}
+	return filtered
+}
+
+func isDestinationMatched(d *models.Destination, targetEmails, targetConvIDs map[string]struct{}) bool {
+	for _, tgt := range d.Targets {
+		// Check Email
+		if tgt.Email != "" {
+			if _, ok := targetEmails[strings.ToLower(tgt.Email)]; ok {
+				return true
 			}
-			if matched {
-				break // avoid duplicate appends for the same destination
+		}
+		// Check ConversationID
+		if tgt.ConversationID != "" {
+			if _, ok := targetConvIDs[strings.ToLower(tgt.ConversationID)]; ok {
+				return true
 			}
 		}
 	}
-	return filteredDestinations
+	return false
 }
 
 // RetryNotification retries a failed notification

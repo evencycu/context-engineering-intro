@@ -725,3 +725,28 @@ type Template struct {
 	Variables            JSONBTemplateVariables `json:"variables" db:"variables"`
 	DefaultJsonStructure string                 `json:"default_json_structure" db:"default_json_structure"`
 }
+
+// =============================================
+// Azure AD Directory Models
+// =============================================
+
+// AzureADUser represents a user synced from Azure AD
+type AzureADUser struct {
+	BaseModel
+	AzureADID   string     `json:"azure_ad_id" db:"azure_ad_id"`
+	DisplayName string     `json:"display_name" db:"display_name"`
+	Email       string     `json:"email" db:"email"`
+	JobTitle    string     `json:"job_title" db:"job_title"`
+	Department  string     `json:"department" db:"department"`
+	SyncedAt    *time.Time `json:"synced_at" db:"synced_at"`
+}
+
+// AzureADGroup represents a group synced from Azure AD
+type AzureADGroup struct {
+	BaseModel
+	AzureADID   string           `json:"azure_ad_id" db:"azure_ad_id"`
+	DisplayName string           `json:"display_name" db:"display_name"`
+	Description string           `json:"description" db:"description"`
+	GroupTypes  JSONBStringArray `json:"group_types" db:"group_types"`
+	SyncedAt    *time.Time       `json:"synced_at" db:"synced_at"`
+}

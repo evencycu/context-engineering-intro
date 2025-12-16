@@ -296,6 +296,27 @@ CREATE TABLE files (
 
 
 -- =============================================
+-- Template Management Tables
+-- =============================================
+
+-- Templates table for managing notification templates
+CREATE TABLE templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    variables JSONB DEFAULT '[]'::jsonb, -- Array of template variables definition
+    default_json_structure TEXT NOT NULL, -- The Adaptive Card JSON structure
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(project_id, name)
+);
+
+-- Index for faster lookup by project
+CREATE INDEX idx_templates_project_id ON templates(project_id);
+
+
+-- =============================================
 -- Audit and Logging Tables
 -- =============================================
 
@@ -485,6 +506,7 @@ CREATE TRIGGER update_project_billing_updated_at BEFORE UPDATE ON project_billin
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_templates_updated_at BEFORE UPDATE ON templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- Views for Common Queries
