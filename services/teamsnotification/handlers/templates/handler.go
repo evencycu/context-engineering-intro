@@ -18,7 +18,7 @@ func NewHandler(templateService services.TemplateService) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	templates := rg.Group("/projects/:projectId/templates")
+	templates := rg.Group("/projects/:id/templates")
 	{
 		templates.GET("", h.ListTemplates)
 		templates.POST("", h.CreateTemplate)
@@ -29,7 +29,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) CreateTemplate(c *gin.Context) {
-	projectID, err := uuid.Parse(c.Param("projectId"))
+	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid project ID", err, nil)
 		return
@@ -52,7 +52,7 @@ func (h *Handler) CreateTemplate(c *gin.Context) {
 }
 
 func (h *Handler) ListTemplates(c *gin.Context) {
-	projectID, err := uuid.Parse(c.Param("projectId"))
+	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid project ID", err, nil)
 		return
