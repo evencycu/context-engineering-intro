@@ -968,15 +968,17 @@ func getEnv(key, def string) string {
 
 // SendNotificationRequest represents a send notification request
 type SendNotificationRequest struct {
-	ProjectID   uuid.UUID        `json:"project_id" validate:"required"`
-	SenderID    *uuid.UUID       `json:"sender_id"`
-	MessageType string           `json:"message_type" validate:"required,oneof=text file adaptive_card"`
-	Content     string           `json:"content" validate:"required,max=4000"`
-	Mentions    []string         `json:"mentions"`
-	Attachments []map[string]any `json:"attachments"`
-	Priority    string           `json:"priority" validate:"oneof=low normal high"`
-	Metadata    map[string]any   `json:"metadata"`
-	Targets     []string         `json:"targets" validate:"omitempty,min=1"`
+	ProjectID    uuid.UUID        `json:"project_id" validate:"required"`
+	SenderID     *uuid.UUID       `json:"sender_id"`
+	MessageType  string           `json:"message_type" validate:"required_without=TemplateID,oneof=text file adaptive_card"`
+	Content      string           `json:"content" validate:"required_without=TemplateID,max=4000"`
+	TemplateID   *uuid.UUID       `json:"template_id"`
+	TemplateData map[string]any   `json:"template_data"`
+	Mentions     []string         `json:"mentions"`
+	Attachments  []map[string]any `json:"attachments"`
+	Priority     string           `json:"priority" validate:"oneof=low normal high"`
+	Metadata     map[string]any   `json:"metadata"`
+	Targets      []string         `json:"targets" validate:"omitempty,min=1"`
 }
 
 // BaseService provides common service functionality
@@ -1447,13 +1449,14 @@ func validateTeamsTargets(targets models.JSONBTargets) error {
 // =============================================
 
 // NewNotificationService creates a new notification service
-func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, metricsService MetricsService) NotificationService {
+func NewNotificationService(repo repositories.NotificationRepository, destinationRepo repositories.DestinationRepository, notificationDestRepo repositories.NotificationDestinationRepository, broadcaster BroadcastService, metricsService MetricsService, templateService TemplateService) NotificationService {
 	return &notificationService{
 		repo:                 repo,
 		destinationRepo:      destinationRepo,
 		notificationDestRepo: notificationDestRepo,
 		broadcaster:          broadcaster,
 		metricsService:       metricsService,
+		templateService:      templateService,
 	}
 }
 
@@ -1463,6 +1466,7 @@ type notificationService struct {
 	notificationDestRepo repositories.NotificationDestinationRepository
 	broadcaster          BroadcastService
 	metricsService       MetricsService
+	templateService      TemplateService
 }
 
 // Create creates a new notification
@@ -1537,6 +1541,25 @@ func (s *notificationService) GetByDateRange(ctx context.Context, start, end tim
 
 // SendNotification sends a notification
 func (s *notificationService) SendNotification(ctx context.Context, req *SendNotificationRequest) (*models.Notification, error) {
+	// Handle Template Rendering
+	if req.TemplateID != nil {
+		if s.templateService == nil {
+			return nil, errors.New("template service not initialized")
+		}
+		template, err := s.templateService.GetByID(ctx, *req.TemplateID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get template: %w", err)
+		}
+
+		content := template.DefaultJsonStructure
+		for key, val := range req.TemplateData {
+			placeholder := fmt.Sprintf("${%s}", key)
+			content = strings.ReplaceAll(content, placeholder, fmt.Sprintf("%v", val))
+		}
+		req.Content = content
+		req.MessageType = "adaptive_card"
+	}
+
 	// Convert attachments slice
 	var attachments models.JSONBObjectArray
 	if req.Attachments != nil {

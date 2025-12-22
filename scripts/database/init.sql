@@ -101,3 +101,16 @@ INSERT INTO feature_flags (name, description, enabled) VALUES
 ('bot_routing', 'Enable intelligent bot routing', true),
 ('maintenance_mode', 'Enable maintenance mode', false)
 ON CONFLICT (name) DO NOTHING;
+
+-- Insert sample templates
+INSERT INTO templates (id, project_id, name, description, variables, default_json_structure, created_at, updated_at) VALUES
+('e50e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', 'Welcome Message', 'Simple welcome card', 
+ '[{"key": "username", "label": "User Name", "type": "text"}]'::jsonb, 
+ '{"type": "AdaptiveCard", "version": "1.4", "body": [{"type": "TextBlock", "text": "Welcome, ${username}!", "size": "Large", "weight": "Bolder"}, {"type": "TextBlock", "text": "We are glad to have you here."}]}', 
+ NOW(), NOW()),
+
+('e50e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440001', 'System Alert', 'Configurable alert card', 
+ '[{"key": "title", "label": "Alert Title", "type": "text"}, {"key": "message", "label": "Alert Message", "type": "text"}, {"key": "color", "label": "Color", "type": "select", "options": ["Good", "Warning", "Attention"]}]'::jsonb, 
+ '{"type": "AdaptiveCard", "version": "1.4", "body": [{"type": "Container", "style": "${color}", "items": [{"type": "TextBlock", "text": "${title}", "weight": "Bolder", "size": "Medium"}, {"type": "TextBlock", "text": "${message}", "wrap": true}]}]}', 
+ NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;

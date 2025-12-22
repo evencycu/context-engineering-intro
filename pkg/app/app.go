@@ -133,7 +133,7 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 	_ = projectBillingRepo
 
 	redisQueue := actor.NewRedisQueue(redisClient)
-	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, metricsService)
+	notificationService := services.NewNotificationService(notificationRepo, destinationRepo, notificationDestRepo, broadcaster, metricsService, templateService)
 
 	// Initialize notification processor (unified ActorPool + QueueConsumer + EnqueueWorker)
 	notificationProcessor := actor.NewNotificationProcessor(

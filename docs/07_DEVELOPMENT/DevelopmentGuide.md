@@ -310,7 +310,10 @@ curl http://localhost:8080/health
 curl http://localhost:8080/api/v1/queue/status
 
 # 查看資料庫連線
-docker exec teamsnotify-postgres psql -U teamsnotify -d teamsnotify -c "SELECT 1;"
+docker exec teamsnotify-postgres psql -U teamsnotify -d notification_center -c "SELECT 1;"
+
+# 進入資料庫 Shell
+make db-shell
 
 # 查看 Redis 連線
 docker exec teamsnotify-redis redis-cli ping

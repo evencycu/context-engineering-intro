@@ -19,17 +19,25 @@ docker-logs:
 	docker-compose logs -f
 
 # Database operations
+db-init:
+	@echo "Initializing database..."
 	@if [ -z "$$(docker ps -q -f name=teamsnotify-postgres)" ]; then \
 		echo "PostgreSQL container is not running. Please run 'make docker-up' first."; \
 		exit 1; \
 	fi
-	docker exec -i teamsnotify-postgres psql -U teamsnotify -d teamsnotify < internal/database/schema.sql
+	@echo "Applying schema..."
+	docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/database/schema.sql
+	@echo "Applying initial data..."
+	docker exec -i teamsnotify-postgres psql -U teamsnotify -d notification_center < scripts/database/init.sql
+	@echo "Database initialization completed!"
 
 db-reset:
 	@echo "Resetting database..."
-	docker-compose down -v
-	docker-compose up -d
+	docker-compose -f scripts/docker/docker-compose.yml down -v
+	docker-compose -f scripts/docker/docker-compose.yml up -d postgres redis
+	@echo "Waiting for database to start..."
 	@sleep 10
+	$(MAKE) db-init
 	@echo "Database reset completed!"
 
 # Application operations
