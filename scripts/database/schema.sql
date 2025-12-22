@@ -595,20 +595,3 @@ JOIN projects p ON f.project_id = p.id
 JOIN companies c ON p.company_id = c.id
 GROUP BY f.project_id, p.notify_key, p.company_id, c.name;
 
-
--- =============================================
--- Indexes for Performance
--- =============================================
-
--- Bot installations indexes
-CREATE INDEX idx_bot_installations_bot_tenant ON bot_installations(bot_id, bot_type, teams_tenant_id);
--- removed invalid legacy indexes (scope, teams_* columns not present)
-
--- Destinations targets indexes (GIN for JSONB queries)
-CREATE INDEX idx_destinations_targets_gin ON destinations USING GIN(targets);
-
--- Notifications indexes
-CREATE INDEX idx_notifications_sender ON notifications(sender_id);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at);
-
--- =============================================

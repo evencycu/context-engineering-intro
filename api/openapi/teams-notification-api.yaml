@@ -2221,7 +2221,6 @@ components:
       type: object
       required:
         - notifyKey
-        - message
       properties:
         notifyKey:
           type: string
@@ -2289,6 +2288,17 @@ components:
                   - type: TextBlock
                     text: "Hello from Adaptive Card"
                     wrap: true
+        templateId:
+          type: string
+          format: uuid
+          description: UUID of the template to use
+        templateData:
+          type: object
+          additionalProperties: true
+          description: Key-value pairs for template variable substitution
+        isTemplate:
+          type: boolean
+          description: Flag to indicate if this is a template based message
 
     ExternalNotifyResponse:
       type: object
@@ -2823,7 +2833,6 @@ components:
       required:
         - projectId
         - messageType
-        - content
         - targets
       properties:
         projectId:
@@ -2842,6 +2851,14 @@ components:
           type: string
           maxLength: 4000
           description: Message content
+        templateId:
+          type: string
+          format: uuid
+          description: UUID of the template to use
+        templateData:
+          type: object
+          additionalProperties: true
+          description: Key-value pairs for template variable substitution
         mentions:
           type: array
           items:

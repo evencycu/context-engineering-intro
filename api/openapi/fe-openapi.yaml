@@ -143,7 +143,7 @@ components:
     # --- Request Payloads ---
     SendMessageRequest:
       type: object
-      required: [projectId, recipient, recipientType, content]
+      required: [projectId, recipient, recipientType]
       properties:
         projectId:
           type: string
@@ -154,12 +154,17 @@ components:
           $ref: '#/components/schemas/RecipientType'
         content:
           type: string
-          description: The final JSON string of the Adaptive Card to send.
+          description: The final JSON string of the Adaptive Card to send. Required if templateId is not provided.
         isTemplate:
           type: boolean
           default: false
         templateId:
           type: string
+          description: UUID of the template to use.
+        templateData:
+          type: object
+          additionalProperties: true
+          description: Key-value pairs for template variable substitution.
         priority:
           $ref: '#/components/schemas/MessagePriority'
           default: Normal

@@ -7,6 +7,7 @@ import (
 
 	"github.com/evencycu/TeamsNotifyGoV3/libs/models"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/repositories"
+	"github.com/google/uuid"
 )
 
 // NotifyService handles external user notification requests
@@ -37,14 +38,17 @@ func NewNotifyService(
 
 // NotifyRequest represents an external notification request
 type NotifyRequest struct {
-	NotifyKey   string           `json:"notify_key" validate:"required,min=3,max=50"`
-	Message     string           `json:"message" validate:"required,min=1,max=4000"`
-	MessageType string           `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
-	Priority    string           `json:"priority" validate:"omitempty,oneof=low normal high"`
-	TargetIDs   []string         `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
-	Mentions    []string         `json:"mentions" validate:"omitempty"`
-	Metadata    map[string]any   `json:"metadata" validate:"omitempty"`
-	Attachments []map[string]any `json:"attachments" validate:"omitempty"`
+	NotifyKey    string           `json:"notify_key" validate:"required,min=3,max=50"`
+	Message      string           `json:"message" validate:"required_without=TemplateID,min=1,max=4000"`
+	MessageType  string           `json:"message_type" validate:"omitempty,oneof=text file adaptive_card"`
+	Priority     string           `json:"priority" validate:"omitempty,oneof=low normal high"`
+	TargetIDs    []string         `json:"target_ids" validate:"omitempty"` // If empty, send to all, personal emails, or channel/groupChats IDs
+	Mentions     []string         `json:"mentions" validate:"omitempty"`
+	Metadata     map[string]any   `json:"metadata" validate:"omitempty"`
+	Attachments  []map[string]any `json:"attachments" validate:"omitempty"`
+	TemplateID   string           `json:"template_id" validate:"omitempty"`
+	TemplateData map[string]any   `json:"template_data" validate:"omitempty"`
+	IsTemplate   bool             `json:"is_template" validate:"omitempty"`
 }
 
 // NotifyResponse represents the response for external notification
@@ -71,7 +75,7 @@ type DestinationResult struct {
 // SendNotification sends notification to external users
 func (s *notifyService) SendNotification(ctx context.Context, req *NotifyRequest) (*NotifyResponse, error) {
 	// Validate and set defaults
-	if req.MessageType == "" {
+	if req.MessageType == "" && !req.IsTemplate {
 		req.MessageType = "text"
 	}
 	if req.Priority == "" {
@@ -102,16 +106,27 @@ func (s *notifyService) SendNotification(ctx context.Context, req *NotifyRequest
 	// Note: results may target a subset based on req.TargetIDs
 
 	// Create notification request for NotificationService
+	var templateUUID *uuid.UUID
+	if req.TemplateID != "" {
+		uid, err := uuid.Parse(req.TemplateID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid template_id format: %w", err)
+		}
+		templateUUID = &uid
+	}
+
 	notificationReq := &SendNotificationRequest{
-		ProjectID:   project.ID,
-		SenderID:    nil, // External notifications don't have a sender
-		MessageType: req.MessageType,
-		Content:     req.Message,
-		Mentions:    req.Mentions,
-		Attachments: req.Attachments,
-		Priority:    req.Priority,
-		Metadata:    req.Metadata,
-		Targets:     req.TargetIDs, // Empty means send to all destinations
+		ProjectID:    project.ID,
+		SenderID:     nil, // External notifications don't have a sender
+		MessageType:  req.MessageType,
+		Content:      req.Message,
+		Mentions:     req.Mentions,
+		Attachments:  req.Attachments,
+		Priority:     req.Priority,
+		Metadata:     req.Metadata,
+		Targets:      req.TargetIDs, // Empty means send to all destinations
+		TemplateID:   templateUUID,
+		TemplateData: req.TemplateData,
 	}
 
 	// Send notification using NotificationService (async)
