@@ -750,3 +750,21 @@ type AzureADGroup struct {
 	GroupTypes  JSONBStringArray `json:"group_types" db:"group_types"`
 	SyncedAt    *time.Time       `json:"synced_at" db:"synced_at"`
 }
+
+// AzureADChannel represents a Teams channel
+type AzureADChannel struct {
+	AzureADID      string `json:"id"`
+	DisplayName    string `json:"display_name"`
+	Description    string `json:"description"`
+	MembershipType string `json:"membership_type"` // standard, private, shared
+}
+
+// ChatGroup represents a registered Teams chat group
+type ChatGroup struct {
+	BaseModel
+	ProjectID uuid.UUID `json:"project_id" db:"project_id"`
+	Name      string    `json:"name" db:"name"`
+	ChatID    string    `json:"chat_id" db:"chat_id"`
+}
+
+

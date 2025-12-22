@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/evencycu/TeamsNotifyGoV3/libs/models"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -15,6 +16,10 @@ type DirectoryRepository interface {
 	SearchUsers(ctx context.Context, query string) ([]models.AzureADUser, error)
 	UpsertGroup(ctx context.Context, group *models.AzureADGroup) error
 	ListGroups(ctx context.Context) ([]models.AzureADGroup, error)
+	// ChatGroup operations
+	CreateChatGroup(ctx context.Context, cg *models.ChatGroup) error
+	ListChatGroups(ctx context.Context, projectID uuid.UUID) ([]models.ChatGroup, error)
+	DeleteChatGroup(ctx context.Context, id uuid.UUID) error
 }
 
 type directoryRepository struct {
@@ -24,6 +29,37 @@ type directoryRepository struct {
 // NewDirectoryRepository creates a new directory repository
 func NewDirectoryRepository(db *sqlx.DB) DirectoryRepository {
 	return &directoryRepository{db: db}
+}
+
+func (r *directoryRepository) CreateChatGroup(ctx context.Context, cg *models.ChatGroup) error {
+	query := `
+		INSERT INTO chat_groups (id, project_id, name, chat_id, created_at, updated_at)
+		VALUES (COALESCE(NULLIF(:id, '00000000-0000-0000-0000-000000000000'::uuid), uuid_generate_v4()), 
+		        :project_id, :name, :chat_id, :created_at, :updated_at)
+		ON CONFLICT (project_id, chat_id) DO UPDATE SET
+			name = EXCLUDED.name,
+			updated_at = EXCLUDED.updated_at
+	`
+	if cg.CreatedAt.IsZero() {
+		cg.CreatedAt = time.Now().UTC()
+	}
+	cg.UpdatedAt = time.Now().UTC()
+
+	_, err := r.db.NamedExecContext(ctx, query, cg)
+	return err
+}
+
+func (r *directoryRepository) ListChatGroups(ctx context.Context, projectID uuid.UUID) ([]models.ChatGroup, error) {
+	query := `SELECT * FROM chat_groups WHERE project_id = $1 ORDER BY name`
+	var chatGroups []models.ChatGroup
+	err := r.db.SelectContext(ctx, &chatGroups, query, projectID)
+	return chatGroups, err
+}
+
+func (r *directoryRepository) DeleteChatGroup(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM chat_groups WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
 }
 
 func (r *directoryRepository) UpsertUser(ctx context.Context, user *models.AzureADUser) error {

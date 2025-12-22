@@ -442,11 +442,13 @@ paths:
                   properties:
                     id:
                       type: string
-                    displayName:
+                    display_name:
                       type: string
-                    membershipType:
+                    description:
                       type: string
-                      enum: [Standard, Private, Shared]
+                    membership_type:
+                      type: string
+                      enum: [standard, private, shared]
 
   /projects/{projectId}/chat-groups:
     get:

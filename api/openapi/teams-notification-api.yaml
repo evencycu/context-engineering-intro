@@ -2047,6 +2047,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/GroupListResponse"
 
+  /internal/v1/directory/groups/{groupId}/channels:
+    get:
+      summary: Get Teams channels for a group
+      tags: [Internal API - Directory]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelListResponse"
+
   /internal/v1/directory/sync:
     post:
       summary: Sync directory
@@ -2062,6 +2080,62 @@ paths:
                 properties:
                   message:
                     type: string
+
+  /internal/v1/projects/{projectId}/chat-groups:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: List registered Chat Groups
+      tags: [Internal API - Directory]
+      responses:
+        "200":
+          description: Chat group list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatGroupListResponse"
+    post:
+      summary: Register a new Chat Group
+      tags: [Internal API - Directory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatGroupCreateRequest"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatGroupResponse"
+
+  /internal/v1/projects/{projectId}/chat-groups/{id}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Remove a Chat Group
+      tags: [Internal API - Directory]
+      responses:
+        "204":
+          description: Removed
 
 components:
   securitySchemes:
@@ -3810,6 +3884,76 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AzureADGroup"
+        message:
+          type: string
+
+    ChatGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        chat_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ChatGroupListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGroup"
+        message:
+          type: string
+
+    ChatGroupResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/ChatGroup"
+        message:
+          type: string
+
+    ChatGroupCreateRequest:
+      type: object
+      required: [name, chatId]
+      properties:
+        name:
+          type: string
+        chatId:
+          type: string
+
+    AzureADChannel:
+      type: object
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        membership_type:
+          type: string
+          enum: [standard, private, shared]
+
+    ChannelListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AzureADChannel"
         message:
           type: string
 
