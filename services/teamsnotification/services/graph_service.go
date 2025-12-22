@@ -16,7 +16,9 @@ const graphBaseURL = "https://graph.microsoft.com/v1.0"
 type GraphService interface {
 	GetUsers(ctx context.Context, deltaLink string) ([]models.AzureADUser, string, error)
 	GetGroups(ctx context.Context, deltaLink string) ([]models.AzureADGroup, string, error)
+	GetGroupChannels(ctx context.Context, groupId string) ([]models.AzureADChannel, error)
 }
+
 
 type graphService struct {
 	tokenManager token.TokenManager
@@ -52,7 +54,10 @@ func (s *graphService) GetUsers(ctx context.Context, deltaLink string) ([]models
 	// Use delta query if link provided, otherwise initial sync
 	requestURL := deltaLink
 	if requestURL == "" {
-		requestURL = fmt.Sprintf("%s/users?$select=id,displayName,mail,userPrincipalName,jobTitle,department&$top=999", graphBaseURL)
+		// Note: Graph API /users does not support sorting by lastModifiedDateTime directly.
+		// To get incremental changes, we must rely on the Delta Query mechanism (deltaLink).
+		// For the initial sync, we fetch all users.
+		requestURL = fmt.Sprintf("%s/users?$select=id,displayName,mail,userPrincipalName,jobTitle,department,createdDateTime&$top=999", graphBaseURL)
 	}
 
 	token, err := s.tokenManager.GetGraphToken(ctx, s.botID, s.tenantID) // This gets the Bot token, assuming it has Graph permissions
@@ -167,4 +172,58 @@ func (s *graphService) GetGroups(ctx context.Context, deltaLink string) ([]model
 	}
 
 	return groups, nextLink, nil
+}
+
+type graphChannelsResponse struct {
+	Value []graphChannel `json:"value"`
+}
+
+type graphChannel struct {
+	ID             string `json:"id"`
+	DisplayName    string `json:"displayName"`
+	Description    string `json:"description"`
+	MembershipType string `json:"membershipType"`
+}
+
+func (s *graphService) GetGroupChannels(ctx context.Context, groupId string) ([]models.AzureADChannel, error) {
+	requestURL := fmt.Sprintf("%s/teams/%s/channels?$select=id,displayName,description,membershipType", graphBaseURL, groupId)
+
+	token, err := s.tokenManager.GetGraphToken(ctx, s.botID, s.tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("graph api call failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("graph api error: %s", resp.Status)
+	}
+
+	var result graphChannelsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	channels := make([]models.AzureADChannel, 0, len(result.Value))
+	for _, c := range result.Value {
+		channels = append(channels, models.AzureADChannel{
+			AzureADID:      c.ID,
+			DisplayName:    c.DisplayName,
+			Description:    c.Description,
+			MembershipType: c.MembershipType,
+		})
+	}
+
+	return channels, nil
 }
