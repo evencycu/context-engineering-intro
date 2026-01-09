@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teams-notification-config
+  namespace: teams-notification-ut
+  labels:
+    app: teams-notification
+    environment: ut
+data:
+  # UT Environment Configuration
+  ENVIRONMENT: "ut"
+  LOG_LEVEL: "debug"
+  PORT: "8080"
+
+  # Database Configuration
+  DB_HOST: "teams-notification-postgres"
+  DB_PORT: "5432"
+  DB_NAME: "teamsnotify"
+  DB_USER: "teamsnotify"
+  DB_SSL_MODE: "disable"
+
+  # Redis Configuration
+  REDIS_HOST: "teams-notification-redis"
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "teamsnotify123"
+
+  # Cache Configuration
+  TOKEN_CACHE_TTL: "1800"
+  SESSION_CACHE_TTL: "900"
+  DATA_CACHE_TTL: "300"
+
+  # Queue Configuration
+  NOTIFICATION_QUEUE_NAME: "notifications_ut"
+  TASK_QUEUE_NAME: "tasks_ut"
+  RETRY_QUEUE_NAME: "retries_ut"
+
+  # Monitoring Configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  PROMETHEUS_ENABLED: "true"
+
+  # UT Specific Configuration
+  DEBUG_MODE: "true"
+  MOCK_EXTERNAL_APIS: "true"
+  TEST_DATA_ENABLED: "true"

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teams-notification-config
+  namespace: teams-notification-prod
+  labels:
+    app: teams-notification
+    environment: prod
+data:
+  # PROD Environment Configuration
+  ENVIRONMENT: "prod"
+  LOG_LEVEL: "warn"
+  PORT: "8080"
+
+  # Database Configuration
+  DB_HOST: "teams-notification-postgres"
+  DB_PORT: "5432"
+  DB_NAME: "teamsnotify"
+  DB_USER: "teamsnotify"
+  DB_SSL_MODE: "require"
+
+  # Redis Configuration
+  REDIS_HOST: "teams-notification-redis"
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "prodredispassword"
+
+  # Cache Configuration
+  TOKEN_CACHE_TTL: "7200"
+  SESSION_CACHE_TTL: "3600"
+  DATA_CACHE_TTL: "1800"
+
+  # Queue Configuration
+  NOTIFICATION_QUEUE_NAME: "notifications_prod"
+  TASK_QUEUE_NAME: "tasks_prod"
+  RETRY_QUEUE_NAME: "retries_prod"
+
+  # Monitoring Configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  PROMETHEUS_ENABLED: "true"
+
+  # PROD Specific Configuration
+  DEBUG_MODE: "false"
+  MOCK_EXTERNAL_APIS: "false"
+  TEST_DATA_ENABLED: "false"

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: teams-notification-ut
+  labels:
+    name: teams-notification-ut
+    environment: ut
+    tier: testing
+  annotations:
+    description: "Teams Notification UT Environment"
+    owner: "development-team"

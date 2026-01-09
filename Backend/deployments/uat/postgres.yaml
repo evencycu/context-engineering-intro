@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teams-notification-postgres
+  namespace: teams-notification-uat
+  labels:
+    app: teams-notification-postgres
+    environment: uat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teams-notification-postgres
+  template:
+    metadata:
+      labels:
+        app: teams-notification-postgres
+        environment: uat
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "teamsnotify"
+            - name: POSTGRES_USER
+              value: "teamsnotify"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: teams-notification-secrets
+                  key: postgres-password
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: teams-notification-uat
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teams-notification-postgres
+  namespace: teams-notification-uat
+  labels:
+    app: teams-notification-postgres
+    environment: uat
+spec:
+  selector:
+    app: teams-notification-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP

@@ -1,0 +1,5 @@
+{
+  "name": "Enterprise Teams Notification Center",
+  "description": "A secure, multi-tenant portal for managing Microsoft Teams notifications, featuring adaptive card templates, AD integration, and audit logging.",
+  "requestFramePermissions": []
+}
