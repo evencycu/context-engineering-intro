@@ -184,6 +184,31 @@ test-report:
 	@echo "Generating test reports..."
 	./scripts/utils/generate_test_report.sh generate
 
+# Development Workflow
+dev-pre-commit:
+	@echo "Running pre-commit workflow..."
+	@../scripts/dev-workflow.sh pre-commit
+
+dev-feature:
+	@echo "Running feature development workflow..."
+	@../scripts/dev-workflow.sh feature
+
+dev-refactor:
+	@echo "Running refactoring workflow..."
+	@../scripts/dev-workflow.sh refactor
+
+dev-full:
+	@echo "Running full development workflow..."
+	@../scripts/dev-workflow.sh full
+
+dev-quality:
+	@echo "Checking code quality..."
+	@../scripts/dev-workflow.sh quality
+
+dev-docs:
+	@echo "Checking documentation sync..."
+	@../scripts/dev-workflow.sh docs
+
 # Help
 help:
 	@echo "Available commands:"
@@ -195,6 +220,14 @@ help:
 	@echo "  clean          - Clean build artifacts"
 	@echo "  dev-setup      - Setup development environment"
 	@echo "  prod-build     - Build for production"
+	@echo ""
+	@echo "Development Workflow:"
+	@echo "  dev-pre-commit - Run pre-commit checks (format, test, lint)"
+	@echo "  dev-feature    - Run feature development workflow"
+	@echo "  dev-refactor   - Run refactoring workflow"
+	@echo "  dev-full       - Run full workflow (all checks)"
+	@echo "  dev-quality    - Check code quality only"
+	@echo "  dev-docs       - Check documentation sync only"
 	@echo ""
 	@echo "Deployment (integrated from deploy.sh):"
 	@echo "  deploy         - Full deployment"

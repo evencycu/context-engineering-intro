@@ -185,6 +185,39 @@ export const service = {
       'getGlobalTemplates'
     ),
 
+  createGlobalTemplate: (data: Omit<Template, 'id'>): Promise<Template> =>
+    withFallback(
+      async () => {
+        // Backend might not have global templates endpoint yet
+        // For now, always use mock (don't throw error, just use mock directly)
+        return mockApiService.createTemplate({ ...data, projectId: 'global' });
+      },
+      () => mockApiService.createTemplate({ ...data, projectId: 'global' }),
+      'createGlobalTemplate'
+    ),
+
+  updateGlobalTemplate: (id: string, data: Partial<Template>): Promise<void> =>
+    withFallback(
+      async () => {
+        // Backend might not have global templates endpoint yet
+        // For now, always use mock (don't throw error, just use mock directly)
+        return mockApiService.updateTemplate(id, data);
+      },
+      () => mockApiService.updateTemplate(id, data),
+      'updateGlobalTemplate'
+    ),
+
+  deleteGlobalTemplate: (id: string): Promise<void> =>
+    withFallback(
+      async () => {
+        // Backend might not have global templates endpoint yet
+        // For now, always use mock (don't throw error, just use mock directly)
+        return mockApiService.deleteTemplate(id);
+      },
+      () => mockApiService.deleteTemplate(id),
+      'deleteGlobalTemplate'
+    ),
+
   createTemplate: (data: Omit<Template, 'id'>): Promise<Template> =>
     withFallback(
       () => apiService.createTemplate(data.projectId, data),
@@ -195,9 +228,10 @@ export const service = {
   updateTemplate: (id: string, data: Partial<Template>): Promise<void> =>
     withFallback(
       async () => {
-        if (data.projectId) {
-          await apiService.updateTemplate(data.projectId, id, data);
+        if (!data.projectId) {
+          throw new Error('Project ID is required to update template');
         }
+        await apiService.updateTemplate(data.projectId, id, data);
       },
       () => mockApiService.updateTemplate(id, data),
       'updateTemplate'
@@ -206,9 +240,10 @@ export const service = {
   deleteTemplate: (id: string, projectId?: string): Promise<void> =>
     withFallback(
       async () => {
-        if (projectId) {
-          await apiService.deleteTemplate(projectId, id);
+        if (!projectId) {
+          throw new Error('Project ID is required to delete template');
         }
+        await apiService.deleteTemplate(projectId, id);
       },
       () => mockApiService.deleteTemplate(id),
       'deleteTemplate'

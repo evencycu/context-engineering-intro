@@ -1,4 +1,8 @@
-`DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL CODE OR EXPLANATION!!! I DON'T WANT "Here's how you can blablabla"
+# Cursor Rules for Teams Notification API Project
+
+## Core Behavior Rules
+
+`DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL CODE OR EXPLANATION!!! I DON'T WANT "Here's how you can blablabla"`
 
 - Be casual unless otherwise specified
 - Be terse
@@ -18,4 +22,311 @@
 - Please respect my prettier preferences when you provide code.
 - Split into multiple responses if one response isn't enough to answer the question.
 
-If I ask for adjustments to code I have provided you, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make. Multiple code blocks are ok.`
+If I ask for adjustments to code I have provided you, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make. Multiple code blocks are ok.
+
+---
+
+## Bash Commands
+
+### Development
+- `make docker-up` - Start PostgreSQL and Redis containers
+- `make docker-down` - Stop Docker containers
+- `make db-init` - Initialize database schema and seed data
+- `make build` - Build the Go application
+- `make run` - Run the application (loads .env automatically)
+- `make test` - Run all Go tests
+- `make clean` - Clean build artifacts
+
+### Testing
+- `make test-e2e` - Run E2E tests
+- `make test-load` - Run load tests with k6
+- `make test-api` - Run API integration tests
+- `make test-report` - Generate test coverage reports
+- `make test-full` - Run complete test suite
+
+### Code Quality
+- `go fmt ./...` - Format all Go code
+- `go vet ./...` - Run go vet static analysis
+- `golangci-lint run` - Run linter (if installed)
+- `go test -cover ./...` - Run tests with coverage report
+
+### Documentation
+- `./scripts/utils/check-doc-sync.sh` - Check documentation sync with code
+- Always update docs after feature changes
+
+---
+
+## Code Style
+
+### Go Code
+- Use `golangci-lint` for code quality checks
+- Follow Go naming conventions (short, concise, semantic)
+- Use `go fmt` before committing
+- Prefer explicit error handling over panics
+- Use context.Context for cancellation and timeouts
+- Module structure:
+  ```
+  /cmd/server/          # Service entry point
+  /services/            # Business logic
+  /configs/             # Configuration files
+  /scripts/             # Scripts and utilities
+  ```
+
+### Frontend (React/TypeScript)
+- Use TypeScript strict mode
+- Prefer functional components with hooks
+- Use ES modules (import/export) syntax
+- Destructure imports when possible: `import { foo } from 'bar'`
+- Follow React best practices (keys, memoization, etc.)
+
+### General
+- Use meaningful variable and function names
+- Keep functions small and focused
+- Add comments for complex logic, not obvious code
+- Prefer composition over inheritance
+
+---
+
+## Incremental Development Workflow
+
+### Feature Development Checklist
+
+When developing a new feature or refactoring, ALWAYS follow this workflow:
+
+#### 1. Planning Phase
+- [ ] Understand requirements and scope
+- [ ] Check existing similar implementations
+- [ ] Plan API changes (if any)
+- [ ] Identify affected files and dependencies
+
+#### 2. Development Phase
+- [ ] Write code following project style guide
+- [ ] Add inline comments for complex logic
+- [ ] Ensure error handling is comprehensive
+- [ ] Keep commits atomic and meaningful
+
+#### 3. Testing Phase (REQUIRED)
+- [ ] Write unit tests for new functions/methods
+- [ ] Write integration tests for API endpoints
+- [ ] Run `make test` and ensure all tests pass
+- [ ] Check test coverage: `go test -cover ./...`
+- [ ] Test edge cases and error scenarios
+- [ ] Run `make test-e2e` for end-to-end validation
+- [ ] If performance-critical, run `make test-load`
+
+#### 4. Documentation Phase (REQUIRED)
+- [ ] Update API documentation if endpoints changed
+- [ ] Update `docs/06_USER_GUIDE/` if user-facing features changed
+- [ ] Update `docs/02_ARCHITECTURE/` if architecture changed
+- [ ] Update `docs/03_DESIGN/` if design patterns changed
+- [ ] Run `./scripts/utils/check-doc-sync.sh` to verify sync
+- [ ] Add code examples in documentation
+- [ ] Update CHANGELOG if significant changes
+
+#### 5. Code Quality Phase
+- [ ] Run `go fmt ./...` to format code
+- [ ] Run `go vet ./...` to check for issues
+- [ ] Run `golangci-lint run` if available
+- [ ] Review code for potential improvements
+- [ ] Ensure no debug logs or commented code remain
+
+#### 6. Commit Phase
+- [ ] Use conventional commit format: `<type>(<scope>): <description>`
+- [ ] Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+- [ ] Include test results in commit message if significant
+- [ ] Reference related issues/PRs if applicable
+
+### Refactoring Checklist
+
+When refactoring existing code:
+- [ ] Ensure all existing tests pass before refactoring
+- [ ] Add new tests for refactored code paths
+- [ ] Maintain backward compatibility when possible
+- [ ] Update affected documentation
+- [ ] Run full test suite: `make test-full`
+- [ ] Verify no performance regression
+
+### Before Committing
+- [ ] All tests pass: `make test`
+- [ ] Code is formatted: `go fmt ./...`
+- [ ] No linter errors
+- [ ] Documentation is updated
+- [ ] Commit message follows convention
+
+---
+
+## Testing Requirements
+
+### Test Coverage Standards
+- Unit test coverage: ≥ 80% for new code
+- Integration tests: Required for all API endpoints
+- E2E tests: Required for critical user flows
+- Load tests: Required for performance-critical features
+
+### Test Best Practices
+- Write tests before or alongside code (TDD preferred)
+- Test both success and failure cases
+- Use descriptive test names: `TestFunctionName_Scenario_ExpectedResult`
+- Keep tests independent and isolated
+- Use table-driven tests for multiple scenarios
+- Mock external dependencies (database, APIs, etc.)
+
+### Test Execution
+- Run tests frequently during development
+- Run full test suite before committing
+- Use `go test -v` for verbose output during debugging
+- Use `go test -race` to detect race conditions
+
+---
+
+## Documentation Standards
+
+### When to Update Documentation
+- **Always** when adding/modifying API endpoints
+- **Always** when changing user-facing features
+- **Always** when modifying architecture or design patterns
+- **Always** when adding new configuration options
+- **Always** when changing deployment procedures
+
+### Documentation Structure
+- API docs: `docs/03_DESIGN/` (API specifications)
+- Architecture: `docs/02_ARCHITECTURE/`
+- User guides: `docs/06_USER_GUIDE/`
+- Development: `docs/07_DEVELOPMENT/`
+- Testing: `docs/04_TEST/`
+- Deployment: `docs/05_DEPLOYMENT/`
+
+### Documentation Quality
+- Include working code examples
+- Keep examples up-to-date with actual code
+- Use clear, concise language
+- Add diagrams when helpful
+- Include troubleshooting sections
+
+---
+
+## Project-Specific Rules
+
+### Teams Notification API
+- Backend: Go 1.24+, PostgreSQL 15+, Redis 7+
+- Frontend: React 19+, TypeScript, Vite
+- Use Actor pattern for async notification processing
+- Follow microservices architecture principles
+- Maintain backward compatibility for API v1
+
+### Database
+- Use migrations for schema changes
+- Never modify production schema directly
+- Test migrations on staging first
+- Document schema changes
+
+### API Design
+- RESTful conventions for endpoints
+- Use proper HTTP status codes
+- Include request/response examples
+- Version APIs: `/api/v1/...`
+- Document rate limits and quotas
+
+### Error Handling
+- Return structured error responses
+- Include error codes and messages
+- Log errors with context
+- Don't expose internal errors to clients
+
+---
+
+## VSCode Best Practices
+
+### Extensions Recommended
+- Go extension (golang.go)
+- ESLint for TypeScript/React
+- Prettier for code formatting
+- GitLens for Git integration
+- Error Lens for inline errors
+
+### Editor Settings
+- Format on save enabled
+- Auto-save enabled
+- Use workspace settings when possible
+- Configure linters to match project standards
+
+### Development Workflow
+- Use VSCode tasks for common commands
+- Use debugger for Go applications
+- Use integrated terminal for running tests
+- Use source control panel for Git operations
+
+---
+
+## AI Assistant Behavior
+
+### When Asked to Develop Features
+1. **Always** follow the incremental development workflow
+2. **Always** write tests alongside code
+3. **Always** update documentation
+4. **Always** run tests before suggesting completion
+5. **Always** check for breaking changes
+
+### When Asked to Refactor
+1. **Always** ensure tests pass before refactoring
+2. **Always** add tests for refactored code
+3. **Always** maintain backward compatibility
+4. **Always** update affected documentation
+5. **Always** run full test suite
+
+### When Asked to Fix Bugs
+1. **Always** write a test that reproduces the bug
+2. **Always** fix the bug
+3. **Always** ensure the test passes
+4. **Always** check for similar issues
+5. **Always** update documentation if behavior changed
+
+### Code Suggestions
+- Suggest improvements proactively
+- Point out potential issues
+- Recommend best practices
+- Consider performance implications
+- Think about maintainability
+
+---
+
+## Quick Reference
+
+### Common Tasks
+```bash
+# Start development environment
+make docker-up && make db-init && make run
+
+# Run tests
+make test
+
+# Check code quality
+go fmt ./... && go vet ./... && make test
+
+# Update documentation
+./scripts/utils/check-doc-sync.sh
+
+# Full development cycle
+make test-full && go fmt ./... && ./scripts/utils/check-doc-sync.sh
+```
+
+### Git Commit Format
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+---
+
+## Remember
+
+- **Test First**: Write tests before or alongside code
+- **Document Always**: Update docs with every change
+- **Incremental**: Small, focused changes with tests
+- **Quality**: Format, lint, and test before committing
+- **Consistency**: Follow project conventions and patterns

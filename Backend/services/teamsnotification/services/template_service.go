@@ -30,18 +30,18 @@ func NewTemplateService(repo repositories.TemplateRepository) TemplateService {
 
 // DTOs
 type CreateTemplateRequest struct {
-	ProjectID            uuid.UUID                     `json:"project_id"`
+	ProjectID            uuid.UUID                     `json:"projectId"`            // Set by handler from path param, not from JSON
 	Name                 string                        `json:"name"`
 	Description          string                        `json:"description"`
 	Variables            models.JSONBTemplateVariables `json:"variables"`
-	DefaultJsonStructure string                        `json:"default_json_structure"`
+	DefaultJsonStructure string                        `json:"defaultJsonStructure"`
 }
 
 type UpdateTemplateRequest struct {
 	Name                 string                        `json:"name"`
 	Description          string                        `json:"description"`
 	Variables            models.JSONBTemplateVariables `json:"variables"`
-	DefaultJsonStructure string                        `json:"default_json_structure"`
+	DefaultJsonStructure string                        `json:"defaultJsonStructure"`
 }
 
 func (s *templateService) Create(ctx context.Context, req *CreateTemplateRequest) (*models.Template, error) {

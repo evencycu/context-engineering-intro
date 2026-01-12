@@ -520,12 +520,11 @@ export const apiService = {
   },
 
   createTemplate: async (projectId: string, data: Omit<Template, 'id'>): Promise<Template> => {
-    // Transform frontend to backend format
-    // Backend expects: name, description, default_json_structure, variables (TemplateVariable[])
+    // Backend expects camelCase: name, description, defaultJsonStructure, variables (TemplateVariable[])
     const backendData = {
       name: data.name,
       description: data.description,
-      default_json_structure: data.defaultJsonStructure,
+      defaultJsonStructure: data.defaultJsonStructure,
       variables: data.variables.map(key => ({
         key,
         label: key, // Use key as label if not provided
@@ -553,10 +552,11 @@ export const apiService = {
   },
 
   updateTemplate: async (projectId: string, templateId: string, data: Partial<Template>): Promise<void> => {
+    // Backend expects camelCase: name, description, defaultJsonStructure, variables
     const backendData: any = {};
     if (data.name) backendData.name = data.name;
     if (data.description) backendData.description = data.description;
-    if (data.defaultJsonStructure) backendData.default_json_structure = data.defaultJsonStructure;
+    if (data.defaultJsonStructure) backendData.defaultJsonStructure = data.defaultJsonStructure;
     if (data.variables) {
       backendData.variables = data.variables.map(key => ({ key, label: key, type: 'text' }));
     }

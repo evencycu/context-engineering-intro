@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { service } from '../services';
 import { SystemHealth, BillingRecord, Company, BotInstance, Project, TransactionRecord, UserProfile, ADGroup, TeamChannel, Template } from '../types';
-import { Plus, RefreshCw, Server, ShieldAlert, Filter, Download, Building2, Briefcase, Users, Search, ChevronDown, ChevronRight, Hash, Lock, Globe, LayoutTemplate, Share2, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Server, ShieldAlert, Filter, Download, Building2, Briefcase, Users, Search, ChevronDown, ChevronRight, Hash, Lock, Globe, LayoutTemplate, Share2, Trash2, Edit2, Code, Variable } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminProps {
@@ -50,6 +50,18 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
   const [selectedTemplateForDist, setSelectedTemplateForDist] = useState<Template | null>(null);
   const [selectedProjectsForDist, setSelectedProjectsForDist] = useState<string[]>([]);
   const [isDistributing, setIsDistributing] = useState(false);
+
+  // Global Template Modal State
+  const [showGlobalTemplateModal, setShowGlobalTemplateModal] = useState(false);
+  const [editingGlobalTemplate, setEditingGlobalTemplate] = useState<Template | null>(null);
+  const [globalTemplateForm, setGlobalTemplateForm] = useState<Partial<Template>>({
+    name: '',
+    description: '',
+    variables: [],
+    defaultJsonStructure: '{}'
+  });
+  const [globalTemplateVariableInput, setGlobalTemplateVariableInput] = useState('');
+  const [isSavingGlobalTemplate, setIsSavingGlobalTemplate] = useState(false);
 
   // Company/Project Creation Modal State
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -221,6 +233,106 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
     }
   };
 
+  // Global Template CRUD handlers
+  const handleOpenCreateGlobalTemplate = () => {
+    setEditingGlobalTemplate(null);
+    setGlobalTemplateForm({
+      name: '',
+      description: '',
+      variables: [],
+      defaultJsonStructure: JSON.stringify({
+        type: "AdaptiveCard",
+        version: "1.4",
+        body: [{ type: "TextBlock", text: "New Global Template" }]
+      }, null, 2)
+    });
+    setGlobalTemplateVariableInput('');
+    setShowGlobalTemplateModal(true);
+  };
+
+  const handleOpenEditGlobalTemplate = (t: Template) => {
+    setEditingGlobalTemplate(t);
+    setGlobalTemplateForm({
+      name: t.name,
+      description: t.description,
+      variables: [...t.variables],
+      defaultJsonStructure: t.defaultJsonStructure
+    });
+    setGlobalTemplateVariableInput('');
+    setShowGlobalTemplateModal(true);
+  };
+
+  const handleSaveGlobalTemplate = async () => {
+    if (!globalTemplateForm.name || !globalTemplateForm.defaultJsonStructure) {
+      alert('Please fill in template name and JSON structure');
+      return;
+    }
+
+    // Validate JSON structure
+    try {
+      JSON.parse(globalTemplateForm.defaultJsonStructure!);
+    } catch (e) {
+      alert('Invalid JSON structure. Please check your JSON syntax.');
+      return;
+    }
+
+    setIsSavingGlobalTemplate(true);
+    try {
+      if (editingGlobalTemplate) {
+        await service.updateGlobalTemplate(editingGlobalTemplate.id, globalTemplateForm);
+      } else {
+        await service.createGlobalTemplate({
+          projectId: 'global', // Global templates don't belong to a project
+          name: globalTemplateForm.name!,
+          description: globalTemplateForm.description || '',
+          variables: globalTemplateForm.variables || [],
+          defaultJsonStructure: globalTemplateForm.defaultJsonStructure!
+        });
+      }
+      setShowGlobalTemplateModal(false);
+      // Reload global templates
+      const templates = await service.getGlobalTemplates();
+      setGlobalTemplates(templates);
+    } catch (e: any) {
+      console.error('Failed to save global template:', e);
+      const errorMessage = e?.message || e?.toString() || 'Failed to save global template';
+      alert(`Failed to save global template: ${errorMessage}`);
+    } finally {
+      setIsSavingGlobalTemplate(false);
+    }
+  };
+
+  const handleDeleteGlobalTemplate = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this global template?")) return;
+    try {
+      await service.deleteGlobalTemplate(id);
+      // Reload global templates
+      const templates = await service.getGlobalTemplates();
+      setGlobalTemplates(templates);
+    } catch (e: any) {
+      console.error('Failed to delete global template:', e);
+      const errorMessage = e?.message || e?.toString() || 'Failed to delete global template';
+      alert(`Failed to delete global template: ${errorMessage}`);
+    }
+  };
+
+  const addGlobalTemplateVariable = () => {
+    if (globalTemplateVariableInput && !globalTemplateForm.variables?.includes(globalTemplateVariableInput)) {
+      setGlobalTemplateForm({
+        ...globalTemplateForm,
+        variables: [...(globalTemplateForm.variables || []), globalTemplateVariableInput]
+      });
+      setGlobalTemplateVariableInput('');
+    }
+  };
+
+  const removeGlobalTemplateVariable = (v: string) => {
+    setGlobalTemplateForm({
+      ...globalTemplateForm,
+      variables: globalTemplateForm.variables?.filter(item => item !== v)
+    });
+  };
+
   const handleOpenEditCompany = async (company: Company) => {
     setEditingCompany(company);
     try {
@@ -296,7 +408,7 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
       if (fullProject) {
         // Map frontend priority to form priority
         const formPriority = fullProject.priority === 'Low (Broadcast)' ? 'low' :
-                            fullProject.priority === 'High (Alert)' ? 'high' : 'normal';
+          fullProject.priority === 'High (Alert)' ? 'high' : 'normal';
         setProjectForm({
           companyId: fullProject.companyId,
           notifyKey: fullProject.name, // Project name is the notify_key
@@ -308,7 +420,7 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
       } else {
         // Fallback to basic data
         const formPriority = project.priority === 'Low (Broadcast)' ? 'low' :
-                            project.priority === 'High (Alert)' ? 'high' : 'normal';
+          project.priority === 'High (Alert)' ? 'high' : 'normal';
         setProjectForm({
           companyId: project.companyId,
           notifyKey: project.name,
@@ -321,7 +433,7 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
     } catch (e) {
       // Fallback to basic data on error
       const formPriority = project.priority === 'Low (Broadcast)' ? 'low' :
-                          project.priority === 'High (Alert)' ? 'high' : 'normal';
+        project.priority === 'High (Alert)' ? 'high' : 'normal';
       setProjectForm({
         companyId: project.companyId,
         notifyKey: project.name,
@@ -474,7 +586,7 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
         {view === 'templates' && (
           <div className="space-y-6">
             <div className="flex justify-end">
-              <Button>
+              <Button onClick={handleOpenCreateGlobalTemplate}>
                 <Plus size={16} className="mr-2" />
                 New Global Template
               </Button>
@@ -503,9 +615,28 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => openDistributeModal(tpl)} className="text-indigo-600 hover:text-indigo-900 mr-3 flex items-center justify-end gap-1 float-right">
-                          <Share2 size={16} /> Distribute
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenEditGlobalTemplate(tpl)}
+                            className="text-gray-400 hover:text-blue-600 p-1"
+                            title="Edit Template"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGlobalTemplate(tpl.id)}
+                            className="text-gray-400 hover:text-red-600 p-1"
+                            title="Delete Template"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => openDistributeModal(tpl)}
+                            className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                          >
+                            <Share2 size={16} /> Distribute
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1229,6 +1360,84 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
                     priority: 'normal',
                   });
                 }} className="mr-3">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Template Modal */}
+      {showGlobalTemplateModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowGlobalTemplateModal(false)}></div>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">{editingGlobalTemplate ? 'Edit Global Template' : 'Create New Global Template'}</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <Input
+                      label="Template Name"
+                      value={globalTemplateForm.name || ''}
+                      onChange={(e) => setGlobalTemplateForm({ ...globalTemplateForm, name: e.target.value })}
+                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                        rows={3}
+                        value={globalTemplateForm.description || ''}
+                        onChange={(e) => setGlobalTemplateForm({ ...globalTemplateForm, description: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Variables</label>
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Add variable (e.g. title)"
+                          value={globalTemplateVariableInput}
+                          onChange={(e) => setGlobalTemplateVariableInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && addGlobalTemplateVariable()}
+                        />
+                        <Button onClick={addGlobalTemplateVariable} variant="secondary" className="px-3">Add</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-md border border-gray-200 min-h-[40px]">
+                        {globalTemplateForm.variables?.map(v => (
+                          <span key={v} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white border border-gray-300 text-gray-700">
+                            <Variable size={12} className="mr-1 text-blue-500" />
+                            {v}
+                            <button onClick={() => removeGlobalTemplateVariable(v)} className="ml-1 text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Use <code>{`{variableName}`}</code> in your JSON to substitute values.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col h-full">
+                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                      <Code size={16} /> JSON Structure
+                    </label>
+                    <textarea
+                      className="flex-1 w-full p-4 font-mono text-xs bg-slate-900 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      value={globalTemplateForm.defaultJsonStructure || ''}
+                      onChange={(e) => setGlobalTemplateForm({ ...globalTemplateForm, defaultJsonStructure: e.target.value })}
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <Button onClick={handleSaveGlobalTemplate} isLoading={isSavingGlobalTemplate} disabled={!globalTemplateForm.name}>
+                  Save Template
+                </Button>
+                <Button variant="secondary" onClick={() => setShowGlobalTemplateModal(false)}>
                   Cancel
                 </Button>
               </div>

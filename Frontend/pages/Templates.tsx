@@ -34,6 +34,11 @@ export const Templates: React.FC = () => {
     try {
       const data = await service.getTemplates(currentProject.id);
       setTemplates(data);
+    } catch (e: any) {
+      console.error('Failed to load templates:', e);
+      const errorMessage = e?.message || e?.toString() || 'Failed to load templates';
+      alert(`Failed to load templates: ${errorMessage}`);
+      setTemplates([]);
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +73,19 @@ export const Templates: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.defaultJsonStructure) return;
+    if (!formData.name || !formData.defaultJsonStructure) {
+      alert('Please fill in template name and JSON structure');
+      return;
+    }
+    
+    // Validate JSON structure
+    try {
+      JSON.parse(formData.defaultJsonStructure!);
+    } catch (e) {
+      alert('Invalid JSON structure. Please check your JSON syntax.');
+      return;
+    }
+    
     setIsSaving(true);
     try {
       if (editingTemplate) {
@@ -84,8 +101,10 @@ export const Templates: React.FC = () => {
       }
       setShowModal(false);
       loadTemplates();
-    } catch (e) {
-      alert('Failed to save template');
+    } catch (e: any) {
+      console.error('Failed to save template:', e);
+      const errorMessage = e?.message || e?.toString() || 'Failed to save template';
+      alert(`Failed to save template: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -96,8 +115,10 @@ export const Templates: React.FC = () => {
     try {
       await service.deleteTemplate(id, currentProject.id);
       loadTemplates();
-    } catch (e) {
-      alert('Failed to delete template');
+    } catch (e: any) {
+      console.error('Failed to delete template:', e);
+      const errorMessage = e?.message || e?.toString() || 'Failed to delete template';
+      alert(`Failed to delete template: ${errorMessage}`);
     }
   };
 

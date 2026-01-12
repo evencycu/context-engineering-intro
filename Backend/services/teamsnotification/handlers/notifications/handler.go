@@ -39,17 +39,20 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	}
 }
 
-// SendNotificationRequest represents a send notification request
+// SendNotificationRequest represents a send notification request from API layer
+// This is a camelCase wrapper over the service-layer SendNotificationRequest which uses snake_case JSON tags.
 type SendNotificationRequest struct {
-	ProjectID   uuid.UUID              `json:"projectId" validate:"required"`
-	SenderID    *uuid.UUID             `json:"senderId"`
-	MessageType string                 `json:"messageType" validate:"required,oneof=text file adaptive_card"`
-	Content     string                 `json:"content" validate:"required,max=4000"`
-	Mentions    []string               `json:"mentions"`
-	Attachments []map[string]any       `json:"attachments"`
-	Priority    string                 `json:"priority" validate:"oneof=low normal high"`
-	Metadata    map[string]interface{} `json:"metadata"`
-	Targets     []string               `json:"targets" validate:"omitempty,min=1"`
+	ProjectID    uuid.UUID              `json:"projectId" validate:"required"`
+	SenderID     *uuid.UUID             `json:"senderId"`
+	MessageType  string                 `json:"messageType" validate:"required_without=TemplateID,oneof=text file adaptive_card"`
+	Content      string                 `json:"content" validate:"required_without=TemplateID,max=4000"`
+	TemplateID   *uuid.UUID             `json:"templateId"`   // Optional template ID for template-based notifications
+	TemplateData map[string]any         `json:"templateData"` // Optional template variables
+	Mentions     []string               `json:"mentions"`
+	Attachments  []map[string]any       `json:"attachments"`
+	Priority     string                 `json:"priority" validate:"oneof=low normal high"`
+	Metadata     map[string]interface{} `json:"metadata"`
+	Targets      []string               `json:"targets" validate:"omitempty,min=1"`
 }
 
 // SendNotificationResponse represents a send notification response
@@ -91,15 +94,17 @@ func (h *Handler) SendNotification(c *gin.Context) {
 
 	// Convert request to service request
 	serviceReq := &services.SendNotificationRequest{
-		ProjectID:   req.ProjectID,
-		SenderID:    req.SenderID,
-		MessageType: req.MessageType,
-		Content:     req.Content,
-		Mentions:    req.Mentions,
-		Attachments: req.Attachments,
-		Priority:    req.Priority,
-		Metadata:    req.Metadata,
-		Targets:     req.Targets,
+		ProjectID:    req.ProjectID,
+		SenderID:     req.SenderID,
+		MessageType:  req.MessageType,
+		Content:      req.Content,
+		TemplateID:   req.TemplateID,
+		TemplateData: req.TemplateData,
+		Mentions:     req.Mentions,
+		Attachments:  req.Attachments,
+		Priority:     req.Priority,
+		Metadata:     req.Metadata,
+		Targets:      req.Targets,
 	}
 
 	// Send notification
