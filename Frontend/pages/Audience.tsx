@@ -37,12 +37,34 @@ export const Audience: React.FC = () => {
   const [isRegisteringChat, setIsRegisteringChat] = useState(false);
 
   useEffect(() => {
+    // Wait for project to load, and ensure we have a valid UUID
+    if (!currentProject || !currentProject.id) {
+      return;
+    }
+    
+    // Check if currentProject.id is a valid UUID (36 characters with dashes)
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentProject.id);
+    
+    if (!isValidUUID) {
+      console.warn(`[Audience] Invalid project ID format: ${currentProject.id}. Expected UUID. Skipping data load.`);
+      setLists([]);
+      setUsers([]);
+      setChatGroups([]);
+      setIsLoading(false);
+      return;
+    }
+    
     loadData();
   }, [currentProject]);
 
   const loadData = async () => {
+    if (!currentProject || !currentProject.id) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
+      // Use project UUID to fetch data
       const [listsData, usersData, chatData] = await Promise.all([
         service.getAudienceLists(currentProject.id),
         service.getProjectUsers(currentProject.id),
@@ -52,7 +74,10 @@ export const Audience: React.FC = () => {
       setUsers(usersData);
       setChatGroups(chatData);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to load audience data:', e);
+      setLists([]);
+      setUsers([]);
+      setChatGroups([]);
     } finally {
       setIsLoading(false);
     }

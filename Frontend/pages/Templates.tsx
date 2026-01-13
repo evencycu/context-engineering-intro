@@ -9,7 +9,7 @@ import { Input } from '../components/ui/Input';
 import { Plus, Trash2, Edit2, Code, FileText, Variable } from 'lucide-react';
 
 export const Templates: React.FC = () => {
-  const { currentProject } = useProject();
+  const { currentProject, isLoading: isProjectLoading } = useProject();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -26,8 +26,22 @@ export const Templates: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // Wait for project to load, and ensure we have a valid UUID
+    if (isProjectLoading) {
+      return;
+    }
+    
+    // Check if currentProject.id is a valid UUID (36 characters with dashes)
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentProject.id);
+    
+    if (!isValidUUID) {
+      console.warn(`[Templates] Invalid project ID format: ${currentProject.id}. Expected UUID. Skipping template load.`);
+      setIsLoading(false);
+      return;
+    }
+    
     loadTemplates();
-  }, [currentProject]);
+  }, [currentProject, isProjectLoading]);
 
   const loadTemplates = async () => {
     setIsLoading(true);

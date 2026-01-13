@@ -66,12 +66,14 @@ func NewServer(serverCfg configs.ServerConfig) *Server {
 		MaxAge:           12 * time.Hour,
 	})
 	defaultCORS := cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080", "http://localhost:8082", "https://yourdomain.com"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3002", "http://localhost:8080", "http://localhost:8082", "https://yourdomain.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
+		// Handle preflight requests
+		AllowWildcard:    false,
 	})
 	// Conditional CORS: use botFrameworkCORS for /api/v1/messages, defaultCORS for others
 	router.Use(func(c *gin.Context) {

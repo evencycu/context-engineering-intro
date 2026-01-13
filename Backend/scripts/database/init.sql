@@ -21,6 +21,12 @@ INSERT INTO projects (id, company_id, notify_key, description, status, daily_lim
 ('750e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'techstart-monitoring', 'TechStart monitoring notifications', 'active', 500, 15000, 'high', '650e8400-e29b-41d4-a716-446655440003', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
+-- Insert special global project for global templates (available to all projects)
+-- This project uses UUID 00000000-0000-0000-0000-000000000000 to represent global templates
+INSERT INTO projects (id, company_id, notify_key, description, status, daily_limit, monthly_limit, priority, created_by, created_at, updated_at) VALUES
+('00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440001', '__global__', 'Global templates project (available to all projects)', 'active', 0, 0, 'normal', '650e8400-e29b-41d4-a716-446655440001', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
 -- Insert sample teams bots (type = platform)
 INSERT INTO teams_bots (id, type, name, description, app_id, app_password_hash, tenant_id, status, webhook_url, capabilities, rate_limit_per_minute, max_concurrent_requests, created_at, updated_at) VALUES
 ('850e8400-e29b-41d4-a716-446655440001', 'platform', 'Main Notification Bot', 'Primary bot for sending notifications', 'app-12345', '$2a$10$example.hash', 'tenant-12345', 'active', 'https://api.teams.com/webhook/12345', '{"send_message": true, "send_file": true, "send_adaptive_card": true}', 60, 10, NOW(), NOW()),

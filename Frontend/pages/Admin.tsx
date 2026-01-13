@@ -583,6 +583,8 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
         )}
 
         {/* === GLOBAL TEMPLATES === */}
+        {/* Note: Global templates can only be managed by global admins (users with access to /admin routes) */}
+        {/* Global templates are available to all projects but only visible in Compose page, not in project Templates page */}
         {view === 'templates' && (
           <div className="space-y-6">
             <div className="flex justify-end">

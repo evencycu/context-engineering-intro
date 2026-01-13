@@ -13,13 +13,30 @@ export const History: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
 
   useEffect(() => {
+    // Wait for project to load, and ensure we have a valid UUID
+    if (!currentProject || !currentProject.id) {
+      return;
+    }
+    
+    // Check if currentProject.id is a valid UUID (36 characters with dashes)
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentProject.id);
+    
+    if (!isValidUUID) {
+      console.warn(`[History] Invalid project ID format: ${currentProject.id}. Expected UUID. Skipping logs load.`);
+      setLogs([]);
+      setIsLoading(false);
+      return;
+    }
+    
     const fetchLogs = async () => {
       setIsLoading(true);
       try {
+        // Use project UUID to fetch logs
         const data = await service.getLogs(currentProject.id);
         setLogs(data);
       } catch (e) {
         console.error("Failed to load logs", e);
+        setLogs([]);
       } finally {
         setIsLoading(false);
       }

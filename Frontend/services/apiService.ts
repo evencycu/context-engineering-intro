@@ -252,7 +252,7 @@ function transformProject(backend: BackendProject): Project {
     'normal': 'Normal',
     'high': 'High (Alert)',
   };
-  
+
   return {
     id: backend.id,
     name: backend.notify_key,  // notify_key is the project name/identifier
@@ -402,7 +402,10 @@ export const apiService = {
   getProjects: async (): Promise<Project[]> => {
     const response = await apiCall<BackendProject[]>('/projects');
     const backendProjects = extractData(response) || [];
-    return backendProjects.map(transformProject);
+    // Filter out global template project (UUID: 00000000-0000-0000-0000-000000000000)
+    const GLOBAL_PROJECT_ID = '00000000-0000-0000-0000-000000000000';
+    const filteredProjects = backendProjects.filter(p => p.id !== GLOBAL_PROJECT_ID);
+    return filteredProjects.map(transformProject);
   },
 
   getProject: async (projectId: string): Promise<Project | null> => {
@@ -523,12 +526,12 @@ export const apiService = {
     // Backend expects camelCase: name, description, defaultJsonStructure, variables (TemplateVariable[])
     const backendData = {
       name: data.name,
-      description: data.description,
+      description: data.description || '',
       defaultJsonStructure: data.defaultJsonStructure,
-      variables: data.variables.map(key => ({
-        key,
-        label: key, // Use key as label if not provided
-        type: 'text' // Default type
+      variables: (data.variables || []).map(key => ({
+        key: typeof key === 'string' ? key : key,
+        label: typeof key === 'string' ? key : (key as any).label || key,
+        type: typeof key === 'string' ? 'text' : (key as any).type || 'text'
       })),
     };
 
@@ -541,14 +544,10 @@ export const apiService = {
       }
     );
     const backend = extractData(response);
-    return backend ? transformTemplate(backend) : {
-      id: '',
-      projectId,
-      name: data.name,
-      description: data.description,
-      variables: data.variables,
-      defaultJsonStructure: data.defaultJsonStructure,
-    };
+    if (!backend) {
+      throw new Error('Failed to create template: No data returned from server');
+    }
+    return transformTemplate(backend);
   },
 
   updateTemplate: async (projectId: string, templateId: string, data: Partial<Template>): Promise<void> => {
@@ -575,6 +574,73 @@ export const apiService = {
     // Backend uses 'id' as path parameter for project
     await apiCall<null>(
       `/projects/${projectId}/templates/${templateId}`,
+      { method: 'DELETE' }
+    );
+  },
+
+  // ============================================
+  // Global Template APIs
+  // ============================================
+
+  getGlobalTemplates: async (): Promise<Template[]> => {
+    const response = await apiCall<BackendTemplate[]>(
+      `/global/templates`
+    );
+    const backendTemplates = extractData(response) || [];
+    return backendTemplates.map(transformTemplate);
+  },
+
+  createGlobalTemplate: async (data: Omit<Template, 'id'>): Promise<Template> => {
+    const backendData = {
+      name: data.name,
+      description: data.description,
+      defaultJsonStructure: data.defaultJsonStructure,
+      variables: data.variables.map(key => ({
+        key,
+        label: key,
+        type: 'text'
+      })),
+    };
+
+    const response = await apiCall<BackendTemplate>(
+      `/global/templates`,
+      {
+        method: 'POST',
+        body: JSON.stringify(backendData),
+      }
+    );
+    const backend = extractData(response);
+    return backend ? transformTemplate(backend) : {
+      id: '',
+      projectId: 'global',
+      name: data.name,
+      description: data.description,
+      variables: data.variables,
+      defaultJsonStructure: data.defaultJsonStructure,
+    };
+  },
+
+  updateGlobalTemplate: async (templateId: string, data: Partial<Template>): Promise<void> => {
+    const backendData: any = {};
+    if (data.name) backendData.name = data.name;
+    if (data.description) backendData.description = data.description;
+    if (data.defaultJsonStructure) backendData.defaultJsonStructure = data.defaultJsonStructure;
+    if (data.variables) {
+      backendData.variables = data.variables.map(key => ({ key, label: key, type: 'text' }));
+    }
+
+    await apiCall<BackendTemplate>(
+      `/global/templates/${templateId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(backendData),
+      }
+    );
+  },
+
+  deleteGlobalTemplate: async (templateId: string): Promise<void> => {
+    await apiCall<null>(
+      `/global/templates/${templateId}`,
       { method: 'DELETE' }
     );
   },

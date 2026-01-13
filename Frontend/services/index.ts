@@ -167,63 +167,44 @@ export const service = {
     ),
 
   // Template APIs
-  getTemplates: (projectId: string): Promise<Template[]> =>
-    withFallback(
-      () => apiService.getTemplates(projectId),
-      () => mockApiService.getTemplates(projectId),
-      'getTemplates'
-    ),
+  getTemplates: (projectId: string): Promise<Template[]> => {
+    // Directly use API, no fallback to mock to avoid mixing real and mock data
+    return apiService.getTemplates(projectId);
+  },
 
-  getGlobalTemplates: (): Promise<Template[]> =>
-    withFallback(
-      async () => {
-        // Backend might not have global templates endpoint yet
-        // For now, return empty array from real API
-        return [];
-      },
-      () => mockApiService.getGlobalTemplates(),
-      'getGlobalTemplates'
-    ),
+  getGlobalTemplates: (): Promise<Template[]> => {
+    // Directly use API, no fallback to mock to avoid mixing real and mock data
+    return apiService.getGlobalTemplates();
+  },
 
   createGlobalTemplate: (data: Omit<Template, 'id'>): Promise<Template> =>
     withFallback(
-      async () => {
-        // Backend might not have global templates endpoint yet
-        // For now, always use mock (don't throw error, just use mock directly)
-        return mockApiService.createTemplate({ ...data, projectId: 'global' });
-      },
+      () => apiService.createGlobalTemplate(data),
       () => mockApiService.createTemplate({ ...data, projectId: 'global' }),
       'createGlobalTemplate'
     ),
 
   updateGlobalTemplate: (id: string, data: Partial<Template>): Promise<void> =>
     withFallback(
-      async () => {
-        // Backend might not have global templates endpoint yet
-        // For now, always use mock (don't throw error, just use mock directly)
-        return mockApiService.updateTemplate(id, data);
-      },
+      () => apiService.updateGlobalTemplate(id, data),
       () => mockApiService.updateTemplate(id, data),
       'updateGlobalTemplate'
     ),
 
   deleteGlobalTemplate: (id: string): Promise<void> =>
     withFallback(
-      async () => {
-        // Backend might not have global templates endpoint yet
-        // For now, always use mock (don't throw error, just use mock directly)
-        return mockApiService.deleteTemplate(id);
-      },
+      () => apiService.deleteGlobalTemplate(id),
       () => mockApiService.deleteTemplate(id),
       'deleteGlobalTemplate'
     ),
 
-  createTemplate: (data: Omit<Template, 'id'>): Promise<Template> =>
-    withFallback(
-      () => apiService.createTemplate(data.projectId, data),
-      () => mockApiService.createTemplate(data),
-      'createTemplate'
-    ),
+  createTemplate: (data: Omit<Template, 'id'>): Promise<Template> => {
+    // Directly use API, no fallback to mock to ensure data is saved to database
+    if (!data.projectId) {
+      throw new Error('Project ID is required to create template');
+    }
+    return apiService.createTemplate(data.projectId, data);
+  },
 
   updateTemplate: (id: string, data: Partial<Template>): Promise<void> =>
     withFallback(
