@@ -219,9 +219,11 @@ func (s *graphService) GetGroupChannels(ctx context.Context, groupId string) ([]
 	for _, c := range result.Value {
 		channels = append(channels, models.AzureADChannel{
 			AzureADID:      c.ID,
+			TeamID:         groupId, // Parent Team/Group ID
 			DisplayName:    c.DisplayName,
 			Description:    c.Description,
 			MembershipType: c.MembershipType,
+			ConversationID: c.ID, // Channel ID is the conversation ID
 		})
 	}
 

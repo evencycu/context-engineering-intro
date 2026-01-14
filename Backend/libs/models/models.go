@@ -753,10 +753,14 @@ type AzureADGroup struct {
 
 // AzureADChannel represents a Teams channel
 type AzureADChannel struct {
-	AzureADID      string `json:"id"`
-	DisplayName    string `json:"display_name"`
-	Description    string `json:"description"`
-	MembershipType string `json:"membership_type"` // standard, private, shared
+	BaseModel
+	AzureADID      string     `json:"azure_ad_id" db:"azure_ad_id"`      // Channel ID (also conversation_id)
+	TeamID         string     `json:"team_id" db:"team_id"`              // Parent Team/Group ID
+	DisplayName    string     `json:"display_name" db:"display_name"`
+	Description    string     `json:"description" db:"description"`
+	MembershipType string     `json:"membership_type" db:"membership_type"` // standard, private, shared
+	ConversationID string     `json:"conversation_id" db:"conversation_id"` // Same as azure_ad_id for channels
+	SyncedAt       *time.Time `json:"synced_at" db:"synced_at"`
 }
 
 // ChatGroup represents a registered Teams chat group
@@ -765,6 +769,29 @@ type ChatGroup struct {
 	ProjectID uuid.UUID `json:"project_id" db:"project_id"`
 	Name      string    `json:"name" db:"name"`
 	ChatID    string    `json:"chat_id" db:"chat_id"`
+}
+
+// AudienceList represents an audience list for a project
+type AudienceList struct {
+	BaseModel
+	ProjectID  uuid.UUID       `json:"project_id" db:"project_id"`
+	Name       string           `json:"name" db:"name"`
+	Type       string           `json:"type" db:"type"` // 'Static' or 'Dynamic'
+	Count      int              `json:"count" db:"count"`
+	Description *string          `json:"description" db:"description"`
+	Metadata   JSONBObject      `json:"metadata" db:"metadata"`
+	LastUpdated time.Time        `json:"last_updated" db:"last_updated"`
+}
+
+// DirectorySyncStatus represents the status of directory synchronization
+type DirectorySyncStatus struct {
+	IsSyncing     bool       `json:"is_syncing"`
+	LastSyncAt    *time.Time `json:"last_sync_at"`
+	LastSyncStatus string    `json:"last_sync_status"` // "success", "failed", "never"
+	UserCount     int        `json:"user_count"`
+	GroupCount    int        `json:"group_count"`
+	ChannelCount  int        `json:"channel_count"`
+	ErrorMessage  string     `json:"error_message,omitempty"`
 }
 
 

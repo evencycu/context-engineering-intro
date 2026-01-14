@@ -17,6 +17,7 @@ type DirectoryService interface {
 	ListGroups(ctx context.Context) ([]models.AzureADGroup, error)
 	ListGroupChannels(ctx context.Context, groupId string) ([]models.AzureADChannel, error)
 	SyncDirectory(ctx context.Context) error
+	GetSyncStatus(ctx context.Context) (*models.DirectorySyncStatus, error)
 	// ChatGroup operations
 	RegisterChatGroup(ctx context.Context, projectID uuid.UUID, name, chatID string) (*models.ChatGroup, error)
 	ListChatGroups(ctx context.Context, projectID uuid.UUID) ([]models.ChatGroup, error)
@@ -140,5 +141,92 @@ func (s *directoryService) SyncDirectory(ctx context.Context) error {
 	}
 	s.logger.Infof("Group sync completed. Total groups: %d", totalGroups)
 
+	// Sync Channels from Unified Groups
+	s.logger.Info("Starting channels sync from Unified Groups...")
+	allGroups, err := s.repo.ListGroups(ctx)
+	if err != nil {
+		s.logger.Errorf("Failed to list groups for channel sync: %v", err)
+		return err
+	}
+
+	totalChannels := 0
+	unifiedGroupCount := 0
+	for _, group := range allGroups {
+		// Check if group is a Unified (M365) Group
+		isUnified := false
+		for _, gt := range group.GroupTypes {
+			if gt == "Unified" {
+				isUnified = true
+				break
+			}
+		}
+		if !isUnified {
+			continue
+		}
+
+		unifiedGroupCount++
+		s.logger.Infof("Syncing channels for Unified Group: %s (%s)", group.DisplayName, group.AzureADID)
+
+		channels, err := s.graphService.GetGroupChannels(ctx, group.AzureADID)
+		if err != nil {
+			s.logger.Warnf("Failed to fetch channels for group %s: %v (may not be a Teams team)", group.AzureADID, err)
+			continue // Not all Unified Groups are Teams teams
+		}
+
+		for _, ch := range channels {
+			ch.TeamID = group.AzureADID // Ensure team_id is set
+			if err := s.repo.UpsertChannel(ctx, &ch); err != nil {
+				s.logger.Errorf("Failed to upsert channel %s: %v", ch.AzureADID, err)
+			} else {
+				totalChannels++
+			}
+		}
+		s.logger.Infof("Synced %d channels for group %s", len(channels), group.DisplayName)
+	}
+	s.logger.Infof("Channels sync completed. Processed %d Unified Groups, synced %d channels", unifiedGroupCount, totalChannels)
+
 	return nil
+}
+
+func (s *directoryService) GetSyncStatus(ctx context.Context) (*models.DirectorySyncStatus, error) {
+	s.syncMutex.Lock()
+	isSyncing := s.isSyncing
+	s.syncMutex.Unlock()
+
+	userCount, err := s.repo.CountUsers(ctx)
+	if err != nil {
+		s.logger.Errorf("Failed to count users: %v", err)
+		userCount = 0
+	}
+
+	groupCount, err := s.repo.CountGroups(ctx)
+	if err != nil {
+		s.logger.Errorf("Failed to count groups: %v", err)
+		groupCount = 0
+	}
+
+	channelCount, err := s.repo.CountChannels(ctx)
+	if err != nil {
+		s.logger.Errorf("Failed to count channels: %v", err)
+		channelCount = 0
+	}
+
+	lastSyncAt, err := s.repo.GetLastSyncTime(ctx)
+	if err != nil {
+		s.logger.Errorf("Failed to get last sync time: %v", err)
+	}
+
+	status := "never"
+	if lastSyncAt != nil {
+		status = "success"
+	}
+
+	return &models.DirectorySyncStatus{
+		IsSyncing:     isSyncing,
+		LastSyncAt:    lastSyncAt,
+		LastSyncStatus: status,
+		UserCount:     userCount,
+		GroupCount:    groupCount,
+		ChannelCount:  channelCount,
+	}, nil
 }

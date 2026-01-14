@@ -336,6 +336,50 @@ CREATE INDEX idx_chat_groups_project_id ON chat_groups(project_id);
 
 
 -- =============================================
+-- Azure AD Directory Sync Tables
+-- =============================================
+
+-- Azure AD Users table for syncing users from Microsoft Graph API
+CREATE TABLE azure_ad_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    azure_ad_id VARCHAR(255) NOT NULL UNIQUE,
+    display_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    job_title VARCHAR(255),
+    department VARCHAR(255),
+    synced_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Azure AD Groups table for syncing groups from Microsoft Graph API
+CREATE TABLE azure_ad_groups (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    azure_ad_id VARCHAR(255) NOT NULL UNIQUE,
+    display_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    group_types JSONB DEFAULT '[]'::jsonb,
+    synced_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Azure AD Channels table for syncing Teams channels from Unified Groups
+CREATE TABLE azure_ad_channels (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    azure_ad_id VARCHAR(500) NOT NULL UNIQUE, -- Channel ID (also conversation_id)
+    team_id VARCHAR(255) NOT NULL, -- Parent Team/Group ID (references azure_ad_groups.azure_ad_id)
+    display_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    membership_type VARCHAR(50), -- standard, private, shared
+    conversation_id VARCHAR(500) NOT NULL, -- Same as azure_ad_id for channels
+    synced_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- =============================================
 -- Audit and Logging Tables
 -- =============================================
 
@@ -483,6 +527,27 @@ CREATE INDEX idx_files_is_public ON files(is_public);
 CREATE INDEX idx_files_expires_at ON files(expires_at);
 CREATE INDEX idx_files_created_at ON files(created_at);
 
+-- Audience Lists indexes
+CREATE INDEX idx_audience_lists_project_id ON audience_lists(project_id);
+CREATE INDEX idx_audience_lists_type ON audience_lists(type);
+CREATE INDEX idx_audience_lists_last_updated ON audience_lists(last_updated);
+
+-- Azure AD indexes
+CREATE INDEX idx_azure_ad_users_azure_ad_id ON azure_ad_users(azure_ad_id);
+CREATE INDEX idx_azure_ad_users_email ON azure_ad_users(email);
+CREATE INDEX idx_azure_ad_users_display_name ON azure_ad_users(display_name);
+CREATE INDEX idx_azure_ad_users_synced_at ON azure_ad_users(synced_at);
+
+CREATE INDEX idx_azure_ad_groups_azure_ad_id ON azure_ad_groups(azure_ad_id);
+CREATE INDEX idx_azure_ad_groups_display_name ON azure_ad_groups(display_name);
+CREATE INDEX idx_azure_ad_groups_synced_at ON azure_ad_groups(synced_at);
+
+CREATE INDEX idx_azure_ad_channels_azure_ad_id ON azure_ad_channels(azure_ad_id);
+CREATE INDEX idx_azure_ad_channels_team_id ON azure_ad_channels(team_id);
+CREATE INDEX idx_azure_ad_channels_conversation_id ON azure_ad_channels(conversation_id);
+CREATE INDEX idx_azure_ad_channels_display_name ON azure_ad_channels(display_name);
+CREATE INDEX idx_azure_ad_channels_synced_at ON azure_ad_channels(synced_at);
+
 
 -- Audit Logs indexes
 CREATE INDEX idx_audit_logs_company_id ON audit_logs(company_id);
@@ -526,6 +591,9 @@ CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_setting
 CREATE TRIGGER update_feature_flags_updated_at BEFORE UPDATE ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_templates_updated_at BEFORE UPDATE ON templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_audience_lists_updated_at BEFORE UPDATE ON audience_lists FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_azure_ad_users_updated_at BEFORE UPDATE ON azure_ad_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_azure_ad_groups_updated_at BEFORE UPDATE ON azure_ad_groups FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- Views for Common Queries
