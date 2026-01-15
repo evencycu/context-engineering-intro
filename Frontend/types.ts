@@ -16,6 +16,7 @@ export interface UserProfile {
   userPrincipalName: string; // Email
   jobTitle: string;
   tags?: string[];
+  conversationId?: string; // Teams conversation ID
 }
 
 export enum TemplateType {
@@ -155,11 +156,24 @@ export interface ADGroup {
   memberCount: number;
 }
 
+export interface TeamsGroupWithChannels {
+  id: string;
+  azure_ad_id: string;
+  display_name: string;
+  description: string;
+  group_types: string[];
+  synced_at?: string;
+  channels: TeamChannel[];
+}
+
 export interface TeamChannel {
   id: string;
   displayName: string;
   membershipType: 'Standard' | 'Private' | 'Shared';
   description?: string;
+  teamId?: string; // Parent Team/Group ID
+  conversationId?: string; // Channel conversation ID
+  teamDisplayName?: string; // Group/Team display name
 }
 
 export interface SyncStatus {

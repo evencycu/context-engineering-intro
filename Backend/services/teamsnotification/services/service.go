@@ -680,6 +680,27 @@ func (s *messagesService) handleMessage(ctx context.Context, act *Activity, rawP
 		convID = act.Conversation.ID
 	}
 	log.Printf("messages: received message event. conversation_id=%s channel_id=%s", convID, act.ChannelID)
+
+	// Auto-create installation record if missing (recovery from missed installationUpdate event)
+	if convID != "" {
+		existingInstallation, err := s.installRepo.GetByConversationID(ctx, convID)
+		if err != nil || existingInstallation == nil {
+			// Installation record not found, try to create from message event
+			log.Printf("messages: No installation found for conversation %s, attempting to create from message event", convID)
+			if err := s.createInstallationFromMessage(ctx, act, rawPayload); err != nil {
+				log.Printf("messages: Failed to create installation from message: %v (non-fatal, continuing)", err)
+				// Non-fatal error, continue processing message
+			} else {
+				log.Printf("messages: Successfully created installation record for conversation %s", convID)
+			}
+		} else {
+			// Update last activity time for existing installation
+			if err := s.installRepo.UpdateActivity(ctx, existingInstallation.ID); err != nil {
+				log.Printf("messages: Failed to update activity time: %v (non-fatal)", err)
+			}
+		}
+	}
+
 	if strings.Contains(act.Text, "email") {
 		reply := createOAuthCardActivity(act)
 
@@ -755,7 +776,7 @@ func (s *messagesService) handleEvent(ctx context.Context, act *Activity, rawPay
 		var tokenResp TokenResponse
 		if err := json.Unmarshal(act.Value, &tokenResp); err != nil {
 			log.Printf("解析 Token Response 失敗: %v", err)
-			return errors.New(fmt.Sprintf("解析 Token Response 失敗: %v", err))
+			return fmt.Errorf("解析 Token Response 失敗: %w", err)
 
 		}
 
@@ -842,6 +863,182 @@ func createOAuthCardActivity(act *Activity) Activity {
 func (s *messagesService) handleConversationUpdate(ctx context.Context, act *Activity, rawPayload map[string]any) error {
 	// Intentionally no-op for now
 	return nil
+}
+
+// createInstallationFromMessage creates an installation record from a message event
+// This is used as a recovery mechanism when installationUpdate event was missed
+func (s *messagesService) createInstallationFromMessage(ctx context.Context, act *Activity, rawPayload map[string]any) error {
+	if act == nil {
+		return errors.New("activity is nil")
+	}
+
+	// Extract appId from recipient.id like "28:<APPID>"
+	appID := ""
+	if rid := act.Recipient.ID; rid != "" {
+		if strings.HasPrefix(rid, "28:") && len(rid) > 3 {
+			appID = rid[3:]
+		}
+	}
+	if appID == "" {
+		return errors.New("cannot determine app_id from recipient.id")
+	}
+
+	// Resolve bot presence
+	bot, botErr := s.teamsBotRepo.GetByAppID(ctx, appID)
+	if bot == nil || botErr != nil {
+		if botErr != nil {
+			return fmt.Errorf("teams bot not found for app_id=%s: %w", appID, botErr)
+		}
+		return fmt.Errorf("teams bot not found for app_id=%s", appID)
+	}
+
+	// Determine tenant id
+	tenantID := s.defaultTenantID
+	if t, ok := rawPayload["tenant"].(map[string]any); ok {
+		if tid, ok2 := t["id"].(string); ok2 && tid != "" {
+			tenantID = tid
+		}
+	}
+	// Try channelData.tenant.id
+	if tenantID == "" {
+		if cd, ok := act.ChannelData["tenant"].(map[string]any); ok {
+			if tid, ok2 := cd["id"].(string); ok2 && tid != "" {
+				tenantID = tid
+			}
+		}
+	}
+	// Try conversation.tenantId
+	if tenantID == "" {
+		if convAny, ok := rawPayload["conversation"].(map[string]any); ok {
+			if tid, ok2 := convAny["tenantId"].(string); ok2 && tid != "" {
+				tenantID = tid
+			}
+		}
+	}
+	if tenantID == "" && act.Conversation.TenantID != "" {
+		tenantID = act.Conversation.TenantID
+	}
+	if tenantID == "" {
+		tenantID = "unknown-tenant"
+	}
+
+	// Determine conversation details
+	conversationID := act.Conversation.ID
+	if conversationID == "" {
+		return errors.New("conversation.id is required")
+	}
+
+	serviceURL := act.ServiceURL
+	if serviceURL == "" {
+		if su, ok := rawPayload["serviceUrl"].(string); ok && su != "" {
+			serviceURL = su
+		}
+	}
+	if serviceURL == "" {
+		return errors.New("serviceUrl is required")
+	}
+
+	// Determine conversation type from Teams event
+	conversationType := "personal"
+	if act.Conversation.ConversationType != "" {
+		switch act.Conversation.ConversationType {
+		case "personal":
+			conversationType = "personal"
+		case "channel":
+			conversationType = "channel"
+		case "groupChat":
+			conversationType = "groupChat"
+		}
+	} else if convType, ok := rawPayload["conversation"].(map[string]any); ok {
+		if ct, ok := convType["conversationType"].(string); ok {
+			switch ct {
+			case "personal":
+				conversationType = "personal"
+			case "channel":
+				conversationType = "channel"
+			case "groupChat":
+				conversationType = "groupChat"
+			}
+		}
+	}
+
+	// Extract AAD Object ID and names
+	aadObjectID := ""
+	fromName := act.From.Name
+	recipientName := act.Recipient.Name
+
+	// Try to get AAD Object ID from raw payload
+	if from, ok := rawPayload["from"].(map[string]any); ok {
+		if aad, ok := from["aadObjectId"].(string); ok && aad != "" {
+			aadObjectID = aad
+		}
+		if name, ok := from["name"].(string); ok && name != "" {
+			fromName = name
+		}
+	}
+
+	// Query additional information based on conversation type
+	email := ""
+	descriptionName := ""
+
+	switch conversationType {
+	case "personal":
+		// For personal chat, get user email from Graph API
+		if aadObjectID != "" {
+			email = s.getUserEmailFromGraphAPI(ctx, aadObjectID, tenantID)
+		}
+		descriptionName = fromName // Use from name as description for personal
+
+	case "groupChat":
+		// For group chat, get topic from conversation
+		if conv, ok := rawPayload["conversation"].(map[string]any); ok {
+			if topic, ok := conv["name"].(string); ok {
+				descriptionName = topic
+			}
+		}
+		if descriptionName == "" {
+			descriptionName = "Group Chat"
+		}
+
+	case "channel":
+		// For channel, get team name from channel data
+		if channelData, ok := rawPayload["channelData"].(map[string]any); ok {
+			if team, ok := channelData["team"].(map[string]any); ok {
+				if teamName, ok := team["name"].(string); ok {
+					descriptionName = teamName
+				}
+			}
+		}
+		if descriptionName == "" {
+			descriptionName = "Channel"
+		}
+	}
+
+	// Prepare installation entity
+	now := time.Now()
+	inst := &models.BotInstallation{
+		BotID:              bot.ID,
+		BotType:            models.BotType("platform"),
+		TeamsTenantID:      tenantID,
+		ConversationType:   conversationType,
+		ConversationID:     conversationID,
+		ServiceURL:         serviceURL,
+		RecipientID:        act.Recipient.ID,
+		RecipientName:      recipientName,
+		FromID:             act.From.ID,
+		FromName:           fromName,
+		FromAADObjectID:    aadObjectID,
+		Email:              email,
+		DescriptionName:    descriptionName,
+		InstallationStatus: "active",
+		InstalledAt:        now,
+		UninstalledAt:      nil,
+		LastActivityAt:     &now,
+		Metadata:           rawPayload,
+	}
+
+	// Use Upsert to handle potential race conditions
+	return s.installRepo.Upsert(ctx, inst)
 }
 
 // SendProactiveTest sends a simple proactive text message using provided activity payload (no DB)

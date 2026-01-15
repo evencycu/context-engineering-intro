@@ -14,17 +14,22 @@ import (
 // DirectoryService defines directory operations
 type DirectoryService interface {
 	SearchUsers(ctx context.Context, query string) ([]models.AzureADUser, error)
+	ListUsers(ctx context.Context, limit, offset int) ([]models.AzureADUser, error)
 	ListGroups(ctx context.Context) ([]models.AzureADGroup, error)
+	ListTeamsGroups(ctx context.Context) ([]models.AzureADGroup, error)
+	ListTeamsGroupsWithChannels(ctx context.Context) ([]models.TeamsGroupWithChannels, error)
 	ListGroupChannels(ctx context.Context, groupId string) ([]models.AzureADChannel, error)
+	ListChannels(ctx context.Context, teamID string) ([]models.AzureADChannel, error)
 	SyncDirectory(ctx context.Context) error
 	GetSyncStatus(ctx context.Context) (*models.DirectorySyncStatus, error)
 	// ChatGroup operations
 	RegisterChatGroup(ctx context.Context, projectID uuid.UUID, name, chatID string) (*models.ChatGroup, error)
 	ListChatGroups(ctx context.Context, projectID uuid.UUID) ([]models.ChatGroup, error)
+	ListAllChatGroups(ctx context.Context) ([]models.ChatGroup, error)
 	RemoveChatGroup(ctx context.Context, id uuid.UUID) error
+	// Group chats from bot_installations
+	GetGroupChatsFromBotInstallations(ctx context.Context) ([]models.GroupChatFromBotInstallation, error)
 }
-
-
 
 type directoryService struct {
 	repo         repositories.DirectoryRepository
@@ -47,12 +52,29 @@ func (s *directoryService) SearchUsers(ctx context.Context, query string) ([]mod
 	return s.repo.SearchUsers(ctx, query)
 }
 
+func (s *directoryService) ListUsers(ctx context.Context, limit, offset int) ([]models.AzureADUser, error) {
+	return s.repo.ListUsers(ctx, limit, offset)
+}
+
 func (s *directoryService) ListGroups(ctx context.Context) ([]models.AzureADGroup, error) {
 	return s.repo.ListGroups(ctx)
 }
 
+func (s *directoryService) ListTeamsGroups(ctx context.Context) ([]models.AzureADGroup, error) {
+	return s.repo.ListTeamsGroups(ctx)
+}
+
+func (s *directoryService) ListTeamsGroupsWithChannels(ctx context.Context) ([]models.TeamsGroupWithChannels, error) {
+	return s.repo.ListTeamsGroupsWithChannels(ctx)
+}
+
 func (s *directoryService) ListGroupChannels(ctx context.Context, groupId string) ([]models.AzureADChannel, error) {
-	return s.graphService.GetGroupChannels(ctx, groupId)
+	// Get channels from database (synced channels) instead of Graph API
+	return s.repo.ListChannels(ctx, groupId)
+}
+
+func (s *directoryService) ListChannels(ctx context.Context, teamID string) ([]models.AzureADChannel, error) {
+	return s.repo.ListChannels(ctx, teamID)
 }
 
 func (s *directoryService) RegisterChatGroup(ctx context.Context, projectID uuid.UUID, name, chatID string) (*models.ChatGroup, error) {
@@ -71,8 +93,16 @@ func (s *directoryService) ListChatGroups(ctx context.Context, projectID uuid.UU
 	return s.repo.ListChatGroups(ctx, projectID)
 }
 
+func (s *directoryService) ListAllChatGroups(ctx context.Context) ([]models.ChatGroup, error) {
+	return s.repo.ListAllChatGroups(ctx)
+}
+
 func (s *directoryService) RemoveChatGroup(ctx context.Context, id uuid.UUID) error {
 	return s.repo.DeleteChatGroup(ctx, id)
+}
+
+func (s *directoryService) GetGroupChatsFromBotInstallations(ctx context.Context) ([]models.GroupChatFromBotInstallation, error) {
+	return s.repo.GetGroupChatsFromBotInstallations(ctx)
 }
 
 func (s *directoryService) SyncDirectory(ctx context.Context) error {
@@ -222,11 +252,11 @@ func (s *directoryService) GetSyncStatus(ctx context.Context) (*models.Directory
 	}
 
 	return &models.DirectorySyncStatus{
-		IsSyncing:     isSyncing,
-		LastSyncAt:    lastSyncAt,
+		IsSyncing:      isSyncing,
+		LastSyncAt:     lastSyncAt,
 		LastSyncStatus: status,
-		UserCount:     userCount,
-		GroupCount:    groupCount,
-		ChannelCount:  channelCount,
+		UserCount:      userCount,
+		GroupCount:     groupCount,
+		ChannelCount:   channelCount,
 	}, nil
 }

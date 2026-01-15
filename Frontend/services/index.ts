@@ -9,22 +9,23 @@
 
 import { apiService } from './apiService';
 import { mockApiService } from './mockApiService';
-import type { 
-  UserProfile, 
-  NotificationLog, 
-  SendMessageRequest, 
-  Project, 
-  AudienceList, 
-  SystemHealth, 
-  BillingRecord, 
-  Company, 
-  BotInstance, 
-  TransactionRecord, 
-  ADGroup, 
-  TeamChannel, 
-  ChatGroup, 
+import type {
+  UserProfile,
+  NotificationLog,
+  SendMessageRequest,
+  Project,
+  AudienceList,
+  SystemHealth,
+  BillingRecord,
+  Company,
+  BotInstance,
+  TransactionRecord,
+  ADGroup,
+  TeamChannel,
+  ChatGroup,
   Template,
-  SyncStatus
+  SyncStatus,
+  TeamsGroupWithChannels
 } from '../types';
 
 // Configuration
@@ -36,7 +37,7 @@ let backendAvailable: boolean | null = null;
 
 async function checkBackendHealth(): Promise<boolean> {
   try {
-    const response = await fetch('/health', { 
+    const response = await fetch('/health', {
       method: 'GET',
       signal: AbortSignal.timeout(3000), // 3 second timeout
     });
@@ -66,13 +67,13 @@ async function withFallback<T>(
     return result;
   } catch (error) {
     console.warn(`[${operationName}] API call failed:`, error);
-    
+
     if (ENABLE_FALLBACK) {
       console.log(`[${operationName}] Falling back to mock data`);
       backendAvailable = false;
       return mockCall();
     }
-    
+
     throw error;
   }
 }
@@ -84,12 +85,12 @@ async function withFallback<T>(
 export const service = {
   // Check if currently using mock
   isUsingMock: () => backendAvailable === false || USE_MOCK_ONLY,
-  
+
   // Check backend health
   checkHealth: checkBackendHealth,
 
   // Directory APIs
-  searchUsers: (query: string): Promise<UserProfile[]> => 
+  searchUsers: (query: string): Promise<UserProfile[]> =>
     withFallback(
       () => apiService.searchUsers(query),
       () => mockApiService.searchUsers(query),
@@ -103,11 +104,39 @@ export const service = {
       'getAllGroups'
     ),
 
+  getTeamsGroups: (): Promise<ADGroup[]> =>
+    withFallback(
+      () => apiService.getTeamsGroups(),
+      () => mockApiService.getAllGroups().then(groups => groups.filter(g => g.groupTypes.includes('Unified'))),
+      'getTeamsGroups'
+    ),
+
+  getTeamsGroupsWithChannels: (): Promise<TeamsGroupWithChannels[]> =>
+    withFallback(
+      () => apiService.getTeamsGroupsWithChannels(),
+      () => Promise.resolve([]), // Mock returns empty array
+      'getTeamsGroupsWithChannels'
+    ),
+
   getGroupChannels: (groupId: string): Promise<TeamChannel[]> =>
     withFallback(
       () => apiService.getGroupChannels(groupId),
       () => mockApiService.getGroupChannels(groupId),
       'getGroupChannels'
+    ),
+
+  getAllChannels: (teamId?: string): Promise<TeamChannel[]> =>
+    withFallback(
+      () => apiService.getAllChannels(teamId),
+      () => Promise.resolve([]), // Mock returns empty array
+      'getAllChannels'
+    ),
+
+  getAllChatGroups: (): Promise<ChatGroup[]> =>
+    withFallback(
+      () => apiService.getAllChatGroups(),
+      () => Promise.resolve([]), // Mock returns empty array
+      'getAllChatGroups'
     ),
 
   syncDirectory: (): Promise<void> =>
@@ -332,6 +361,18 @@ export const service = {
       'uploadAudienceList'
     ),
 
+  createAudienceListFromResources: (
+    projectId: string,
+    name: string,
+    description: string | undefined,
+    resources: {
+      users?: Array<{ azure_ad_id: string; email: string; display_name: string }>;
+      groups?: Array<{ azure_ad_id: string; display_name: string }>;
+      channels?: Array<{ team_id: string; channel_id: string; display_name: string; team_name?: string }>;
+    }
+  ): Promise<AudienceList> =>
+    apiService.createAudienceListFromResources(projectId, name, description, resources),
+
   // User tagging (currently mock-only)
   addTagToUser: (userId: string, tag: string): Promise<void> =>
     mockApiService.addTagToUser(userId, tag),
@@ -340,7 +381,11 @@ export const service = {
     mockApiService.removeTagFromUser(userId, tag),
 
   getAllUsers: (): Promise<UserProfile[]> =>
-    mockApiService.getAllUsers(),
+    withFallback(
+      () => apiService.getAllUsers(),
+      () => mockApiService.getAllUsers(),
+      'getAllUsers'
+    ),
 
   getProjectUsers: (projectId: string): Promise<UserProfile[]> =>
     mockApiService.getProjectUsers(projectId),

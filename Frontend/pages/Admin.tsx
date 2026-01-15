@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { service } from '../services';
-import { SystemHealth, BillingRecord, Company, BotInstance, Project, TransactionRecord, UserProfile, ADGroup, TeamChannel, Template } from '../types';
+import { SystemHealth, BillingRecord, Company, BotInstance, Project, TransactionRecord, UserProfile, ADGroup, TeamChannel, Template, ChatGroup, TeamsGroupWithChannels } from '../types';
 import { Plus, RefreshCw, Server, ShieldAlert, Filter, Download, Building2, Briefcase, Users, Search, ChevronDown, ChevronRight, Hash, Lock, Globe, LayoutTemplate, Share2, Trash2, Edit2, Code, Variable } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -25,15 +25,14 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
   const [orgTab, setOrgTab] = useState<'companies' | 'projects'>('companies');
 
   // Directory View State
-  const [dirTab, setDirTab] = useState<'users' | 'groups'>('users');
+  const [dirTab, setDirTab] = useState<'users' | 'channels' | 'groupChats'>('users');
   const [directoryUsers, setDirectoryUsers] = useState<UserProfile[]>([]);
-  const [directoryGroups, setDirectoryGroups] = useState<ADGroup[]>([]);
+  const [directoryTeamsGroupsWithChannels, setDirectoryTeamsGroupsWithChannels] = useState<TeamsGroupWithChannels[]>([]);
+  const [directoryChatGroups, setDirectoryChatGroups] = useState<ChatGroup[]>([]);
   const [dirSearch, setDirSearch] = useState('');
 
-  // Channel Expansion State
+  // Channel Expansion State (for Channels tab)
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
-  const [groupChannels, setGroupChannels] = useState<TeamChannel[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(false);
 
   // Billing Filters
   const [filterCompany, setFilterCompany] = useState('');
@@ -112,12 +111,24 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
         setCompanies(c);
         setProjects(p);
       } else if (view === 'aad') {
-        const [u, g] = await Promise.all([
-          service.getAllUsers(),
-          service.getAllGroups()
-        ]);
-        setDirectoryUsers(u);
-        setDirectoryGroups(g);
+        try {
+          const [u, tgwc, cg] = await Promise.all([
+            service.getAllUsers(),
+            service.getTeamsGroupsWithChannels(),
+            service.getAllChatGroups()
+          ]);
+          setDirectoryUsers(u || []);
+          setDirectoryTeamsGroupsWithChannels(tgwc || []);
+          setDirectoryChatGroups(cg || []);
+        } catch (err) {
+          console.error('Failed to load directory data:', err);
+          // Set empty arrays on error
+          setDirectoryUsers([]);
+          setDirectoryTeamsGroupsWithChannels([]);
+          setDirectoryChatGroups([]);
+          // Show user-friendly error message
+          alert('Failed to load directory data. Please ensure the backend is running and directory has been synced.');
+        }
       } else if (view === 'bots') {
         const b = await service.getBots();
         setBots(b);
@@ -140,7 +151,13 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
         setProjects(p);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to load data:', e);
+      // Set empty arrays on error to prevent blank screen
+      if (view === 'aad') {
+        setDirectoryUsers([]);
+        setDirectoryTeamsGroupsWithChannels([]);
+        setDirectoryChatGroups([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -182,19 +199,25 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
   const handleExpandGroup = async (groupId: string) => {
     if (expandedGroupId === groupId) {
       setExpandedGroupId(null);
-      setGroupChannels([]);
       return;
     }
 
     setExpandedGroupId(groupId);
-    setLoadingChannels(true);
+    
+    // If channels already loaded, just expand
+    if (groupChannelsMap[groupId]) {
+      return;
+    }
+
+    // Load channels for this group
+    setLoadingChannels(prev => ({ ...prev, [groupId]: true }));
     try {
       const channels = await service.getGroupChannels(groupId);
-      setGroupChannels(channels);
+      setGroupChannelsMap(prev => ({ ...prev, [groupId]: channels }));
     } catch (e) {
       console.error("Failed to load channels", e);
     } finally {
-      setLoadingChannels(false);
+      setLoadingChannels(prev => ({ ...prev, [groupId]: false }));
     }
   };
 
@@ -204,9 +227,7 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
     try {
       await service.syncChannels(groupId);
       const channels = await service.getGroupChannels(groupId);
-      if (expandedGroupId === groupId) {
-        setGroupChannels(channels);
-      }
+      setGroupChannelsMap(prev => ({ ...prev, [groupId]: channels }));
       alert('Channels synced successfully.');
     } catch (e) {
       alert('Sync failed.');
@@ -501,16 +522,38 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
   };
 
   // Filter logic for Directory View
-  const filteredUsers = directoryUsers.filter(u =>
-    u.displayName.toLowerCase().includes(dirSearch.toLowerCase()) ||
-    u.userPrincipalName.toLowerCase().includes(dirSearch.toLowerCase()) ||
-    u.jobTitle.toLowerCase().includes(dirSearch.toLowerCase())
-  );
+  const filteredUsers = directoryUsers.filter(u => {
+    if (!u) return false;
+    const searchLower = dirSearch.toLowerCase();
+    return (
+      (u.displayName || '').toLowerCase().includes(searchLower) ||
+      (u.userPrincipalName || '').toLowerCase().includes(searchLower) ||
+      (u.jobTitle || '').toLowerCase().includes(searchLower)
+    );
+  });
 
-  const filteredGroups = directoryGroups.filter(g =>
-    g.displayName.toLowerCase().includes(dirSearch.toLowerCase()) ||
-    g.mailNickname.toLowerCase().includes(dirSearch.toLowerCase())
-  );
+  // Filter Teams Groups for Channels tab
+  const filteredTeamsGroupsWithChannels = directoryTeamsGroupsWithChannels.filter(g => {
+    if (!g) return false;
+    const searchLower = dirSearch.toLowerCase();
+    return (
+      (g.display_name || '').toLowerCase().includes(searchLower) ||
+      (g.description || '').toLowerCase().includes(searchLower) ||
+      (g.channels || []).some(c => 
+        (c.displayName || '').toLowerCase().includes(searchLower)
+      )
+    );
+  });
+
+  const filteredChatGroups = directoryChatGroups.filter(cg => {
+    if (!cg) return false;
+    const searchLower = dirSearch.toLowerCase();
+    return (
+      (cg.name || '').toLowerCase().includes(searchLower) ||
+      (cg.chatId || '').toLowerCase().includes(searchLower) ||
+      (cg.projectId || '').toLowerCase().includes(searchLower)
+    );
+  });
 
   // Filter projects for the billing dropdown based on selected company
   const filteredProjects = filterCompany
@@ -776,13 +819,22 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
                   Users
                 </button>
                 <button
-                  onClick={() => setDirTab('groups')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${dirTab === 'groups'
+                  onClick={() => setDirTab('channels')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${dirTab === 'channels'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                 >
-                  Groups
+                  Teams Channels
+                </button>
+                <button
+                  onClick={() => setDirTab('groupChats')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${dirTab === 'groupChats'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Group Chats
                 </button>
               </div>
 
@@ -807,18 +859,26 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Display Name</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Principal Name</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conversation ID</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredUsers.length === 0 ? (
-                      <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No users found.</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No users found.</td></tr>
                     ) : (
                       filteredUsers.map((user) => (
                         <tr key={user.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.displayName}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.userPrincipalName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.jobTitle}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.jobTitle || '-'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                            {user.conversationId ? (
+                              <span className="text-gray-700">{user.conversationId}</span>
+                            ) : (
+                              <span className="text-gray-400 italic">Not available</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex flex-wrap gap-1">
                               {user.tags?.map(t => (
@@ -834,73 +894,82 @@ export const Admin: React.FC<AdminProps> = ({ view }) => {
               </div>
             )}
 
-            {dirTab === 'groups' && (
+            {dirTab === 'channels' && (
               <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 w-8"></th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mail Nickname</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Members</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group ID</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Channels</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredGroups.length === 0 ? (
-                      <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No groups found.</td></tr>
+                    {filteredTeamsGroupsWithChannels.length === 0 ? (
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No Teams groups found.</td></tr>
                     ) : (
-                      filteredGroups.map((group) => (
-                        <React.Fragment key={group.id}>
-                          <tr className={`hover:bg-gray-50 cursor-pointer ${expandedGroupId === group.id ? 'bg-indigo-50 hover:bg-indigo-50' : ''}`} onClick={() => group.groupTypes.includes('Unified') && handleExpandGroup(group.id)}>
+                      filteredTeamsGroupsWithChannels.map((group) => (
+                        <React.Fragment key={group.azure_ad_id}>
+                          <tr 
+                            className={`hover:bg-gray-50 cursor-pointer ${expandedGroupId === group.azure_ad_id ? 'bg-indigo-50 hover:bg-indigo-50' : ''}`} 
+                            onClick={() => handleExpandGroup(group.azure_ad_id)}
+                          >
                             <td className="px-4 py-4 text-gray-400">
-                              {group.groupTypes.includes('Unified') && (
-                                expandedGroupId === group.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />
-                              )}
+                              {expandedGroupId === group.azure_ad_id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{group.displayName}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{group.mailNickname}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {group.groupTypes.includes('Unified') ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">M365</span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Security</span>
-                              )}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{group.display_name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{group.azure_ad_id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                              {group.channels ? group.channels.length : 0}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">{group.memberCount}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                              {group.groupTypes.includes('Unified') && (
-                                <button onClick={(e) => handleSyncChannels(group.id, e)} className="text-indigo-600 hover:text-indigo-900 text-xs font-medium flex items-center justify-end gap-1 ml-auto">
-                                  <RefreshCw size={12} /> Sync Channels
-                                </button>
-                              )}
+                              <button 
+                                onClick={(e) => handleSyncChannels(group.azure_ad_id, e)} 
+                                className="text-indigo-600 hover:text-indigo-900 text-xs font-medium flex items-center justify-end gap-1 ml-auto"
+                              >
+                                <RefreshCw size={12} /> Sync Channels
+                              </button>
                             </td>
                           </tr>
                           {/* Nested Channels Row */}
-                          {expandedGroupId === group.id && (
+                          {expandedGroupId === group.azure_ad_id && (
                             <tr className="bg-gray-50">
-                              <td colSpan={6} className="px-4 py-4 sm:px-10">
+                              <td colSpan={5} className="px-4 py-4 sm:px-10">
                                 <div className="bg-white border border-gray-200 rounded-md p-4 shadow-inner">
                                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                                     <Hash size={12} /> Channels
                                   </h4>
 
-                                  {loadingChannels ? (
-                                    <div className="text-sm text-gray-500 py-2 italic">Loading channels from Microsoft Graph...</div>
-                                  ) : groupChannels.length === 0 ? (
+                                  {!group.channels || group.channels.length === 0 ? (
                                     <div className="text-sm text-gray-500 py-2">No channels found or synced yet.</div>
                                   ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                      {groupChannels.map(channel => (
-                                        <div key={channel.id} className="flex items-center justify-between p-3 border border-gray-100 rounded bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
-                                          <div className="flex items-center gap-2">
-                                            {channel.membershipType === 'Private' ? <Lock size={14} className="text-amber-500" /> : <Globe size={14} className="text-gray-400" />}
-                                            <span className="text-sm font-medium text-gray-700">{channel.displayName}</span>
+                                    <div className="space-y-2">
+                                      {group.channels.map(channel => {
+                                        // Transform backend channel to frontend format
+                                        const frontendChannel: TeamChannel = {
+                                          id: channel.azure_ad_id,
+                                          displayName: channel.display_name,
+                                          membershipType: (channel.membership_type === 'private' ? 'Private' : 
+                                                           channel.membership_type === 'shared' ? 'Shared' : 'Standard') as 'Standard' | 'Private' | 'Shared',
+                                          description: channel.description || undefined,
+                                          teamId: channel.team_id,
+                                          conversationId: channel.conversation_id,
+                                        };
+                                        return (
+                                          <div key={channel.azure_ad_id} className="flex items-center justify-between p-3 border border-gray-100 rounded bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                              {frontendChannel.membershipType === 'Private' ? <Lock size={14} className="text-amber-500 flex-shrink-0" /> : <Globe size={14} className="text-gray-400 flex-shrink-0" />}
+                                              <div className="flex-1 min-w-0">
+                                                <div className="text-sm font-medium text-gray-700">{frontendChannel.displayName}</div>
+                                                <div className="text-xs text-gray-400 font-mono truncate">{channel.azure_ad_id}</div>
+                                              </div>
+                                            </div>
+                                            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{frontendChannel.membershipType}</span>
                                           </div>
-                                          <span className="text-xs text-gray-400">{channel.membershipType}</span>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>

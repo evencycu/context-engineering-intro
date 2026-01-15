@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useProject } from '../context/ProjectContext';
 import { service } from '../services';
-import { AudienceList, UserProfile, ChatGroup, SyncStatus } from '../types';
+import { AudienceList, UserProfile, ChatGroup, SyncStatus, ADGroup, TeamChannel } from '../types';
 import { ProjectSwitcher } from '../components/ProjectSwitcher';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -14,12 +14,12 @@ export const Audience: React.FC = () => {
   const { currentProject } = useProject();
   const [activeTab, setActiveTab] = useState<Tab>('lists');
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Data States
   const [lists, setLists] = useState<AudienceList[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [chatGroups, setChatGroups] = useState<ChatGroup[]>([]);
-  
+
   // Tagging View States
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +36,20 @@ export const Audience: React.FC = () => {
   const [chatForm, setChatForm] = useState({ name: '', chatId: '' });
   const [isRegisteringChat, setIsRegisteringChat] = useState(false);
 
+  // Create from Teams Resources Modal State
+  const [showCreateFromResourcesModal, setShowCreateFromResourcesModal] = useState(false);
+  const [createListForm, setCreateListForm] = useState({ name: '', description: '' });
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [selectedChannels, setSelectedChannels] = useState<Set<string>>(new Set());
+  const [availableGroups, setAvailableGroups] = useState<ADGroup[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]); // Azure AD users for modal
+  const [groupChannels, setGroupChannels] = useState<Record<string, TeamChannel[]>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [isCreatingList, setIsCreatingList] = useState(false);
+  const [resourceSearchQuery, setResourceSearchQuery] = useState('');
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
   // Sync Status State
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -46,10 +60,10 @@ export const Audience: React.FC = () => {
     if (!currentProject || !currentProject.id) {
       return;
     }
-    
+
     // Check if currentProject.id is a valid UUID (36 characters with dashes)
     const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentProject.id);
-    
+
     if (!isValidUUID) {
       console.warn(`[Audience] Invalid project ID format: ${currentProject.id}. Expected UUID. Skipping data load.`);
       setLists([]);
@@ -58,10 +72,10 @@ export const Audience: React.FC = () => {
       setIsLoading(false);
       return;
     }
-    
+
     loadData();
     loadSyncStatus();
-    
+
     // Cleanup polling on unmount
     return () => {
       if (syncPollInterval) {
@@ -74,7 +88,7 @@ export const Audience: React.FC = () => {
     if (!currentProject || !currentProject.id) {
       return;
     }
-    
+
     setIsLoading(true);
     try {
       // Use project UUID to fetch data
@@ -93,6 +107,123 @@ export const Audience: React.FC = () => {
       setChatGroups([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadGroups = async () => {
+    try {
+      const groups = await service.getAllGroups();
+      setAvailableGroups(groups);
+    } catch (e) {
+      console.error('Failed to load groups:', e);
+      setAvailableGroups([]);
+    }
+  };
+
+  const loadAvailableUsers = async (query: string = '') => {
+    setIsLoadingUsers(true);
+    try {
+      // Use a broad search query to get all users if query is empty
+      const searchQuery = query || '%';
+      const users = await service.searchUsers(searchQuery);
+      setAvailableUsers(users);
+    } catch (e) {
+      console.error('Failed to load users:', e);
+      setAvailableUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const loadGroupChannels = async (groupId: string) => {
+    if (groupChannels[groupId]) {
+      return; // Already loaded
+    }
+    try {
+      const channels = await service.getGroupChannels(groupId);
+      setGroupChannels(prev => ({ ...prev, [groupId]: channels }));
+    } catch (e) {
+      console.error(`Failed to load channels for group ${groupId}:`, e);
+      setGroupChannels(prev => ({ ...prev, [groupId]: [] }));
+    }
+  };
+
+  const handleToggleGroup = (groupId: string) => {
+    if (expandedGroups.has(groupId)) {
+      setExpandedGroups(prev => {
+        const next = new Set(prev);
+        next.delete(groupId);
+        return next;
+      });
+    } else {
+      setExpandedGroups(prev => new Set(prev).add(groupId));
+      loadGroupChannels(groupId);
+    }
+  };
+
+  const handleCreateListFromResources = async () => {
+    if (!createListForm.name || !currentProject) return;
+
+    const selectedUserData = availableUsers
+      .filter(u => selectedUsers.has(u.id))
+      .map(u => ({
+        azure_ad_id: u.id, // UserProfile.id should map to AzureADUser.azure_ad_id
+        email: u.userPrincipalName,
+        display_name: u.displayName,
+      }));
+
+    const selectedGroupData = availableGroups
+      .filter(g => selectedGroups.has(g.id))
+      .map(g => ({
+        azure_ad_id: g.id,
+        display_name: g.displayName,
+      }));
+
+    const selectedChannelData: Array<{ team_id: string; channel_id: string; display_name: string; team_name?: string }> = [];
+    for (const [groupId, channels] of Object.entries(groupChannels)) {
+      for (const channel of channels) {
+        if (selectedChannels.has(`${groupId}:${channel.id}`)) {
+          const group = availableGroups.find(g => g.id === groupId);
+          selectedChannelData.push({
+            team_id: groupId,
+            channel_id: channel.id,
+            display_name: channel.displayName,
+            team_name: group?.displayName,
+          });
+        }
+      }
+    }
+
+    if (selectedUserData.length === 0 && selectedGroupData.length === 0 && selectedChannelData.length === 0) {
+      alert('Please select at least one resource');
+      return;
+    }
+
+    setIsCreatingList(true);
+    try {
+      await service.createAudienceListFromResources(
+        currentProject.id,
+        createListForm.name,
+        createListForm.description || undefined,
+        {
+          users: selectedUserData,
+          groups: selectedGroupData,
+          channels: selectedChannelData,
+        }
+      );
+      await loadData();
+      setShowCreateFromResourcesModal(false);
+      setCreateListForm({ name: '', description: '' });
+      setSelectedUsers(new Set());
+      setSelectedGroups(new Set());
+      setSelectedChannels(new Set());
+      setExpandedGroups(new Set());
+      setGroupChannels({});
+    } catch (e) {
+      console.error('Failed to create list:', e);
+      alert('Failed to create list: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    } finally {
+      setIsCreatingList(false);
     }
   };
 
@@ -128,7 +259,7 @@ export const Audience: React.FC = () => {
       try {
         const status = await service.getSyncStatus();
         setSyncStatus(status);
-        
+
         // Stop polling when sync is complete
         if (!status.isSyncing) {
           clearInterval(interval);
@@ -151,8 +282,8 @@ export const Audience: React.FC = () => {
   // --- Derived State for Tags ---
   const allTags = Array.from(new Set(users.flatMap(u => u.tags || []))).sort();
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.displayName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          u.userPrincipalName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = u.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.userPrincipalName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = selectedTag ? u.tags?.includes(selectedTag) : true;
     return matchesSearch && matchesTag;
   });
@@ -179,14 +310,14 @@ export const Audience: React.FC = () => {
     if (!tag.trim()) return;
     // Optimistic Update
     const updatedUsers = users.map(u => {
-       if (u.id === userId) {
-         const newTags = u.tags ? [...u.tags, tag] : [tag];
-         return { ...u, tags: newTags };
-       }
-       return u;
+      if (u.id === userId) {
+        const newTags = u.tags ? [...u.tags, tag] : [tag];
+        return { ...u, tags: newTags };
+      }
+      return u;
     });
     setUsers(updatedUsers);
-    
+
     await service.addTagToUser(userId, tag);
     setTagInput('');
   };
@@ -194,10 +325,10 @@ export const Audience: React.FC = () => {
   const handleRemoveTag = async (userId: string, tag: string) => {
     // Optimistic Update
     const updatedUsers = users.map(u => {
-       if (u.id === userId && u.tags) {
-         return { ...u, tags: u.tags.filter(t => t !== tag) };
-       }
-       return u;
+      if (u.id === userId && u.tags) {
+        return { ...u, tags: u.tags.filter(t => t !== tag) };
+      }
+      return u;
     });
     setUsers(updatedUsers);
 
@@ -223,11 +354,11 @@ export const Audience: React.FC = () => {
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
-         <div>
-            <h2 className="text-2xl font-bold text-gray-900">Audience & Tags</h2>
-            <p className="text-gray-500 mt-1">Manage target lists, dynamic user tags, and group chats.</p>
-         </div>
-         <ProjectSwitcher />
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Audience & Tags</h2>
+          <p className="text-gray-500 mt-1">Manage target lists, dynamic user tags, and group chats.</p>
+        </div>
+        <ProjectSwitcher />
       </div>
 
       {/* Directory Sync Status */}
@@ -263,7 +394,7 @@ export const Audience: React.FC = () => {
                   <div>Last Sync: Never</div>
                 )}
                 <div>
-                  Users: <span className="font-medium">{syncStatus?.userCount || 0}</span> | 
+                  Users: <span className="font-medium">{syncStatus?.userCount || 0}</span> |
                   Groups: <span className="font-medium">{syncStatus?.groupCount || 0}</span>
                 </div>
               </div>
@@ -287,33 +418,30 @@ export const Audience: React.FC = () => {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('lists')}
-            className={`${
-              activeTab === 'lists'
+            className={`${activeTab === 'lists'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
           >
             <FileSpreadsheet size={16} />
             Target Lists
           </button>
           <button
             onClick={() => setActiveTab('tags')}
-            className={`${
-              activeTab === 'tags'
+            className={`${activeTab === 'tags'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
           >
             <Tag size={16} />
             User Tags
           </button>
           <button
             onClick={() => setActiveTab('chat-groups')}
-            className={`${
-              activeTab === 'chat-groups'
+            className={`${activeTab === 'chat-groups'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
           >
             <MessageSquare size={16} />
             Chat Groups
@@ -323,11 +451,19 @@ export const Audience: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 min-h-0">
-        
+
         {/* === TAB 1: TARGET LISTS === */}
         {activeTab === 'lists' && (
           <div className="space-y-6">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <Button onClick={() => {
+                setShowCreateFromResourcesModal(true);
+                loadGroups();
+                loadAvailableUsers(); // Load Azure AD users when modal opens
+              }} variant="primary">
+                <Users size={16} className="mr-2" />
+                Create from Teams Resources
+              </Button>
               <Button onClick={() => setShowUploadModal(true)}>
                 <Upload size={16} className="mr-2" />
                 Upload New List
@@ -374,7 +510,7 @@ export const Audience: React.FC = () => {
         {/* === TAB 2: TAGS & USERS === */}
         {activeTab === 'tags' && (
           <div className="flex h-[calc(100vh-250px)] gap-6">
-            
+
             {/* Sidebar: Tags */}
             <div className="w-64 bg-white border border-gray-200 rounded-lg flex flex-col flex-shrink-0">
               <div className="p-4 border-b border-gray-200">
@@ -383,27 +519,25 @@ export const Audience: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 <button
                   onClick={() => setSelectedTag(null)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center justify-between ${
-                    selectedTag === null ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center justify-between ${selectedTag === null ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <span>All Users</span>
                   <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{users.length}</span>
                 </button>
-                
+
                 {allTags.map(tag => {
                   const count = users.filter(u => u.tags?.includes(tag)).length;
                   return (
                     <button
                       key={tag}
                       onClick={() => setSelectedTag(tag)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center justify-between ${
-                        selectedTag === tag ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center justify-between ${selectedTag === tag ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                         <Tag size={14} />
-                         <span className="truncate">{tag}</span>
+                        <Tag size={14} />
+                        <span className="truncate">{tag}</span>
                       </div>
                       <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{count}</span>
                     </button>
@@ -415,79 +549,79 @@ export const Audience: React.FC = () => {
             {/* Main: User List */}
             <div className="flex-1 bg-white border border-gray-200 rounded-lg flex flex-col min-h-0">
               <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4">
-                 <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input 
-                      type="text"
-                      placeholder="Search users by name, email, or tag..."
-                      className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                 </div>
-                 <div className="text-sm text-gray-500">
-                    Showing {filteredUsers.length} users
-                 </div>
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search users by name, email, or tag..."
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="text-sm text-gray-500">
+                  Showing {filteredUsers.length} users
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                 {filteredUsers.length === 0 && (
-                   <div className="text-center py-10 text-gray-500">No users match your filters.</div>
-                 )}
-                 {filteredUsers.map(user => (
-                   <div key={user.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group">
-                      <div className="flex items-center gap-3">
-                         <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-                           {user.displayName.charAt(0)}
-                         </div>
-                         <div>
-                            <h4 className="text-sm font-medium text-gray-900">{user.displayName}</h4>
-                            <p className="text-xs text-gray-500">{user.userPrincipalName}</p>
-                         </div>
+                {filteredUsers.length === 0 && (
+                  <div className="text-center py-10 text-gray-500">No users match your filters.</div>
+                )}
+                {filteredUsers.map(user => (
+                  <div key={user.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                        {user.displayName.charAt(0)}
                       </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">{user.displayName}</h4>
+                        <p className="text-xs text-gray-500">{user.userPrincipalName}</p>
+                      </div>
+                    </div>
 
-                      <div className="flex items-center gap-2">
-                         <div className="flex flex-wrap justify-end gap-1.5 max-w-[300px]">
-                            {user.tags?.map(tag => (
-                              <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                                {tag}
-                                <button 
-                                  onClick={() => handleRemoveTag(user.id, tag)}
-                                  className="ml-1.5 text-gray-400 hover:text-red-500"
-                                >
-                                  <X size={12} />
-                                </button>
-                              </span>
-                            ))}
-                            
-                            {editingUser === user.id ? (
-                               <div className="flex items-center gap-1">
-                                  <input 
-                                    type="text" 
-                                    autoFocus
-                                    className="w-24 text-xs border border-blue-300 rounded px-1 py-0.5 focus:outline-none"
-                                    placeholder="New tag..."
-                                    value={tagInput}
-                                    onChange={(e) => setTagInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if(e.key === 'Enter') { handleAddTag(user.id, tagInput); setEditingUser(null); }
-                                      if(e.key === 'Escape') setEditingUser(null);
-                                    }}
-                                    onBlur={() => setEditingUser(null)}
-                                  />
-                               </div>
-                            ) : (
-                               <button 
-                                 onClick={() => { setEditingUser(user.id); setTagInput(''); }}
-                                 className="opacity-0 group-hover:opacity-100 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 transition-opacity"
-                               >
-                                 <Plus size={12} className="mr-1" /> Add Tag
-                               </button>
-                            )}
-                         </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap justify-end gap-1.5 max-w-[300px]">
+                        {user.tags?.map(tag => (
+                          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {tag}
+                            <button
+                              onClick={() => handleRemoveTag(user.id, tag)}
+                              className="ml-1.5 text-gray-400 hover:text-red-500"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+
+                        {editingUser === user.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              autoFocus
+                              className="w-24 text-xs border border-blue-300 rounded px-1 py-0.5 focus:outline-none"
+                              placeholder="New tag..."
+                              value={tagInput}
+                              onChange={(e) => setTagInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { handleAddTag(user.id, tagInput); setEditingUser(null); }
+                                if (e.key === 'Escape') setEditingUser(null);
+                              }}
+                              onBlur={() => setEditingUser(null)}
+                            />
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setEditingUser(user.id); setTagInput(''); }}
+                            className="opacity-0 group-hover:opacity-100 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 transition-opacity"
+                          >
+                            <Plus size={12} className="mr-1" /> Add Tag
+                          </button>
+                        )}
                       </div>
-                   </div>
-                 ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -495,56 +629,56 @@ export const Audience: React.FC = () => {
 
         {/* === TAB 3: CHAT GROUPS === */}
         {activeTab === 'chat-groups' && (
-           <div className="space-y-6">
-             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertTriangle className="text-blue-600 mt-0.5 flex-shrink-0" size={18} />
-                <div>
-                   <h4 className="text-sm font-semibold text-blue-900">How to use Chat Groups</h4>
-                   <p className="text-sm text-blue-800 mt-1">
-                      To send notifications to a group chat, you must first invite the <strong>System Bot</strong> to the chat.
-                      Then, copy the Chat Link or ID and register it here.
-                   </p>
-                </div>
-             </div>
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertTriangle className="text-blue-600 mt-0.5 flex-shrink-0" size={18} />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-900">How to use Chat Groups</h4>
+                <p className="text-sm text-blue-800 mt-1">
+                  To send notifications to a group chat, you must first invite the <strong>System Bot</strong> to the chat.
+                  Then, copy the Chat Link or ID and register it here.
+                </p>
+              </div>
+            </div>
 
-             <div className="flex justify-end">
-               <Button onClick={() => setShowChatModal(true)}>
-                 <Plus size={16} className="mr-2" />
-                 Register Chat Group
-               </Button>
-             </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setShowChatModal(true)}>
+                <Plus size={16} className="mr-2" />
+                Register Chat Group
+              </Button>
+            </div>
 
-             <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Internal Alias</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chat ID (Teams)</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered By</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {chatGroups.length === 0 ? (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No chat groups registered.</td></tr>
-                    ) : (
-                      chatGroups.map((chat) => (
-                        <tr key={chat.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{chat.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono truncate max-w-[200px]" title={chat.chatId}>{chat.chatId}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{chat.registeredBy}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{chat.createdAt}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button className="text-red-600 hover:text-red-900"><Trash2 size={16} /></button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-             </div>
-           </div>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Internal Alias</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chat ID (Teams)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered By</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {chatGroups.length === 0 ? (
+                    <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No chat groups registered.</td></tr>
+                  ) : (
+                    chatGroups.map((chat) => (
+                      <tr key={chat.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{chat.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono truncate max-w-[200px]" title={chat.chatId}>{chat.chatId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{chat.registeredBy}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{chat.createdAt}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button className="text-red-600 hover:text-red-900"><Trash2 size={16} /></button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 
@@ -554,26 +688,26 @@ export const Audience: React.FC = () => {
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={() => setShowUploadModal(false)}></div>
             <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-md w-full p-6 relative z-10">
-               <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Target List</h3>
-               <div className="space-y-4">
-                  <Input 
-                    label="List Name" 
-                    placeholder="e.g. Q4 Vendors" 
-                    value={uploadName}
-                    onChange={(e) => setUploadName(e.target.value)}
-                  />
-                  
-                  <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center">
-                     <FileSpreadsheet className="h-10 w-10 text-gray-400 mb-2" />
-                     <p className="text-sm text-gray-600">Drag and drop Excel/CSV file here</p>
-                     <p className="text-xs text-gray-400 mt-1">or click to browse</p>
-                  </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Target List</h3>
+              <div className="space-y-4">
+                <Input
+                  label="List Name"
+                  placeholder="e.g. Q4 Vendors"
+                  value={uploadName}
+                  onChange={(e) => setUploadName(e.target.value)}
+                />
 
-                  <div className="flex justify-end gap-3 pt-2">
-                     <Button variant="secondary" onClick={() => setShowUploadModal(false)}>Cancel</Button>
-                     <Button onClick={handleUploadList} isLoading={isUploading} disabled={!uploadName}>Upload</Button>
-                  </div>
-               </div>
+                <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center">
+                  <FileSpreadsheet className="h-10 w-10 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">Drag and drop Excel/CSV file here</p>
+                  <p className="text-xs text-gray-400 mt-1">or click to browse</p>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button variant="secondary" onClick={() => setShowUploadModal(false)}>Cancel</Button>
+                  <Button onClick={handleUploadList} isLoading={isUploading} disabled={!uploadName}>Upload</Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -585,33 +719,216 @@ export const Audience: React.FC = () => {
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={() => setShowChatModal(false)}></div>
             <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full p-6 relative z-10">
-               <h3 className="text-lg font-medium text-gray-900 mb-4">Register Chat Group</h3>
-               <div className="space-y-4">
-                  <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-800 flex gap-2">
-                     <AlertTriangle size={18} className="flex-shrink-0" />
-                     <p>You must add the <strong>System Bot</strong> to the group chat before registering it, otherwise messages will fail.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Register Chat Group</h3>
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-800 flex gap-2">
+                  <AlertTriangle size={18} className="flex-shrink-0" />
+                  <p>You must add the <strong>System Bot</strong> to the group chat before registering it, otherwise messages will fail.</p>
+                </div>
+
+                <Input
+                  label="Internal Alias Name"
+                  placeholder="e.g. Project Alpha Standup"
+                  value={chatForm.name}
+                  onChange={(e) => setChatForm({ ...chatForm, name: e.target.value })}
+                />
+
+                <Input
+                  label="Teams Chat ID (or Link)"
+                  placeholder="19:meeting_... or https://teams.microsoft.com/..."
+                  value={chatForm.chatId}
+                  onChange={(e) => setChatForm({ ...chatForm, chatId: e.target.value })}
+                />
+                <p className="text-xs text-gray-500">You can find this in the link when you 'Get link to chat' in Teams.</p>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="secondary" onClick={() => setShowChatModal(false)}>Cancel</Button>
+                  <Button onClick={handleRegisterChatGroup} isLoading={isRegisteringChat} disabled={!chatForm.name || !chatForm.chatId}>Register</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create from Teams Resources Modal */}
+      {showCreateFromResourcesModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 py-8">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={() => setShowCreateFromResourcesModal(false)}></div>
+            <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-4xl w-full p-6 relative z-10 max-h-[90vh] flex flex-col">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Create List from Teams Resources</h3>
+
+              <div className="flex-1 overflow-y-auto space-y-6">
+                {/* Form Fields */}
+                <div className="space-y-4">
+                  <Input
+                    label="List Name"
+                    placeholder="e.g. Marketing Team List"
+                    value={createListForm.name}
+                    onChange={(e) => setCreateListForm({ ...createListForm, name: e.target.value })}
+                  />
+                  <Input
+                    label="Description (Optional)"
+                    placeholder="Brief description of this list"
+                    value={createListForm.description}
+                    onChange={(e) => setCreateListForm({ ...createListForm, description: e.target.value })}
+                  />
+                </div>
+
+                {/* Resource Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-900">Select Resources</h4>
+                    <div className="text-xs text-gray-500">
+                      Selected: {selectedUsers.size} users, {selectedGroups.size} groups, {selectedChannels.size} channels
+                    </div>
                   </div>
 
-                  <Input 
-                    label="Internal Alias Name" 
-                    placeholder="e.g. Project Alpha Standup" 
-                    value={chatForm.name}
-                    onChange={(e) => setChatForm({...chatForm, name: e.target.value})}
-                  />
-
-                  <Input 
-                    label="Teams Chat ID (or Link)" 
-                    placeholder="19:meeting_... or https://teams.microsoft.com/..." 
-                    value={chatForm.chatId}
-                    onChange={(e) => setChatForm({...chatForm, chatId: e.target.value})}
-                  />
-                  <p className="text-xs text-gray-500">You can find this in the link when you 'Get link to chat' in Teams.</p>
-
-                  <div className="flex justify-end gap-3 pt-4">
-                     <Button variant="secondary" onClick={() => setShowChatModal(false)}>Cancel</Button>
-                     <Button onClick={handleRegisterChatGroup} isLoading={isRegisteringChat} disabled={!chatForm.name || !chatForm.chatId}>Register</Button>
+                  {/* Users Section */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                      <Users size={16} />
+                      Users ({availableUsers.length})
+                    </h5>
+                    <div className="mb-3">
+                      <input
+                        type="text"
+                        placeholder="Search users... (type to filter)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        value={resourceSearchQuery}
+                        onChange={(e) => {
+                          setResourceSearchQuery(e.target.value);
+                          // Filter is done client-side, no need to reload
+                        }}
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {isLoadingUsers ? (
+                        <div className="text-center py-4 text-sm text-gray-500">Loading users...</div>
+                      ) : availableUsers.length === 0 ? (
+                        <div className="text-center py-4 text-sm text-gray-500">No users found. Try syncing directory first.</div>
+                      ) : (
+                        availableUsers
+                          .filter(u =>
+                            u.displayName.toLowerCase().includes(resourceSearchQuery.toLowerCase()) ||
+                            u.userPrincipalName.toLowerCase().includes(resourceSearchQuery.toLowerCase())
+                          )
+                          .map(user => (
+                            <label key={user.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedUsers.has(user.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedUsers(prev => new Set(prev).add(user.id));
+                                  } else {
+                                    setSelectedUsers(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(user.id);
+                                      return next;
+                                    });
+                                  }
+                                }}
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                                <div className="text-xs text-gray-500">{user.userPrincipalName}</div>
+                              </div>
+                            </label>
+                          ))
+                      )}
+                    </div>
                   </div>
-               </div>
+
+                  {/* Groups Section */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                      <MessageSquare size={16} />
+                      Groups ({availableGroups.length})
+                    </h5>
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {availableGroups
+                        .filter(g => g.groupTypes.includes('Unified'))
+                        .map(group => (
+                          <div key={group.id} className="border border-gray-100 rounded p-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedGroups.has(group.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedGroups(prev => new Set(prev).add(group.id));
+                                  } else {
+                                    setSelectedGroups(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(group.id);
+                                      return next;
+                                    });
+                                  }
+                                }}
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{group.displayName}</div>
+                                <div className="text-xs text-gray-500">{group.description || 'No description'}</div>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleToggleGroup(group.id);
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800"
+                              >
+                                {expandedGroups.has(group.id) ? 'Hide' : 'Show'} Channels
+                              </button>
+                            </label>
+                            {expandedGroups.has(group.id) && (
+                              <div className="mt-2 ml-6 space-y-1">
+                                {groupChannels[group.id] ? (
+                                  groupChannels[group.id].map(channel => (
+                                    <label key={channel.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedChannels.has(`${group.id}:${channel.id}`)}
+                                        onChange={(e) => {
+                                          const key = `${group.id}:${channel.id}`;
+                                          if (e.target.checked) {
+                                            setSelectedChannels(prev => new Set(prev).add(key));
+                                          } else {
+                                            setSelectedChannels(prev => {
+                                              const next = new Set(prev);
+                                              next.delete(key);
+                                              return next;
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <span className="text-xs text-gray-700">{channel.displayName}</span>
+                                    </label>
+                                  ))
+                                ) : (
+                                  <div className="text-xs text-gray-400">Loading channels...</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-4">
+                <Button variant="secondary" onClick={() => setShowCreateFromResourcesModal(false)}>Cancel</Button>
+                <Button
+                  onClick={handleCreateListFromResources}
+                  isLoading={isCreatingList}
+                  disabled={!createListForm.name || (selectedUsers.size === 0 && selectedGroups.size === 0 && selectedChannels.size === 0)}
+                >
+                  Create List
+                </Button>
+              </div>
             </div>
           </div>
         </div>

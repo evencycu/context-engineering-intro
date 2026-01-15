@@ -14,15 +14,21 @@ import (
 type DirectoryRepository interface {
 	UpsertUser(ctx context.Context, user *models.AzureADUser) error
 	SearchUsers(ctx context.Context, query string) ([]models.AzureADUser, error)
+	ListUsers(ctx context.Context, limit, offset int) ([]models.AzureADUser, error)
 	UpsertGroup(ctx context.Context, group *models.AzureADGroup) error
 	ListGroups(ctx context.Context) ([]models.AzureADGroup, error)
+	ListTeamsGroups(ctx context.Context) ([]models.AzureADGroup, error)
+	ListTeamsGroupsWithChannels(ctx context.Context) ([]models.TeamsGroupWithChannels, error)
 	UpsertChannel(ctx context.Context, channel *models.AzureADChannel) error
 	ListChannels(ctx context.Context, teamID string) ([]models.AzureADChannel, error)
 	CountChannels(ctx context.Context) (int, error)
 	// ChatGroup operations
 	CreateChatGroup(ctx context.Context, cg *models.ChatGroup) error
 	ListChatGroups(ctx context.Context, projectID uuid.UUID) ([]models.ChatGroup, error)
+	ListAllChatGroups(ctx context.Context) ([]models.ChatGroup, error)
 	DeleteChatGroup(ctx context.Context, id uuid.UUID) error
+	// Group chats from bot_installations
+	GetGroupChatsFromBotInstallations(ctx context.Context) ([]models.GroupChatFromBotInstallation, error)
 	// Sync status operations
 	CountUsers(ctx context.Context) (int, error)
 	CountGroups(ctx context.Context) (int, error)
@@ -63,10 +69,43 @@ func (r *directoryRepository) ListChatGroups(ctx context.Context, projectID uuid
 	return chatGroups, err
 }
 
+func (r *directoryRepository) ListAllChatGroups(ctx context.Context) ([]models.ChatGroup, error) {
+	query := `SELECT * FROM chat_groups ORDER BY name`
+	var chatGroups []models.ChatGroup
+	err := r.db.SelectContext(ctx, &chatGroups, query)
+	return chatGroups, err
+}
+
 func (r *directoryRepository) DeleteChatGroup(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM chat_groups WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
+}
+
+func (r *directoryRepository) GetGroupChatsFromBotInstallations(ctx context.Context) ([]models.GroupChatFromBotInstallation, error) {
+	query := `
+		SELECT 
+			bi.conversation_id,
+			bi.conversation_type,
+			bi.from_name as chat_name,
+			bi.from_aad_object_id,
+			bi.email,
+			bi.installed_at,
+			bi.last_activity_at,
+			bi.installation_status,
+			bi.teams_tenant_id,
+			bi.bot_id
+		FROM bot_installations bi
+		WHERE bi.conversation_type = 'groupChat'
+		  AND bi.installation_status = 'active'
+		ORDER BY bi.installed_at DESC
+	`
+	var groupChats []models.GroupChatFromBotInstallation
+	err := r.db.SelectContext(ctx, &groupChats, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group chats from bot_installations: %w", err)
+	}
+	return groupChats, nil
 }
 
 func (r *directoryRepository) UpsertUser(ctx context.Context, user *models.AzureADUser) error {
@@ -111,9 +150,32 @@ func (r *directoryRepository) UpsertUser(ctx context.Context, user *models.Azure
 
 func (r *directoryRepository) SearchUsers(ctx context.Context, q string) ([]models.AzureADUser, error) {
 	query := `
-		SELECT * FROM azure_ad_users 
-		WHERE display_name ILIKE $1 OR email ILIKE $1 
-		ORDER BY display_name 
+		SELECT 
+			u.id,
+			u.created_at,
+			u.updated_at,
+			u.azure_ad_id,
+			u.display_name,
+			u.email,
+			u.job_title,
+			u.department,
+			u.synced_at,
+			COALESCE(bi.conversation_id, '') as conversation_id
+		FROM azure_ad_users u
+		LEFT JOIN LATERAL (
+			SELECT conversation_id
+			FROM bot_installations
+			WHERE conversation_type = 'personal'
+			  AND installation_status = 'active'
+			  AND (
+				from_aad_object_id = u.azure_ad_id
+				OR LOWER(email) = LOWER(u.email)
+			  )
+			ORDER BY installed_at DESC
+			LIMIT 1
+		) bi ON true
+		WHERE u.display_name ILIKE $1 OR u.email ILIKE $1 
+		ORDER BY u.display_name 
 		LIMIT 20
 	`
 	searchQuery := "%" + q + "%"
@@ -121,6 +183,47 @@ func (r *directoryRepository) SearchUsers(ctx context.Context, q string) ([]mode
 	err := r.db.SelectContext(ctx, &users, query, searchQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search users: %w", err)
+	}
+	return users, nil
+}
+
+func (r *directoryRepository) ListUsers(ctx context.Context, limit, offset int) ([]models.AzureADUser, error) {
+	if limit <= 0 {
+		limit = 1000 // Default limit
+	}
+	query := `
+		SELECT 
+			u.id,
+			u.created_at,
+			u.updated_at,
+			u.azure_ad_id,
+			u.display_name,
+			u.email,
+			u.job_title,
+			u.department,
+			u.synced_at,
+			COALESCE(bi.conversation_id, '') as conversation_id
+		FROM azure_ad_users u
+		LEFT JOIN LATERAL (
+			SELECT conversation_id
+			FROM bot_installations
+			WHERE conversation_type = 'personal'
+			  AND installation_status = 'active'
+			  AND (
+				from_aad_object_id = u.azure_ad_id
+				OR LOWER(email) = LOWER(u.email)
+			  )
+			ORDER BY installed_at DESC
+			LIMIT 1
+		) bi ON true
+		ORDER BY u.display_name 
+		LIMIT $1 OFFSET $2
+	`
+
+	var users []models.AzureADUser
+	err := r.db.SelectContext(ctx, &users, query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	return users, nil
 }
@@ -171,6 +274,70 @@ func (r *directoryRepository) ListGroups(ctx context.Context) ([]models.AzureADG
 		return nil, fmt.Errorf("failed to list groups: %w", err)
 	}
 	return groups, nil
+}
+
+func (r *directoryRepository) ListTeamsGroups(ctx context.Context) ([]models.AzureADGroup, error) {
+	// Only return groups that have "Unified" in group_types (M365/Teams groups)
+	query := `SELECT * FROM azure_ad_groups 
+		WHERE group_types @> '["Unified"]'::jsonb 
+		ORDER BY display_name`
+	var groups []models.AzureADGroup
+	err := r.db.SelectContext(ctx, &groups, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Teams groups: %w", err)
+	}
+	return groups, nil
+}
+
+func (r *directoryRepository) ListTeamsGroupsWithChannels(ctx context.Context) ([]models.TeamsGroupWithChannels, error) {
+	// Get all Teams groups (Unified type)
+	groupsQuery := `SELECT * FROM azure_ad_groups 
+		WHERE group_types @> '["Unified"]'::jsonb 
+		ORDER BY display_name`
+	var groups []models.AzureADGroup
+	err := r.db.SelectContext(ctx, &groups, groupsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Teams groups: %w", err)
+	}
+
+	// Get all channels grouped by team_id
+	channelsQuery := `
+		SELECT 
+			c.id,
+			c.created_at,
+			c.updated_at,
+			c.azure_ad_id,
+			c.team_id,
+			c.display_name,
+			c.description,
+			c.membership_type,
+			c.conversation_id,
+			c.synced_at
+		FROM azure_ad_channels c
+		ORDER BY c.team_id, c.display_name`
+	var allChannels []models.AzureADChannel
+	err = r.db.SelectContext(ctx, &allChannels, channelsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list channels: %w", err)
+	}
+
+	// Group channels by team_id
+	channelsByTeamID := make(map[string][]models.AzureADChannel)
+	for _, channel := range allChannels {
+		channelsByTeamID[channel.TeamID] = append(channelsByTeamID[channel.TeamID], channel)
+	}
+
+	// Combine groups with their channels
+	result := make([]models.TeamsGroupWithChannels, 0, len(groups))
+	for _, group := range groups {
+		groupWithChannels := models.TeamsGroupWithChannels{
+			AzureADGroup: group,
+			Channels:     channelsByTeamID[group.AzureADID],
+		}
+		result = append(result, groupWithChannels)
+	}
+
+	return result, nil
 }
 
 func (r *directoryRepository) CountUsers(ctx context.Context) (int, error) {
@@ -239,12 +406,44 @@ func (r *directoryRepository) ListChannels(ctx context.Context, teamID string) (
 	var query string
 	var args []interface{}
 	if teamID != "" {
-		query = `SELECT * FROM azure_ad_channels WHERE team_id = $1 ORDER BY display_name`
+		query = `
+			SELECT 
+				c.id,
+				c.created_at,
+				c.updated_at,
+				c.azure_ad_id,
+				c.team_id,
+				c.display_name,
+				c.description,
+				c.membership_type,
+				c.conversation_id,
+				c.synced_at,
+				g.display_name as team_display_name
+			FROM azure_ad_channels c
+			LEFT JOIN azure_ad_groups g ON c.team_id = g.azure_ad_id
+			WHERE c.team_id = $1 
+			ORDER BY g.display_name, c.display_name`
 		args = []interface{}{teamID}
 	} else {
-		query = `SELECT * FROM azure_ad_channels ORDER BY display_name`
+		query = `
+			SELECT 
+				c.id,
+				c.created_at,
+				c.updated_at,
+				c.azure_ad_id,
+				c.team_id,
+				c.display_name,
+				c.description,
+				c.membership_type,
+				c.conversation_id,
+				c.synced_at,
+				g.display_name as team_display_name
+			FROM azure_ad_channels c
+			LEFT JOIN azure_ad_groups g ON c.team_id = g.azure_ad_id
+			ORDER BY g.display_name, c.display_name`
 		args = []interface{}{}
 	}
+
 	var channels []models.AzureADChannel
 	err := r.db.SelectContext(ctx, &channels, query, args...)
 	if err != nil {
@@ -277,13 +476,13 @@ func (r *directoryRepository) GetLastSyncTime(ctx context.Context) (*time.Time, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get last sync time: %w", err)
 	}
-	
+
 	// Return nil if no sync has occurred (1970-01-01)
 	epoch := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 	if lastSync.Equal(epoch) || lastSync.Before(epoch) {
 		return nil, nil
 	}
-	
+
 	return &lastSync, nil
 }
 

@@ -3,6 +3,7 @@ package directory
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/evencycu/TeamsNotifyGoV3/libs/response"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/services"
@@ -22,8 +23,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	dir := rg.Group("/directory")
 	{
 		dir.GET("/users/search", h.SearchUsers)
+		dir.GET("/users", h.ListUsers)
 		dir.GET("/groups", h.ListGroups)
+		dir.GET("/groups/teams", h.ListTeamsGroups)
+		dir.GET("/groups/teams/with-channels", h.ListTeamsGroupsWithChannels)
 		dir.GET("/groups/:groupId/channels", h.ListGroupChannels)
+		dir.GET("/channels", h.ListChannels)
 		dir.POST("/sync", h.SyncDirectory)
 		dir.GET("/sync/status", h.GetSyncStatus)
 	}
@@ -35,6 +40,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		projects.POST("", h.RegisterChatGroup)
 		projects.DELETE("/:chatGroupId", h.RemoveChatGroup)
 	}
+
+	// All Chat Groups (admin view)
+	dir.GET("/chat-groups", h.ListAllChatGroups)
+	// Group chats from bot_installations
+	dir.GET("/group-chats/from-bot-installations", h.GetGroupChatsFromBotInstallations)
 }
 
 func (h *Handler) SearchUsers(c *gin.Context) {
@@ -53,6 +63,19 @@ func (h *Handler) SearchUsers(c *gin.Context) {
 	response.Success(c, http.StatusOK, "Users found", users)
 }
 
+func (h *Handler) ListUsers(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "1000"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	users, err := h.directoryService.ListUsers(c.Request.Context(), limit, offset)
+	if err != nil {
+		response.InternalServerError(c, "Failed to list users", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Users listed successfully", users)
+}
+
 func (h *Handler) ListGroups(c *gin.Context) {
 	groups, err := h.directoryService.ListGroups(c.Request.Context())
 	if err != nil {
@@ -61,6 +84,26 @@ func (h *Handler) ListGroups(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "Groups listed successfully", groups)
+}
+
+func (h *Handler) ListTeamsGroups(c *gin.Context) {
+	groups, err := h.directoryService.ListTeamsGroups(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to list Teams groups", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Teams groups listed successfully", groups)
+}
+
+func (h *Handler) ListTeamsGroupsWithChannels(c *gin.Context) {
+	groupsWithChannels, err := h.directoryService.ListTeamsGroupsWithChannels(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to list Teams groups with channels", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Teams groups with channels listed successfully", groupsWithChannels)
 }
 
 func (h *Handler) ListGroupChannels(c *gin.Context) {
@@ -73,6 +116,18 @@ func (h *Handler) ListGroupChannels(c *gin.Context) {
 	channels, err := h.directoryService.ListGroupChannels(c.Request.Context(), groupID)
 	if err != nil {
 		response.InternalServerError(c, "Failed to list group channels", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Channels listed successfully", channels)
+}
+
+func (h *Handler) ListChannels(c *gin.Context) {
+	teamID := c.Query("team_id") // Optional: filter by team_id
+
+	channels, err := h.directoryService.ListChannels(c.Request.Context(), teamID)
+	if err != nil {
+		response.InternalServerError(c, "Failed to list channels", err, nil)
 		return
 	}
 
@@ -154,4 +209,24 @@ func (h *Handler) GetSyncStatus(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "Sync status retrieved", status)
+}
+
+func (h *Handler) ListAllChatGroups(c *gin.Context) {
+	chatGroups, err := h.directoryService.ListAllChatGroups(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to list chat groups", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Chat groups listed successfully", chatGroups)
+}
+
+func (h *Handler) GetGroupChatsFromBotInstallations(c *gin.Context) {
+	groupChats, err := h.directoryService.GetGroupChatsFromBotInstallations(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to get group chats from bot installations", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Group chats from bot installations retrieved successfully", groupChats)
 }

@@ -733,12 +733,13 @@ type Template struct {
 // AzureADUser represents a user synced from Azure AD
 type AzureADUser struct {
 	BaseModel
-	AzureADID   string     `json:"azure_ad_id" db:"azure_ad_id"`
-	DisplayName string     `json:"display_name" db:"display_name"`
-	Email       string     `json:"email" db:"email"`
-	JobTitle    string     `json:"job_title" db:"job_title"`
-	Department  string     `json:"department" db:"department"`
-	SyncedAt    *time.Time `json:"synced_at" db:"synced_at"`
+	AzureADID      string     `json:"azure_ad_id" db:"azure_ad_id"`
+	DisplayName    string     `json:"display_name" db:"display_name"`
+	Email          string     `json:"email" db:"email"`
+	JobTitle       string     `json:"job_title" db:"job_title"`
+	Department     string     `json:"department" db:"department"`
+	SyncedAt       *time.Time `json:"synced_at" db:"synced_at"`
+	ConversationID string     `json:"conversation_id,omitempty" db:"conversation_id"` // Teams conversation ID (from bot_installations)
 }
 
 // AzureADGroup represents a group synced from Azure AD
@@ -754,13 +755,20 @@ type AzureADGroup struct {
 // AzureADChannel represents a Teams channel
 type AzureADChannel struct {
 	BaseModel
-	AzureADID      string     `json:"azure_ad_id" db:"azure_ad_id"`      // Channel ID (also conversation_id)
-	TeamID         string     `json:"team_id" db:"team_id"`              // Parent Team/Group ID
-	DisplayName    string     `json:"display_name" db:"display_name"`
-	Description    string     `json:"description" db:"description"`
-	MembershipType string     `json:"membership_type" db:"membership_type"` // standard, private, shared
-	ConversationID string     `json:"conversation_id" db:"conversation_id"` // Same as azure_ad_id for channels
-	SyncedAt       *time.Time `json:"synced_at" db:"synced_at"`
+	AzureADID       string     `json:"azure_ad_id" db:"azure_ad_id"` // Channel ID (also conversation_id)
+	TeamID          string     `json:"team_id" db:"team_id"`         // Parent Team/Group ID
+	DisplayName     string     `json:"display_name" db:"display_name"`
+	Description     string     `json:"description" db:"description"`
+	MembershipType  string     `json:"membership_type" db:"membership_type"` // standard, private, shared
+	ConversationID  string     `json:"conversation_id" db:"conversation_id"` // Same as azure_ad_id for channels
+	SyncedAt        *time.Time `json:"synced_at" db:"synced_at"`
+	TeamDisplayName string     `json:"team_display_name,omitempty" db:"team_display_name"` // Group/Team name (from JOIN)
+}
+
+// TeamsGroupWithChannels represents a Teams group with its channels
+type TeamsGroupWithChannels struct {
+	AzureADGroup
+	Channels []AzureADChannel `json:"channels"`
 }
 
 // ChatGroup represents a registered Teams chat group
@@ -771,27 +779,39 @@ type ChatGroup struct {
 	ChatID    string    `json:"chat_id" db:"chat_id"`
 }
 
+// GroupChatFromBotInstallation represents a group chat discovered from bot_installations table
+type GroupChatFromBotInstallation struct {
+	ConversationID     string     `json:"conversation_id" db:"conversation_id"`
+	ConversationType   string     `json:"conversation_type" db:"conversation_type"`
+	ChatName           *string    `json:"chat_name,omitempty" db:"chat_name"` // from_name from bot_installations
+	FromAADObjectID    *string    `json:"from_aad_object_id,omitempty" db:"from_aad_object_id"`
+	Email              *string    `json:"email,omitempty" db:"email"`
+	InstalledAt        time.Time  `json:"installed_at" db:"installed_at"`
+	LastActivityAt     *time.Time `json:"last_activity_at,omitempty" db:"last_activity_at"`
+	InstallationStatus string     `json:"installation_status" db:"installation_status"`
+	TeamsTenantID      string     `json:"teams_tenant_id" db:"teams_tenant_id"`
+	BotID              uuid.UUID  `json:"bot_id" db:"bot_id"`
+}
+
 // AudienceList represents an audience list for a project
 type AudienceList struct {
 	BaseModel
-	ProjectID  uuid.UUID       `json:"project_id" db:"project_id"`
-	Name       string           `json:"name" db:"name"`
-	Type       string           `json:"type" db:"type"` // 'Static' or 'Dynamic'
-	Count      int              `json:"count" db:"count"`
-	Description *string          `json:"description" db:"description"`
-	Metadata   JSONBObject      `json:"metadata" db:"metadata"`
-	LastUpdated time.Time        `json:"last_updated" db:"last_updated"`
+	ProjectID   uuid.UUID   `json:"project_id" db:"project_id"`
+	Name        string      `json:"name" db:"name"`
+	Type        string      `json:"type" db:"type"` // 'Static' or 'Dynamic'
+	Count       int         `json:"count" db:"count"`
+	Description *string     `json:"description" db:"description"`
+	Metadata    JSONBObject `json:"metadata" db:"metadata"`
+	LastUpdated time.Time   `json:"last_updated" db:"last_updated"`
 }
 
 // DirectorySyncStatus represents the status of directory synchronization
 type DirectorySyncStatus struct {
-	IsSyncing     bool       `json:"is_syncing"`
-	LastSyncAt    *time.Time `json:"last_sync_at"`
-	LastSyncStatus string    `json:"last_sync_status"` // "success", "failed", "never"
-	UserCount     int        `json:"user_count"`
-	GroupCount    int        `json:"group_count"`
-	ChannelCount  int        `json:"channel_count"`
-	ErrorMessage  string     `json:"error_message,omitempty"`
+	IsSyncing      bool       `json:"is_syncing"`
+	LastSyncAt     *time.Time `json:"last_sync_at"`
+	LastSyncStatus string     `json:"last_sync_status"` // "success", "failed", "never"
+	UserCount      int        `json:"user_count"`
+	GroupCount     int        `json:"group_count"`
+	ChannelCount   int        `json:"channel_count"`
+	ErrorMessage   string     `json:"error_message,omitempty"`
 }
-
-

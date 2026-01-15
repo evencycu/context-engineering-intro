@@ -23,7 +23,8 @@ import {
   Template,
   MessageStatus,
   MessagePriority,
-  SyncStatus
+  SyncStatus,
+  TeamsGroupWithChannels
 } from '../types';
 
 // API Base URLs - uses Vite proxy in development
@@ -236,6 +237,10 @@ async function apiCall<T>(
       // If JSON parsing fails, use status text
       errorMessage = response.statusText || `HTTP ${response.status}`;
     }
+    // For 404, provide more specific error message
+    if (response.status === 404) {
+      errorMessage = `Resource not found: ${url}`;
+    }
     throw new Error(errorMessage);
   }
 
@@ -347,6 +352,82 @@ function transformSystemHealth(backend: BackendSystemHealth): SystemHealth {
   };
 }
 
+// Backend AzureADUser format
+interface BackendAzureADUser {
+  id: string;
+  azure_ad_id: string;
+  display_name: string;
+  email: string;
+  job_title: string;
+  department: string;
+  synced_at?: string;
+  created_at: string;
+  updated_at: string;
+  conversation_id?: string; // Teams conversation ID (from bot_installations)
+}
+
+// Backend AzureADGroup format
+interface BackendAzureADGroup {
+  id: string;
+  azure_ad_id: string;
+  display_name: string;
+  description: string;
+  group_types: string[]; // JSONB array
+  synced_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Backend AzureADChannel format
+interface BackendAzureADChannel {
+  id: string;
+  azure_ad_id: string;
+  team_id: string;
+  display_name: string;
+  description: string;
+  membership_type: string;
+  conversation_id: string;
+  synced_at?: string;
+  created_at: string;
+  updated_at: string;
+  team_display_name?: string; // Group/Team display name (from JOIN)
+}
+
+function transformAzureADUser(backend: BackendAzureADUser): UserProfile {
+  return {
+    id: backend.azure_ad_id, // Use azure_ad_id as the id
+    displayName: backend.display_name,
+    userPrincipalName: backend.email,
+    jobTitle: backend.job_title || '',
+    tags: [], // Tags are not in Azure AD user model
+    conversationId: backend.conversation_id || undefined,
+  };
+}
+
+function transformAzureADGroup(backend: BackendAzureADGroup): ADGroup {
+  return {
+    id: backend.azure_ad_id, // Use azure_ad_id as the id
+    displayName: backend.display_name,
+    mailNickname: '', // Not available in Azure AD Group model
+    description: backend.description || '',
+    groupTypes: backend.group_types || [],
+    memberCount: 0, // Not available in Azure AD Group model
+  };
+}
+
+function transformAzureADChannel(backend: BackendAzureADChannel): TeamChannel {
+  return {
+    id: backend.azure_ad_id,
+    displayName: backend.display_name,
+    membershipType: (backend.membership_type === 'private' ? 'Private' :
+      backend.membership_type === 'shared' ? 'Shared' : 'Standard') as 'Standard' | 'Private' | 'Shared',
+    description: backend.description || undefined,
+    teamId: backend.team_id,
+    conversationId: backend.conversation_id,
+    teamDisplayName: backend.team_display_name || undefined,
+  };
+}
+
 function transformTemplate(backend: BackendTemplate): Template {
   // Convert backend variables (array of objects) to frontend (array of strings)
   // Backend uses TemplateVariable[] with {key, label, type, options}
@@ -374,20 +455,81 @@ export const apiService = {
 
   searchUsers: async (query: string): Promise<UserProfile[]> => {
     if (!query) return [];
-    const response = await apiCall<UserProfile[]>(
-      `/directory/users/search?q=${encodeURIComponent(query)}`
+    const response = await apiCall<BackendAzureADUser[]>(
+      `/directory/users/search?q=${encodeURIComponent(query)}`,
+      {},
+      true // Use internal API
+    );
+    const backendUsers = extractData(response) || [];
+    return backendUsers.map(transformAzureADUser);
+  },
+
+  getAllUsers: async (): Promise<UserProfile[]> => {
+    const response = await apiCall<BackendAzureADUser[]>(
+      `/directory/users?limit=1000`,
+      {},
+      true // Use internal API
+    );
+    const backendUsers = extractData(response) || [];
+    return backendUsers.map(transformAzureADUser);
+  },
+
+  getAllGroups: async (): Promise<ADGroup[]> => {
+    const response = await apiCall<BackendAzureADGroup[]>(
+      '/directory/groups',
+      {},
+      true // Use internal API
+    );
+    const backendGroups = extractData(response) || [];
+    return backendGroups.map(transformAzureADGroup);
+  },
+
+  getTeamsGroups: async (): Promise<ADGroup[]> => {
+    const response = await apiCall<BackendAzureADGroup[]>(
+      '/directory/groups/teams',
+      {},
+      true // Use internal API
+    );
+    const backendGroups = extractData(response) || [];
+    return backendGroups.map(transformAzureADGroup);
+  },
+
+  getTeamsGroupsWithChannels: async (): Promise<TeamsGroupWithChannels[]> => {
+    const response = await apiCall<TeamsGroupWithChannels[]>(
+      '/directory/groups/teams/with-channels',
+      {},
+      true // Use internal API
     );
     return extractData(response) || [];
   },
 
-  getAllGroups: async (): Promise<ADGroup[]> => {
-    const response = await apiCall<ADGroup[]>('/directory/groups');
+  getAllChannels: async (teamId?: string): Promise<TeamChannel[]> => {
+    const endpoint = teamId
+      ? `/directory/channels?team_id=${encodeURIComponent(teamId)}`
+      : '/directory/channels';
+    const response = await apiCall<BackendAzureADChannel[]>(
+      endpoint,
+      {},
+      true // Use internal API
+    );
+    const backendChannels = extractData(response) || [];
+    return backendChannels.map(transformAzureADChannel);
+  },
+
+  getAllChatGroups: async (): Promise<ChatGroup[]> => {
+    const response = await apiCall<ChatGroup[]>(
+      '/directory/chat-groups',
+      {},
+      true // Use internal API
+    );
     return extractData(response) || [];
   },
 
   getGroupChannels: async (groupId: string): Promise<TeamChannel[]> => {
     const response = await apiCall<TeamChannel[]>(
-      `/directory/groups/${groupId}/channels`
+      `/directory/groups/${groupId}/channels`,
+      {},
+      true // Use internal API
     );
     return extractData(response) || [];
   },
@@ -813,6 +955,40 @@ export const apiService = {
     const data = extractData(response);
     if (!data) {
       throw new Error('Failed to create audience list');
+    }
+    return data;
+  },
+
+  createAudienceListFromResources: async (
+    projectId: string,
+    name: string,
+    description: string | undefined,
+    resources: {
+      users?: Array<{ azure_ad_id: string; email: string; display_name: string }>;
+      groups?: Array<{ azure_ad_id: string; display_name: string }>;
+      channels?: Array<{ team_id: string; channel_id: string; display_name: string; team_name?: string }>;
+    }
+  ): Promise<AudienceList> => {
+    const response = await apiCall<AudienceList>(
+      `/projects/${projectId}/audience-lists`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          type: 'Static',
+          description,
+          resources: {
+            users: resources.users || [],
+            groups: resources.groups || [],
+            channels: resources.channels || [],
+          },
+        }),
+      },
+      true // Use internal API
+    );
+    const data = extractData(response);
+    if (!data) {
+      throw new Error('Failed to create audience list from resources');
     }
     return data;
   },

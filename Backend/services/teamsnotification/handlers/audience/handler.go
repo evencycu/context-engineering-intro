@@ -34,6 +34,34 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	}
 }
 
+// ResourceSelection represents selected Teams resources
+type ResourceSelection struct {
+	Users    []UserResource    `json:"users,omitempty"`
+	Groups   []GroupResource   `json:"groups,omitempty"`
+	Channels []ChannelResource `json:"channels,omitempty"`
+}
+
+// UserResource represents a selected user
+type UserResource struct {
+	AzureADID   string `json:"azure_ad_id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+}
+
+// GroupResource represents a selected group
+type GroupResource struct {
+	AzureADID   string `json:"azure_ad_id"`
+	DisplayName string `json:"display_name"`
+}
+
+// ChannelResource represents a selected channel
+type ChannelResource struct {
+	TeamID      string `json:"team_id"`
+	ChannelID   string `json:"channel_id"`
+	DisplayName string `json:"display_name"`
+	TeamName    string `json:"team_name,omitempty"`
+}
+
 // CreateAudienceListRequest represents a create audience list request
 type CreateAudienceListRequest struct {
 	Name        string                 `json:"name" validate:"required,min=1,max=255"`
@@ -41,6 +69,7 @@ type CreateAudienceListRequest struct {
 	Count       int                    `json:"count" validate:"min=0"`
 	Description *string                `json:"description"`
 	Metadata    map[string]interface{} `json:"metadata"`
+	Resources   *ResourceSelection     `json:"resources,omitempty"` // Optional: resources to include in the list
 }
 
 // UpdateAudienceListRequest represents an update audience list request
@@ -86,6 +115,34 @@ func (h *Handler) CreateAudienceList(c *gin.Context) {
 	}
 	if audienceList.Metadata == nil {
 		audienceList.Metadata = make(models.JSONBObject)
+	}
+
+	// If resources are provided, calculate count and store in metadata
+	if req.Resources != nil {
+		// Calculate total count from resources
+		totalCount := len(req.Resources.Users) + len(req.Resources.Groups) + len(req.Resources.Channels)
+		if req.Count == 0 {
+			audienceList.Count = totalCount
+		}
+
+		// Store resources in metadata
+		resourcesMetadata := map[string]interface{}{
+			"source": "teams_resources",
+			"resources": map[string]interface{}{
+				"users":    req.Resources.Users,
+				"groups":   req.Resources.Groups,
+				"channels": req.Resources.Channels,
+			},
+			"total_count": totalCount,
+		}
+
+		// Merge with existing metadata
+		if audienceList.Metadata == nil {
+			audienceList.Metadata = make(models.JSONBObject)
+		}
+		for k, v := range resourcesMetadata {
+			audienceList.Metadata[k] = v
+		}
 	}
 
 	createReq := &services.CreateRequest[models.AudienceList]{
