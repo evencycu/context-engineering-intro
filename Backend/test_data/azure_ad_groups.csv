@@ -1,0 +1,155 @@
+azure_ad_id,display_name,description,group_types,synced_at
+39cdb82e-1ce8-4682-927f-743b23b93822,1234,1234,[],2026-01-14 07:17:56.783965+00
+09be23e8-7597-4fb2-a190-5b4c8e0177a4,Allow_invite_guest,allow user to invite guest user,[],2026-01-14 07:17:56.758334+00
+9fbf7b63-8063-4f35-9536-3369c8954b04,Approvals App Admin team,"",[],2026-01-14 07:17:56.826043+00
+32a9ab8d-f69f-4784-8490-a6e7b3fa19d9,BK-AccountLicenses,BK-AccountLicenses,[],2026-01-14 07:17:56.780027+00
+75d88118-721a-435c-9086-9659bd1d6aca,BK-MAM Users,BK-MAM,[],2026-01-14 07:17:56.809154+00
+944e4428-6672-4a06-a89a-e68ccc5cd7ef,CCI-AccountLicenses,群組方式授權，提供產險人員M365產品授權,[],2026-01-14 07:17:56.820845+00
+73ad4691-d98a-4cb4-ab40-9a55af48038c,CCI-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.808557+00
+1890e7c2-e7f9-4835-b619-12e4dcff0648,CCI-CA Users,產險條件式存取使用的群組,[],2026-01-14 07:17:56.767847+00
+0dc0ccc0-bd5c-449c-a174-41bc08d55686,CCI-MAM Users,產險 MAM 管控群組,[],2026-01-14 07:17:56.761757+00
+8303127b-ae6e-4797-bcde-7bbb280609b9,CFH Teams Bot,CFH Teams Bot,"[""Unified""]",2026-01-14 07:17:56.813589+00
+9f950d79-54cf-40e4-8f9a-4c680015d65e,CFH-AccountLicenses,群組方式授權，提供金控人員M365產品授權,[],2026-01-14 07:17:56.825511+00
+df7be50f-fa18-4351-b411-71e15fc37cfd,CFH-AccountLicensesE3,群組方式授權，提供完整E3 授權,[],2026-01-14 07:17:56.851865+00
+a2453f3f-29b3-418a-b642-ade6a7c120a1,CFH-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.82737+00
+f3cb1e6b-9a1b-4c64-b5d6-2776ffb028d6,CFH-Authenticator Test Group,CFH-Authenticator Test Group,[],2026-01-14 07:17:56.859646+00
+15a7b8e1-2264-437e-a346-f3daf4762995,CFH-Azure-LabUsers,B2B cross tenant sync users,"[""DynamicMembership""]",2026-01-14 07:17:56.766801+00
+4f24b600-f9a9-479e-973d-36a5ff06a0c0,CFH-CA Exception VIP,副總級主管有特殊需求時使用的群組,[],2026-01-14 07:17:56.795218+00
+54d8fa48-cab8-4b0a-bf64-372af5630335,CFH-CA VVIP,董事長樓層專用群組，26樓條件式存取,[],2026-01-14 07:17:56.79736+00
+5886d383-4e8d-410c-b429-031fc66fcf08,CFH-CSD-CO-SRE,"",[],2026-01-14 07:17:56.802644+00
+95294eff-a7ab-4255-baba-a23de936157d,CFH-CSD-SRE,"",[],2026-01-14 07:17:56.821504+00
+5c0969c8-7e5d-406c-a07a-eca2a5c3dded,CFH-EDGE for Business,EDGE for Business測試用群組,[],2026-01-14 07:17:56.803276+00
+f1e1f85c-67d0-4c26-bb3c-e8b9ca887982,CFH-IPAD,管理公發蘋果平板,[],2026-01-14 07:17:56.859084+00
+0d59975c-22f6-4a29-b2d6-808d94bcf580,CFH-IT Pilot,金控技術人員測試用群組,[],2026-01-14 07:17:56.760564+00
+1530b65b-6954-4777-b000-f7f8778b0379,CFH-LAB-NPGroupDynamic,"","[""DynamicMembership""]",2026-01-14 07:17:56.764873+00
+78954113-b06e-4366-a6c5-1a85c30a35c3,CFH-LAB-NPGroupDynamicM365,CFH-LAB-NPGroupDynamicM365,"[""Unified"", ""DynamicMembership""]",2026-01-14 07:17:56.811029+00
+fde7b08c-44ea-473c-a853-dfdbd1b81ffe,CFH-MAM GM,管理者專用MAM群組,[],2026-01-14 07:17:56.861862+00
+dc0d293b-242e-4b08-afed-d3adc6f74e7f,CFH-MAM Other APPs,金控測試其它受控管APP專用群組,[],2026-01-14 07:17:56.849617+00
+8207cc60-cd4b-4edd-ad4a-156bb398aaee,CFH-MAM Users,國泰金控 MAM 管控群組,[],2026-01-14 07:17:56.812972+00
+dd54d5c5-4182-428a-b04d-89b418b8ebfe,CFH-MRoomB-Group,In this group can book the room B,[],2026-01-14 07:17:56.85078+00
+6acc7535-660e-41e7-a724-85721876d0ca,CFH-MeetingRoomGP-A,meeting room group,[],2026-01-14 07:17:56.806029+00
+e11c8be3-e09c-410b-b581-d92ef0e714eb,CFH-NP Lab Group,CFH-NP Lab Group,[],2026-01-14 07:17:56.853703+00
+b555a139-6701-4ffe-b9c2-e13c418363af,CFH-PPENV-LAB-M365KMAGENT,"",[],2026-01-14 07:17:56.838459+00
+3e3f07b7-ae02-4da7-ac5d-9e91132dbc72,CFH-PPENV-LAB-PPCOE,CFH-PPENV-LAB-PPCOE,[],2026-01-14 07:17:56.784854+00
+48a67a25-b94e-46b2-bcc1-342ab979e5f2,CFH-PPEnv-LAB-AGIA,審批編號25082795962，商業分析科許哲維，開發金控員工AI助手,[],2026-01-14 07:17:56.790733+00
+0236ba59-83b1-4519-8b58-8cec1eed8f7a,CFH-PPEnv-LAB-AIAGENT,審批編號25092423650,[],2026-01-14 07:17:56.750809+00
+f8bdd417-101f-4068-84ad-ae6a44c13152,CFH-Passwordless,無密碼測試,[],2026-01-14 07:17:56.860785+00
+dc6390e7-7c60-469e-aa12-88459b83227c,CFH-PasswordlessSecurityKey,SecurityKey,[],2026-01-14 07:17:56.850195+00
+5111f39a-302f-4695-bbcd-a81804e1cf21,CFH-Security-POC,MDO P1 + Sentinel POC 專案小組,"[""Unified""]",2026-01-14 07:17:56.796734+00
+402376f8-7f35-4696-9cff-35f0e37d8b05,CFH-SharePointCAUsers,CFH-SharePointCAUsers,[],2026-01-14 07:17:56.786529+00
+ed477580-282e-4d06-aa51-30764c19806b,CFH-Test-In-Lab,CFH-Test-In-Lab,"[""Unified""]",2026-01-14 07:17:56.858+00
+30b1d27f-9200-4c85-9020-8c06df7aa14b,CFH-WIN,公發Windows筆電,[],2026-01-14 07:17:56.777423+00
+49b64c7f-dc83-4290-9f80-43079ea58695,CFH-WebApplicationProxyUsers,CFH-WebApplicationProxyUsers,[],2026-01-14 07:17:56.791781+00
+abada408-20d9-4bd6-b53d-6ea56413681d,CFH-test,CFH-test,"[""Unified""]",2026-01-14 07:17:56.831535+00
+c168f8f4-41b0-4bd5-8f1c-910aec742962,CFH_Mammoth,CFH_Mammoth,[],2026-01-14 07:17:56.840379+00
+39993e2f-ec17-46d0-8824-77679cd69e85,CSIC-AccountLicenses,群組方式授權，提供投顧人員M365產品授權,[],2026-01-14 07:17:56.783213+00
+ac3700fd-b4b9-4b7c-a908-86d4035799f0,CSIC-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.832102+00
+55cc7a78-5e39-42f1-a940-af2209f07f96,CSIC-CA Users,投顧條件式存取使用的群組,[],2026-01-14 07:17:56.800119+00
+af2de0c6-0112-4335-be2c-5abe83966eaf,CSIC-MAM Users,投顧 MAM 管控群組,[],2026-01-14 07:17:56.834298+00
+4c39f766-20c7-4065-9bca-dc2dc09e1da9,CSIT-AccountLicenses,群組方式授權，提供投信人員M365產品授權,[],2026-01-14 07:17:56.79449+00
+a3ba88fb-c291-4a86-971c-b0d6716d6bc2,CSIT-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.828465+00
+066aab58-5e9e-40c6-b044-47e6d1e5a69e,CSIT-AccountLicensesNoTeamsOD,群組方式授權，提供投信人員M365產品授權，但不包含Teams及OneDrive,[],2026-01-14 07:17:56.757229+00
+305f24b6-c9ee-47a7-ba8b-6f4959fcef88,CSIT-CA Users,投信條件式存取使用的群組,[],2026-01-14 07:17:56.776528+00
+953f3844-2860-41ff-85c7-8c7eb28163c3,CSIT-MAM Users,投信 MAM 管控群組,[],2026-01-14 07:17:56.822118+00
+34b58b05-20d2-4911-a7f4-b0530a7f4a37,CUB111銷售,CUB111銷售,"[""DynamicMembership"", ""Unified""]",2026-01-14 07:17:56.780828+00
+c80f36a7-bfcb-429b-9fab-e4893f0c5120,CUB222研發,CUB222研發,"[""DynamicMembership"", ""Unified""]",2026-01-14 07:17:56.843266+00
+d1db7588-0055-4b3e-a9ad-99a712086285,CUB333人事,CUB333人事,"[""DynamicMembership"", ""Unified""]",2026-01-14 07:17:56.84563+00
+ab2c6464-c224-41a2-a1d2-fd574b529755,CVT-AccountLicenses,群組方式授權，提供創投人員M365產品授權,[],2026-01-14 07:17:56.83094+00
+a3bb690b-f26f-4134-b19f-d7a095db61fe,CVT-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.829028+00
+58469fc8-e836-4bbd-bf64-4d1a19be4c10,CVT-CA Users,創投條件式存取使用的群組,[],2026-01-14 07:17:56.802043+00
+b4f033fd-896b-458e-b8ec-24bd84fd26f0,CVT-MAM Users,創投 MAM 管控群組,[],2026-01-14 07:17:56.837236+00
+cdc773f6-6e5f-414a-9222-20b0ca985a3e,CXL-AccountLicenses,群組方式授權，提供人壽人員M365產品授權,[],2026-01-14 07:17:56.843885+00
+28a414d3-3345-4d39-9244-c86307a17005,CXL-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.772825+00
+4aa691c5-cf18-4ff5-9fcc-f780b49d3336,CXL-AccountLicenses_cathaytest,"",[],2026-01-14 07:17:56.793811+00
+68041b37-1327-4d78-886a-be64e395a37b,CXL-CA Users,人壽條件式存取使用的群組,[],2026-01-14 07:17:56.805425+00
+d832d771-04c0-4e53-b9f6-c2d4b1ffd479,CXL-CA Users_cathaytest,"",[],2026-01-14 07:17:56.847986+00
+b0352c56-468d-43c2-9a61-e35e5bd0f832,CXL-MAM Users,人壽 MAM 管控群組,[],2026-01-14 07:17:56.83537+00
+6cd49ad4-674c-4a4f-a3e0-4a11459dab2c,CXL-MAM Users_cathaytest,"",[],2026-01-14 07:17:56.807245+00
+c7aeb704-7e99-4306-a1dc-bf7700d7e2fd,CXL-PPEnv-LAB-AITEST,審批編號25091716447,[],2026-01-14 07:17:56.84267+00
+fc35f7ef-edf2-4f2c-bafa-2d82050e920d,CXL-UiPath,CXL-UiPath,"[""Unified""]",2026-01-14 07:17:56.861316+00
+660c0241-c886-4082-a151-55495812e7ee,Copilot Studio 2024 Team Site,Copilot Studio 2024 Team Site,"[""Unified""]",2026-01-14 07:17:56.804763+00
+1c87b492-5e29-41e2-ad33-77719fffc18e,Copliot Studio知識庫檢索,Copliot Studio知識庫檔案名稱列表檢索用,"[""Unified""]",2026-01-14 07:17:56.770022+00
+e3a2d679-ac8d-484c-9bc0-fc75a29d4f12,DEX_Martin_test,DEX_Martin_test,"[""Unified""]",2026-01-14 07:17:56.854951+00
+2a6c7a32-a281-4a32-9a43-92a5535cfa30,DEX布蘭想怎樣-同仁,布蘭測試,"[""Unified""]",2026-01-14 07:17:56.774632+00
+9607a641-a451-4f8b-9f08-e2e9e68a3121,Edit Mail Group,Edit Mail Group,"[""Unified""]",2026-01-14 07:17:56.822749+00
+474667d0-4fb4-48e2-977a-536d70b94655,EvenTestGroup,EvenTestGroup,"[""Unified""]",2026-01-14 07:17:56.789165+00
+b3d3041f-9075-43d5-92b3-4d2d0d739531,FUT-AccountLicenses,群組方式授權，提供期貨人員M365產品授權,[],2026-01-14 07:17:56.836533+00
+9afa2354-88f9-48b6-b277-a65d3aace83b,FUT-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.824449+00
+aa4c634e-fadc-4c2a-8230-83af0d43d2c2,FUT-CA Users,期貨條件式存取使用的群組,[],2026-01-14 07:17:56.830335+00
+1c564c15-638f-40c3-b09b-3212e5cab2b1,FUT-MAM Users,期貨 MAM 管控群組,[],2026-01-14 07:17:56.769169+00
+ad5284ff-a0c6-4d8f-9671-25bc0fe25f3c,GAIA_Law_POC,GAIA_Law_POC,"[""Unified""]",2026-01-14 07:17:56.833751+00
+8e7704cd-f7c4-468f-9221-0bf31122266e,HR Documents,HR Documents,"[""Unified""]",2026-01-14 07:17:56.819055+00
+e2d0100e-303d-4885-89a1-86f3338af56d,HR FAQ,HR FAQ,"[""Unified""]",2026-01-14 07:17:56.854376+00
+d177aad7-2d78-4de5-8d7a-dba61630e235,HR Intern,HR Intern,"[""Unified""]",2026-01-14 07:17:56.845031+00
+81e21df4-4d89-46f9-911b-83445bad71db,Howard test,Howard test,"[""Unified""]",2026-01-14 07:17:56.812338+00
+b5398afb-af9f-4ff5-9d2f-13b96e0272c7,HowardMAM,HowardMAM,[],2026-01-14 07:17:56.837895+00
+47a4031e-28c2-4edf-b20f-274618529d64,Howard_engage,Howard_engage,"[""Unified""]",2026-01-14 07:17:56.790071+00
+d918a21a-4187-4904-b91a-391123889c49,Intune1215,"",[],2026-01-14 07:17:56.848522+00
+d460b131-3519-4f33-a51e-6e58fdca0e38,Intune_All App,"",[],2026-01-14 07:17:56.847421+00
+7b62133a-c933-4602-9367-26e07910dc09,Intune_Teams,"",[],2026-01-14 07:17:56.811622+00
+4a791d6c-4367-4ab4-b7c6-4dae4fe12f6a,JackTest,JackTest,"[""Unified""]",2026-01-14 07:17:56.793121+00
+afee923a-8691-4001-81eb-5953852ac553,JackTest_20260105,JackTest_20260105,"[""Unified""]",2026-01-14 07:17:56.834823+00
+77cffa23-0334-40cd-b2f2-705eda2131df,JackTest_Private,JackTest_Private,"[""Unified""]",2026-01-14 07:17:56.810422+00
+30148d28-2f41-42cd-9f15-553308f8d906,JackTest_Public,JackTest_Public,"[""Unified""]",2026-01-14 07:17:56.775579+00
+8bc50f76-cf2d-402f-b994-e949f0b90b06,LAB-All-User-For-CopilotStudioAuthors,"","[""DynamicMembership""]",2026-01-14 07:17:56.817259+00
+f7da3aeb-1954-4afe-9882-4314cc2db3f8,LAB-CFH-digisec,CFH-digisec,[],2026-01-14 07:17:56.860237+00
+8416d6b8-3af6-4cd1-8687-ef367953eed1,LAB-DL-Conference,for old place meeting booking,[],2026-01-14 07:17:56.815363+00
+0aff2b94-6d67-4af7-a99c-93fc828b9cbc,LAB-DW戰情室,測試站台,"[""Unified""]",2026-01-14 07:17:56.759409+00
+366cad05-dbf8-4dd1-a416-4b86df9c6163,LAB-Group for Answers in Viva Engage – DO NOT DELETE 114506899456,Group that stores content and metadata for Answers in Viva Engage in network 114506899456. Deleting this this group will disrupt Answers in Viva Engage.,"[""Unified""]",2026-01-14 07:17:56.78245+00
+d27a6579-b826-4d5b-b2c8-d73b1bd515a7,LAB-KilioGroupA,LAB-KilioGroupA,[],2026-01-14 07:17:56.846249+00
+04876baf-2098-49ff-ad19-59e1eeb3e0d2,LAB-KilioGroupAddA,LAB-KilioGroupAddA,[],2026-01-14 07:17:56.756051+00
+ad223243-f044-4dae-b5ba-209c0ba43eac,LAB-KilioGroupB,LAB-KilioGroupB,[],2026-01-14 07:17:56.833188+00
+31e620fb-d1ca-489b-90f2-06aebe801c4d,LAB-KilioTeamSiteBlockAccess,KilioTeamSiteBlockAccess,"[""Unified""]",2026-01-14 07:17:56.778236+00
+c6b8141a-8f93-4cac-9362-a9adeec3721b,LAB-Loop Test,Loop Test,"[""Unified""]",2026-01-14 07:17:56.841485+00
+320b0174-5bac-486c-90f4-6924ab292927,LAB-New-org-01,test,"[""Unified"", ""DynamicMembership""]",2026-01-14 07:17:56.779192+00
+005d564d-f571-4faf-a969-3ed1fd60d389,LAB-SASE PA POC,LAB-SASE PA POC,"[""Unified""]",2026-01-14 07:17:56.746724+00
+6f75bc16-f40e-4f8a-8299-fbd799699de2,LAB-SSE,"",[],2026-01-14 07:17:56.807924+00
+0467c04d-e071-458f-9c52-4deb391a238d,LAB-kilioTeamSiteAllowLimitedAccess,kilioTeamSiteAllowLimitedAccess,"[""Unified""]",2026-01-14 07:17:56.754796+00
+f1508a4f-5729-4476-8398-5f8e6a601eac,LAB-test-conf-book,LAB-test-conf-book,[],2026-01-14 07:17:56.858544+00
+e95f4156-8b2c-467b-b2ee-d82be37953f6,LAB-信箱保留_系統串接,信箱保留_系統串接,[],2026-01-14 07:17:56.856117+00
+b04fa724-f713-47db-8412-6cbc908979da,LAB-信箱保留_系統串接,信箱保留_系統串接,[],2026-01-14 07:17:56.83596+00
+763a3ef7-765a-41d9-a0fe-ba71e615cfc4,LAB-信箱保留不得申請,信箱保留不得申請,[],2026-01-14 07:17:56.809757+00
+a35bcb16-2d37-400e-abf4-7676438f3284,LAB-信箱保留不得申請,信箱保留不得申請,[],2026-01-14 07:17:56.827916+00
+29c33c77-8ac4-4257-b38e-cd70f5ef9c7e,LAB-信箱保留不得申請,信箱保留不得申請,[],2026-01-14 07:17:56.773759+00
+41192ead-3ff3-4a42-9f9c-9d2a1b69d2e3,LAB-信箱保留不得申請,信箱保留不得申請,[],2026-01-14 07:17:56.787453+00
+92b11a58-894b-4bf4-8fa6-a7d85e66d2cd,LAB-金控-數位數據暨科技發展中心-經理,金控-數位數據暨科技發展中心-經理,[],2026-01-14 07:17:56.82025+00
+e07f87ed-44ce-4a19-b139-8879a2e3165b,LAB-金控-數位數據暨科技發展中心兼任同仁,金控-數位數據暨科技發展中心兼任同仁,[],2026-01-14 07:17:56.852627+00
+8949c51d-982c-4899-aafb-536898d3637c,LAB-金控-數位架構發展部兼任同仁,金控-數位架構發展部兼任同仁,[],2026-01-14 07:17:56.816699+00
+a2206acf-15a8-4c91-afa2-8b466c327869,LAB-金控-數位生態發展部兼任同仁,金控-數位生態發展部兼任同仁,[],2026-01-14 07:17:56.826814+00
+2480958f-78ee-4a66-9910-014d67fd6cf0,LAB-金控-數據商業分析科,LAB-金控-數據商業分析科,[],2026-01-14 07:17:56.771016+00
+4022473b-0098-4afb-844a-fa0dcd20bdcc,LAB-金控-數據暨人工智慧發展部兼任同仁,金控-數據暨人工智慧發展部兼任同仁,[],2026-01-14 07:17:56.785764+00
+1592f72d-58d9-47d2-8962-b72b42792867,LAB-金控-東南亞發展部兼任同仁,金控-東南亞發展部兼任同仁,[],2026-01-14 07:17:56.765796+00
+e0c94154-4d67-4cce-9cd3-47e43713d8e4,LAB-金控-東南亞金融科技發展科兼任同仁,申請單編號：23082300005A 申請人：國泰金控 營運行政小組林昭馨 申請需求：因信箱系統移轉M365，兼任同仁需手動至對應群組信箱新增/刪除，惟科級群組信箱是動態信箱無法手動新增帳號，因此考量業務需求需額外新增群組信箱供單位使用。,[],2026-01-14 07:17:56.853166+00
+4a6e1faf-6578-42c6-a0d1-89918a7abe88,LAB-金控-用戶科技發展部兼任同仁,金控-用戶科技發展部兼任同仁,[],2026-01-14 07:17:56.792424+00
+1043eb79-6bdf-4d95-93b0-b93cd083ee3a,LAB-金控-資訊開發中心(台中)兼任同仁,申請單編號：23082300005A 申請人：國泰金控 營運行政小組林昭馨 申請需求：因信箱系統移轉M365，兼任同仁需手動至對應群組信箱新增/刪除，惟科級群組信箱是動態信箱無法手動新增帳號，因此考量業務需求需額外新增群組信箱供單位使用。,[],2026-01-14 07:17:56.762893+00
+d2a0c7ce-d2d8-43d5-a761-ec7aa731a53d,LAB-金控-資訊開發中心(高雄)兼任同仁,申請單編號：23082300005A 申請人：國泰金控 營運行政小組林昭馨 申請需求：因信箱系統移轉M365，兼任同仁需手動至對應群組信箱新增/刪除，惟科級群組信箱是動態信箱無法手動新增帳號，因此考量業務需求需額外新增群組信箱供單位使用。,[],2026-01-14 07:17:56.846861+00
+a781c025-4bf7-425d-9b99-445e5c974685,LAB-金控-開源創新發展小組兼任同仁,申請單編號：23082300005A 申請人：國泰金控 營運行政小組林昭馨 申請需求：因信箱系統移轉M365，兼任同仁需手動至對應群組信箱新增/刪除，惟科級群組信箱是動態信箱無法手動新增帳號，因此考量業務需求需額外新增群組信箱供單位使用。,[],2026-01-14 07:17:56.829721+00
+54e9d616-23a5-4a2c-a96e-36588c14105f,LAB-金控-體驗研究小組兼任同仁,申請單編號：23082300005A 申請人：國泰金控 營運行政小組林昭馨 申請需求：因信箱系統移轉M365，兼任同仁需手動至對應群組信箱新增/刪除，惟科級群組信箱是動態信箱無法手動新增帳號，因此考量業務需求需額外新增群組信箱供單位使用。,[],2026-01-14 07:17:56.798+00
+92880a97-c12d-4bcd-af87-873f92d4a40b,LAB_除BK的EXO,LAB_除BK的EXO,"[""Unified""]",2026-01-14 07:17:56.819657+00
+c51c8b88-8783-4284-bd44-889f6a9e24fe,Lab-CSD-CO-test,testing,"[""Unified""]",2026-01-14 07:17:56.840931+00
+358390a0-47e1-44f4-b1fb-91f819784e96,MS Defender_POC,"","[""DynamicMembership""]",2026-01-14 07:17:56.781649+00
+5508504c-cbe2-4733-b1ad-1e3a859583c4,OTL-0DC6000,"",[],2026-01-14 07:17:56.798664+00
+df29c59f-7236-4512-a10e-281805f947cb,OTL-0DC6100,"",[],2026-01-14 07:17:56.851324+00
+d9837f2d-0052-4bcc-88f5-b2865739f3aa,OTL-0DC6200,"",[],2026-01-14 07:17:56.849064+00
+83283f0d-35bf-42e3-8d06-a39c1007d2d7,OTL-0DC6300,"",[],2026-01-14 07:17:56.814787+00
+b6e0c12a-177e-4768-a07f-a824c32f247e,OldPlaceSecGroup,security group for booking old place conference,[],2026-01-14 07:17:56.839221+00
+9a6aae4a-f3a3-46a6-9265-1462e92885b1,Prisma SASE,"",[],2026-01-14 07:17:56.823892+00
+13460c15-f823-401a-b645-08294778a4de,SEC-AccountLicenses,群組方式授權，提供證券人員M365產品授權,[],2026-01-14 07:17:56.763884+00
+8cea9e2f-d844-49a2-9c45-67808b080f69,SEC-AccountLicensesEXOP2,群組方式授權，提供Exchange online Plan 2，目前對象為兼任人員及公務信箱,[],2026-01-14 07:17:56.817828+00
+4597521c-597f-4398-b626-3b7d4a2f61ef,SEC-CA Users,證券條件式存取使用的群組,[],2026-01-14 07:17:56.788383+00
+88829291-d3c0-4d2b-a652-63e97465e998,SEC-MAM Users,證券 MAM 管控群組,[],2026-01-14 07:17:56.816104+00
+ac5b4dca-6967-41e5-97bb-4b888a1634d5,Security-POC,Security-POC,"[""Unified""]",2026-01-14 07:17:56.832656+00
+2747cdba-5b58-4fdf-9cac-dc52e725e728,Teams Send Msg Test Group,Teams Send Msg Test Group,"[""Unified""]",2026-01-14 07:17:56.771893+00
+570bcbe0-7ebf-4c86-91dd-5236ea8de0ea,Teams-Support,Teams-Support,"[""Unified""]",2026-01-14 07:17:56.800754+00
+57894047-1fcb-471f-be28-0a020d380bcb,Test1215,Test1215,"[""Unified""]",2026-01-14 07:17:56.801425+00
+6385c431-79b9-4c8f-b8ed-2ab4625c1a8d,deleteitemgroup,deleteitemgroup,"[""Unified""]",2026-01-14 07:17:56.80413+00
+e5840fc6-63ed-40b2-99e7-c275f2f4ba7a,efficiencymailgroup,"","[""Unified""]",2026-01-14 07:17:56.855512+00
+962c0334-a261-4bd5-b5f8-f0c7beecb356,odtest,"",[],2026-01-14 07:17:56.823308+00
+9b7b6774-ad94-42a1-9a85-d9ca47ced2b2,test,test,"[""Unified""]",2026-01-14 07:17:56.824979+00
+cf431b1c-ddfd-49f8-9063-509789375f25,testgroup1,Ａ,"[""DynamicMembership"", ""Unified""]",2026-01-14 07:17:56.844473+00
+c7549ce1-b30b-4982-ac79-bd6f0381267f,傑克日常,傑克日常,"[""Unified""]",2026-01-14 07:17:56.842061+00
+eb505635-0c56-4328-b56a-b8d7473c6a89,荔枝果園,研究teams團隊功能,"[""Unified""]",2026-01-14 07:17:56.856684+00
+6b8c26b2-d219-4a34-99e5-4f784a5ca37e,金控-員工數位體驗小組同仁DL2,"",[],2026-01-14 07:17:56.806647+00
+03918ed7-b329-48f8-a410-f787448116f3,金控-員工數位體驗小組同仁DL3,"",[],2026-01-14 07:17:56.752927+00
+b81e4842-b444-404b-be66-7b0b994faf2d,金控科主管含以上,金控科主管含以上,"[""DynamicMembership"", ""Unified""]",2026-01-14 07:17:56.839803+00
+5031d257-fbec-4c4c-bb7c-a0034c3b7c72,项目团队ddd,项目ABA团队,"[""Unified""]",2026-01-14 07:17:56.795986+00

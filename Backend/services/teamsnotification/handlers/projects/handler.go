@@ -32,6 +32,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		projects.PUT("/:id", h.UpdateProject)
 		projects.DELETE("/:id", h.DeleteProject)
 		projects.PATCH("/:id/limits", h.UpdateLimits)
+		projects.POST("/:id/regenerate-key", h.RegenerateKey)
 		projects.GET("/company/:companyId", h.GetProjectsByCompany)
 		projects.GET("/key/:keyName", h.GetProjectByKeyName)
 	}
@@ -389,5 +390,39 @@ func (h *Handler) GetProjectByKeyName(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": project,
+	})
+}
+
+// RegenerateKey regenerates the notify_key for a project
+func (h *Handler) RegenerateKey(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project ID",
+		})
+		return
+	}
+
+	newKey, err := h.projectService.RegenerateKey(c.Request.Context(), id)
+	if err != nil {
+		if _, ok := err.(services.NotFoundError); ok {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Project not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to regenerate API key",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"apiKey": newKey,
+		},
+		"message": "API key regenerated successfully",
 	})
 }

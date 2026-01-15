@@ -3,6 +3,8 @@ package services
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -377,6 +379,7 @@ type ProjectService interface {
 	GetByStatus(ctx context.Context, status string) ([]*models.Project, error)
 	UpdateLimits(ctx context.Context, id uuid.UUID, dailyLimit, monthlyLimit int) error
 	CheckLimit(ctx context.Context, id uuid.UUID) (bool, error)
+	RegenerateKey(ctx context.Context, id uuid.UUID) (string, error)
 }
 
 // BotService defines bot-specific operations
@@ -1129,6 +1132,60 @@ func (s *projectService) CheckLimit(ctx context.Context, id uuid.UUID) (bool, er
 	return true, nil
 }
 
+// RegenerateKey regenerates the notify_key for a project
+func (s *projectService) RegenerateKey(ctx context.Context, id uuid.UUID) (string, error) {
+	project, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("failed to get project: %w", err)
+	}
+
+	// Generate new notify_key: format: "proj_" + random string (alphanumeric, 10 chars)
+	// Ensure uniqueness by checking against existing keys
+	maxAttempts := 10
+	var newKey string
+	for i := 0; i < maxAttempts; i++ {
+		// Generate random alphanumeric string
+		randomPart := generateRandomString(10)
+		newKey = fmt.Sprintf("proj_%s", randomPart)
+
+		// Check if key already exists
+		_, err := s.repo.GetByKeyName(ctx, newKey)
+		if err != nil {
+			// If error is sql.ErrNoRows, key is available (not found means available)
+			if errors.Is(err, sql.ErrNoRows) {
+				break
+			}
+			return "", fmt.Errorf("failed to check key availability: %w", err)
+		}
+		// Key exists (no error means key was found), try again
+		if i == maxAttempts-1 {
+			return "", fmt.Errorf("failed to generate unique key after %d attempts", maxAttempts)
+		}
+	}
+
+	// Update project with new key
+	project.NotifyKey = newKey
+	project.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, project)
+	if err != nil {
+		return "", fmt.Errorf("failed to update project: %w", err)
+	}
+
+	return newKey, nil
+}
+
+// generateRandomString generates a random alphanumeric string of specified length
+func generateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	rand.Read(b)
+	for i := range b {
+		b[i] = charset[b[i]%byte(len(charset))]
+	}
+	return string(b)
+}
+
 // teamsBotService implements BotService
 type teamsBotService struct {
 	repo repositories.TeamsBotRepository
@@ -1799,6 +1856,98 @@ func (s *messagesService) getUserEmailFromGraphAPI(ctx context.Context, aadObjec
 		return userInfo.Mail
 	}
 	return userInfo.UserPrincipalName
+}
+
+// =============================================
+// AudienceList Service
+// =============================================
+
+// AudienceListService defines audience list operations
+type AudienceListService interface {
+	Create(ctx context.Context, req *CreateRequest[models.AudienceList]) (*models.AudienceList, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.AudienceList, error)
+	Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.AudienceList]) (*models.AudienceList, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.AudienceList, error)
+	List(ctx context.Context, req *ListRequest) ([]*models.AudienceList, error)
+	Count(ctx context.Context, req *CountRequest) (int64, error)
+}
+
+// audienceListService implements AudienceListService
+type audienceListService struct {
+	repo repositories.AudienceListRepository
+}
+
+// NewAudienceListService creates a new audience list service
+func NewAudienceListService(repo repositories.AudienceListRepository) AudienceListService {
+	return &audienceListService{repo: repo}
+}
+
+// Create creates a new audience list
+func (s *audienceListService) Create(ctx context.Context, req *CreateRequest[models.AudienceList]) (*models.AudienceList, error) {
+	req.Data.ID = uuid.New()
+	req.Data.CreatedAt = time.Now()
+	req.Data.UpdatedAt = time.Now()
+	req.Data.LastUpdated = time.Now()
+	if req.Data.Type == "" {
+		req.Data.Type = "Static"
+	}
+	if req.Data.Metadata == nil {
+		req.Data.Metadata = make(map[string]any)
+	}
+
+	err := s.repo.Create(ctx, &req.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create audience list: %w", err)
+	}
+
+	return &req.Data, nil
+}
+
+// GetByID retrieves an audience list by ID
+func (s *audienceListService) GetByID(ctx context.Context, id uuid.UUID) (*models.AudienceList, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+// Update updates an audience list
+func (s *audienceListService) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest[models.AudienceList]) (*models.AudienceList, error) {
+	_, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get audience list: %w", err)
+	}
+
+	req.Data.ID = id
+	req.Data.UpdatedAt = time.Now()
+	if req.Data.LastUpdated.IsZero() {
+		req.Data.LastUpdated = time.Now()
+	}
+
+	err = s.repo.Update(ctx, &req.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update audience list: %w", err)
+	}
+
+	return &req.Data, nil
+}
+
+// Delete deletes an audience list
+func (s *audienceListService) Delete(ctx context.Context, id uuid.UUID) error {
+	return s.repo.Delete(ctx, id)
+}
+
+// GetByProjectID retrieves all audience lists for a project
+func (s *audienceListService) GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*models.AudienceList, error) {
+	return s.repo.GetByProjectID(ctx, projectID)
+}
+
+// List lists audience lists with pagination
+func (s *audienceListService) List(ctx context.Context, req *ListRequest) ([]*models.AudienceList, error) {
+	return s.repo.List(ctx, req.Limit, req.Offset)
+}
+
+// Count counts audience lists
+func (s *audienceListService) Count(ctx context.Context, req *CountRequest) (int64, error) {
+	return s.repo.Count(ctx)
 }
 
 // getGraphAPIAccessToken gets access token for Microsoft Graph API

@@ -23,7 +23,8 @@ import type {
   ADGroup, 
   TeamChannel, 
   ChatGroup, 
-  Template 
+  Template,
+  SyncStatus
 } from '../types';
 
 // Configuration
@@ -108,6 +109,12 @@ export const service = {
       () => mockApiService.getGroupChannels(groupId),
       'getGroupChannels'
     ),
+
+  syncDirectory: (): Promise<void> =>
+    apiService.syncDirectory(),
+
+  getSyncStatus: (): Promise<SyncStatus> =>
+    apiService.getSyncStatus(),
 
   // Project APIs
   getProjects: (): Promise<Project[]> =>
@@ -310,12 +317,20 @@ export const service = {
       'getTransactionHistory'
     ),
 
-  // Audience APIs (currently mock-only, backend needs implementation)
+  // Audience APIs
   getAudienceLists: (projectId: string): Promise<AudienceList[]> =>
-    mockApiService.getAudienceLists(projectId),
+    withFallback(
+      () => apiService.getAudienceLists(projectId),
+      () => mockApiService.getAudienceLists(projectId),
+      'getAudienceLists'
+    ),
 
   uploadAudienceList: (projectId: string, name: string, count: number): Promise<AudienceList> =>
-    mockApiService.uploadAudienceList(projectId, name, count),
+    withFallback(
+      () => apiService.uploadAudienceList(projectId, name, count),
+      () => mockApiService.uploadAudienceList(projectId, name, count),
+      'uploadAudienceList'
+    ),
 
   // User tagging (currently mock-only)
   addTagToUser: (userId: string, tag: string): Promise<void> =>

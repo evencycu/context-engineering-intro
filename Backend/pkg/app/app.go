@@ -24,6 +24,7 @@ import (
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/provision"
 	qhandler "github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/queue"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/system"
+	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/audience"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/templates"
 	"github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/handlers/users"
 	repositories "github.com/evencycu/TeamsNotifyGoV3/services/teamsnotification/repositories"
@@ -116,6 +117,9 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 	templateRepo := repositories.NewTemplateRepository(db)
 	templateService := services.NewTemplateService(templateRepo)
 
+	audienceListRepo := repositories.NewAudienceListRepository(db)
+	audienceListService := services.NewAudienceListService(audienceListRepo)
+
 	metricsService := services.NewMetricsService(redisClient)
 	broadcaster := services.NewBroadcastService(teamsBotRepo, installationRepo, destinationRepo, metricsService)
 	tokenManager := token.NewTokenManager(redisClient)
@@ -177,6 +181,7 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 	monitoringHandler := monitoring.NewMonitoringHandler(monitoringService)
 	templateHandler := templates.NewHandler(templateService)
 	directoryHandler := directory.NewHandler(directoryService)
+	audienceHandler := audience.NewHandler(audienceListService)
 
 	// Create server
 	server := teamsnotification.NewServer(cfg.Server)
@@ -226,6 +231,7 @@ func NewApplication(cfg *configs.Config, logger *logrus.Logger) (*Application, e
 		monitoringHandler,
 		templateHandler,
 		directoryHandler,
+		audienceHandler,
 	)
 
 	return &Application{

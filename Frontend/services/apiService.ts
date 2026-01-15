@@ -22,7 +22,8 @@ import {
   ChatGroup,
   Template,
   MessageStatus,
-  MessagePriority
+  MessagePriority,
+  SyncStatus
 } from '../types';
 
 // API Base URLs - uses Vite proxy in development
@@ -392,7 +393,16 @@ export const apiService = {
   },
 
   syncDirectory: async (): Promise<void> => {
-    await apiCall<null>('/directory/sync', { method: 'POST' });
+    await apiCall<null>('/directory/sync', { method: 'POST' }, true);
+  },
+
+  getSyncStatus: async (): Promise<SyncStatus> => {
+    const response = await apiCall<SyncStatus>('/directory/sync/status', {}, true);
+    const data = extractData(response);
+    if (!data) {
+      throw new Error('Failed to get sync status');
+    }
+    return data;
   },
 
   // ============================================
@@ -772,6 +782,58 @@ export const apiService = {
     );
     const backendNotifications = extractData(response) || [];
     return backendNotifications.map(transformNotificationToLog);
+  },
+
+  // ============================================
+  // Audience Lists APIs
+  // ============================================
+
+  getAudienceLists: async (projectId: string): Promise<AudienceList[]> => {
+    const response = await apiCall<AudienceList[]>(
+      `/projects/${projectId}/audience-lists`,
+      {},
+      true // Use internal API
+    );
+    return extractData(response) || [];
+  },
+
+  uploadAudienceList: async (projectId: string, name: string, count: number): Promise<AudienceList> => {
+    const response = await apiCall<AudienceList>(
+      `/projects/${projectId}/audience-lists`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          type: 'Static',
+          count,
+        }),
+      },
+      true // Use internal API
+    );
+    const data = extractData(response);
+    if (!data) {
+      throw new Error('Failed to create audience list');
+    }
+    return data;
+  },
+
+  // ============================================
+  // API Key Management APIs
+  // ============================================
+
+  regenerateApiKey: async (projectId: string): Promise<string> => {
+    const response = await apiCall<{ apiKey: string }>(
+      `/projects/${projectId}/regenerate-key`,
+      {
+        method: 'POST',
+      },
+      true // Use internal API
+    );
+    const data = extractData(response);
+    if (!data || !data.apiKey) {
+      throw new Error('Failed to regenerate API key');
+    }
+    return data.apiKey;
   },
 
   // ============================================

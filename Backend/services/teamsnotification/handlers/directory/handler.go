@@ -25,6 +25,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		dir.GET("/groups", h.ListGroups)
 		dir.GET("/groups/:groupId/channels", h.ListGroupChannels)
 		dir.POST("/sync", h.SyncDirectory)
+		dir.GET("/sync/status", h.GetSyncStatus)
 	}
 
 	// Chat Group management (per project)
@@ -143,4 +144,14 @@ func (h *Handler) SyncDirectory(c *gin.Context) {
 	}()
 
 	response.Success(c, http.StatusAccepted, "Directory sync started", nil)
+}
+
+func (h *Handler) GetSyncStatus(c *gin.Context) {
+	status, err := h.directoryService.GetSyncStatus(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to get sync status", err, nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Sync status retrieved", status)
 }

@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { useProject } from '../context/ProjectContext';
 import { service } from '../services';
-import { AudienceList, UserProfile, ChatGroup } from '../types';
+import { AudienceList, UserProfile, ChatGroup, SyncStatus } from '../types';
 import { ProjectSwitcher } from '../components/ProjectSwitcher';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Upload, Users, Tag, FileSpreadsheet, Plus, Search, Filter, Trash2, X, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Upload, Users, Tag, FileSpreadsheet, Plus, Search, Filter, Trash2, X, MessageSquare, AlertTriangle, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 
 type Tab = 'lists' | 'tags' | 'chat-groups';
 
@@ -36,6 +36,11 @@ export const Audience: React.FC = () => {
   const [chatForm, setChatForm] = useState({ name: '', chatId: '' });
   const [isRegisteringChat, setIsRegisteringChat] = useState(false);
 
+  // Sync Status State
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncPollInterval, setSyncPollInterval] = useState<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     // Wait for project to load, and ensure we have a valid UUID
     if (!currentProject || !currentProject.id) {
@@ -55,6 +60,14 @@ export const Audience: React.FC = () => {
     }
     
     loadData();
+    loadSyncStatus();
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (syncPollInterval) {
+        clearInterval(syncPollInterval);
+      }
+    };
   }, [currentProject]);
 
   const loadData = async () => {
@@ -81,6 +94,58 @@ export const Audience: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadSyncStatus = async () => {
+    try {
+      const status = await service.getSyncStatus();
+      setSyncStatus(status);
+    } catch (e) {
+      console.error('Failed to load sync status:', e);
+    }
+  };
+
+  const handleSyncDirectory = async () => {
+    setIsSyncing(true);
+    try {
+      await service.syncDirectory();
+      // Start polling for sync status
+      startSyncPolling();
+    } catch (error) {
+      console.error('Failed to start sync:', error);
+      setIsSyncing(false);
+    }
+  };
+
+  const startSyncPolling = () => {
+    // Clear existing interval
+    if (syncPollInterval) {
+      clearInterval(syncPollInterval);
+    }
+
+    // Poll every 2 seconds
+    const interval = setInterval(async () => {
+      try {
+        const status = await service.getSyncStatus();
+        setSyncStatus(status);
+        
+        // Stop polling when sync is complete
+        if (!status.isSyncing) {
+          clearInterval(interval);
+          setSyncPollInterval(null);
+          setIsSyncing(false);
+          // Reload data after sync completes
+          loadData();
+        }
+      } catch (error) {
+        console.error('Failed to poll sync status:', error);
+        clearInterval(interval);
+        setSyncPollInterval(null);
+        setIsSyncing(false);
+      }
+    }, 2000);
+
+    setSyncPollInterval(interval);
   };
 
   // --- Derived State for Tags ---
@@ -163,6 +228,58 @@ export const Audience: React.FC = () => {
             <p className="text-gray-500 mt-1">Manage target lists, dynamic user tags, and group chats.</p>
          </div>
          <ProjectSwitcher />
+      </div>
+
+      {/* Directory Sync Status */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-medium text-gray-900">Directory Status</h3>
+                {syncStatus?.isSyncing && (
+                  <span className="inline-flex items-center gap-1 text-xs text-blue-600">
+                    <Clock size={12} className="animate-spin" />
+                    Syncing...
+                  </span>
+                )}
+                {syncStatus && !syncStatus.isSyncing && syncStatus.lastSyncStatus === 'success' && (
+                  <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                    <CheckCircle size={12} />
+                    Synced
+                  </span>
+                )}
+                {syncStatus && syncStatus.lastSyncStatus === 'never' && (
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                    <AlertTriangle size={12} />
+                    Not synced
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-gray-600 space-y-1">
+                {syncStatus?.lastSyncAt ? (
+                  <div>Last Sync: {new Date(syncStatus.lastSyncAt).toLocaleString()}</div>
+                ) : (
+                  <div>Last Sync: Never</div>
+                )}
+                <div>
+                  Users: <span className="font-medium">{syncStatus?.userCount || 0}</span> | 
+                  Groups: <span className="font-medium">{syncStatus?.groupCount || 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Button
+            onClick={handleSyncDirectory}
+            disabled={isSyncing || (syncStatus?.isSyncing ?? false)}
+            isLoading={isSyncing || (syncStatus?.isSyncing ?? false)}
+            variant="primary"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} className={isSyncing || syncStatus?.isSyncing ? 'animate-spin' : ''} />
+            Sync Directory
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}

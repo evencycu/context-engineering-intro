@@ -161,3 +161,12 @@ export interface TeamChannel {
   membershipType: 'Standard' | 'Private' | 'Shared';
   description?: string;
 }
+
+export interface SyncStatus {
+  isSyncing: boolean;
+  lastSyncAt: string | null;
+  lastSyncStatus: 'success' | 'failed' | 'never';
+  userCount: number;
+  groupCount: number;
+  errorMessage?: string;
+}
